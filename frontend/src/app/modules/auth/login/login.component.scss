@@ -1,0 +1,96 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a237e;
+  box-sizing: border-box;
+}
+
+.login-card {
+  background: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 380px;
+  margin: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.login-brand-icon {
+  display: flex;
+  color: #1a237e;
+  flex-shrink: 0;
+}
+
+.login-brand-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+h2 {
+  text-align: center;
+  color: #1a237e;
+  margin: 0 0 24px;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+button[type='submit'] {
+  width: 100%;
+  padding: 12px;
+  background-color: #1a237e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 8px;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+button[type='submit']:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #c62828;
+  font-size: 0.875rem;
+  margin-bottom: 12px;
+}

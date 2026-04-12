@@ -1,0 +1,85 @@
+<div class="page">
+  <header class="header">
+    <div class="brand-row">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1 class="title">EmergenciasViales</h1>
+        <p class="subtitle">Plataforma Inteligente de Atención</p>
+      </div>
+    </div>
+    <p class="lead">
+      Prototipo UI/UX — Ciclo 1. Selecciona el panel que deseas explorar.
+    </p>
+  </header>
+
+  <div class="cards">
+    <a routerLink="/movil" class="card card-blue" aria-label="Explorar App Móvil — Cliente">
+      <div class="card-icon icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+          <line x1="12" y1="18" x2="12.01" y2="18"/>
+        </svg>
+      </div>
+      <h2>App Móvil</h2>
+      <p class="role-label">Cliente</p>
+      <p class="desc">Registro, login, gestión de vehículos y perfil del cliente.</p>
+      <ul class="cu-list">
+        <li class="cu-item"><svg class="cu-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5h11L19 11m-14 0h14v4H5v-4z"/></svg> CU1 Registrarse</li>
+        <li class="cu-item"><svg class="cu-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5h11L19 11m-14 0h14v4H5v-4z"/></svg> CU2/3/4 Sesión</li>
+        <li class="cu-item"><svg class="cu-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 11l1.5-4.5h11L19 11m-14 0h14v4H5v-4z"/></svg> CU10 Gestionar vehículo</li>
+      </ul>
+      <span class="explore ex-blue">
+        Explorar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
+      </span>
+    </a>
+
+    <a routerLink="/auth/login" class="card card-purple" aria-label="Explorar Panel Web Administrador">
+      <div class="card-icon icon-purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <h2>Panel Web</h2>
+      <p class="role-label">Administrador</p>
+      <p class="desc">Dashboard completo: usuarios, roles, permisos, talleres y bitácora.</p>
+      <ul class="cu-list">
+        <li class="cu-item"><svg class="cu-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> CU5 Roles · CU6 Permisos</li>
+        <li class="cu-item"><svg class="cu-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> CU7 Usuarios · CU8 Bitácora</li>
+        <li class="cu-item"><svg class="cu-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> CU9 Talleres</li>
+      </ul>
+      <span class="explore ex-purple">
+        Explorar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
+      </span>
+    </a>
+
+    <a routerLink="/auth/login" class="card card-teal" aria-label="Explorar Panel Web Taller">
+      <div class="card-icon icon-teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      </div>
+      <h2>Panel Web</h2>
+      <p class="role-label">Taller</p>
+      <p class="desc">Gestión del perfil del taller y administración de técnicos.</p>
+      <ul class="cu-list">
+        <li class="cu-item"><svg class="cu-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> CU22 Gestionar taller</li>
+        <li class="cu-item"><svg class="cu-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> CU23 Gestionar técnicos</li>
+        <li class="cu-item"><svg class="cu-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> CU2/3/4 Sesión</li>
+      </ul>
+      <span class="explore ex-teal">
+        Explorar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18l6-6-6-6"/></svg>
+      </span>
+    </a>
+  </div>
+
+  <p class="footer">
+    Plataforma Inteligente de Atención de Emergencias Vehiculares — Ciclo 1 Prototipo
+  </p>
+
+  <button type="button" class="help-fab" title="Ciclo 1: prototipo UI/UX. Usa las tarjetas para entrar a cada panel." aria-label="Ayuda">?</button>
+</div>

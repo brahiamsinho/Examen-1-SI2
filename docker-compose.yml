@@ -1,0 +1,98 @@
+# docker-compose.yml
+# =========================================================
+# Orquestación principal
+# Servicios: db (PostgreSQL), backend (FastAPI), frontend (Angular)
+# 
+# USO:
+#   cp .env.example .env        ← primera vez
+#   docker compose up -d        ← levantar todo
+#   docker compose logs -f      ← ver logs
+#   docker compose down         ← bajar todo
+# =========================================================
+
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: emergencias_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Script SQL inicial — se ejecuta solo si el volumen está vacío
+      - ./backend/migrations/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - emergencias_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  # ── FastAPI Backend ────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: emergencias_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-true}
+      API_PREFIX: ${API_PREFIX:-/api}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - emergencias_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  # ── Angular Frontend ───────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: emergencias_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - emergencias_net
+
+
+# ── Volumes ────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    name: emergencias_postgres_data
+
+
+# ── Networks ───────────────────────────────────────────────
+networks:
+  emergencias_net:
+    name: emergencias_network
+    driver: bridge

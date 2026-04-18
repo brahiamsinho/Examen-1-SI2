@@ -38,6 +38,13 @@ class RolRead(BaseModel):
     created_at: Optional[datetime]
 
 
+class RolPermisosRead(BaseModel):
+    """IDs de permisos asignados al rol (para panel admin)."""
+
+    rol_id: int
+    permiso_ids: list[int]
+
+
 class RolUpdate(BaseModel):
     nombre: Optional[str] = None
     descripcion: Optional[str] = None

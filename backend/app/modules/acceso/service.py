@@ -3,13 +3,13 @@
 # Lógica de negocio del módulo de Acceso
 # =========================================================
 import uuid
-from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from fastapi import HTTPException, status, Request
 
 from app.core.security import verify_password, create_access_token, create_refresh_token, hash_password
 from app.core.config import settings
+from app.core.timeutil import utc_now_naive
 from app.modules.usuarios.models import Usuario
 from app.modules.acceso.models import (
     Rol, Permiso, RolPermiso, UsuarioRol, Sesion,
@@ -71,7 +71,7 @@ async def login(
         user_agent=request.headers.get("user-agent"),
         dispositivo=request.headers.get("x-device-type"),
         plataforma=request.headers.get("x-platform"),
-        iniciado_at=datetime.now(timezone.utc),
+        iniciado_at=utc_now_naive(),
         expira_at=None,
         estado=EstadoSesionEnum.ACTIVA,
     )
@@ -81,7 +81,7 @@ async def login(
     await db.execute(
         update(Usuario)
         .where(Usuario.id == user.id)
-        .values(ultimo_acceso_at=datetime.now(timezone.utc))
+        .values(ultimo_acceso_at=utc_now_naive())
     )
 
     # 6. Registrar en bitácora
@@ -116,7 +116,7 @@ async def logout(usuario_id: int, jti: str, db: AsyncSession, request: Request) 
     await db.execute(
         update(Sesion)
         .where(Sesion.token_jti == jti)
-        .values(estado=EstadoSesionEnum.CERRADA, cerrado_at=datetime.now(timezone.utc))
+        .values(estado=EstadoSesionEnum.CERRADA, cerrado_at=utc_now_naive())
     )
     await registrar_accion(
         db=db,
@@ -135,12 +135,19 @@ async def get_roles(db: AsyncSession) -> list[Rol]:
     return list(result.scalars().all())
 
 
+async def get_permiso_ids_for_rol(rol_id: int, db: AsyncSession) -> list[int]:
+    res = await db.execute(
+        select(RolPermiso.permiso_id).where(RolPermiso.rol_id == rol_id)
+    )
+    return [row[0] for row in res.fetchall()]
+
+
 async def create_rol(nombre: str, descripcion: str | None, db: AsyncSession) -> Rol:
     rol = Rol(
         nombre=nombre,
         descripcion=descripcion,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=utc_now_naive(),
+        updated_at=utc_now_naive(),
     )
     db.add(rol)
     await db.flush()
@@ -162,7 +169,7 @@ async def asignar_permisos_rol(rol_id: int, permiso_ids: list[int], db: AsyncSes
         db.add(RolPermiso(
             rol_id=rol_id,
             permiso_id=pid,
-            created_at=datetime.now(timezone.utc),
+            created_at=utc_now_naive(),
         ))
 
 
@@ -174,5 +181,5 @@ async def asignar_roles_usuario(usuario_id: int, rol_ids: list[int], db: AsyncSe
         db.add(UsuarioRol(
             usuario_id=usuario_id,
             rol_id=rid,
-            asignado_at=datetime.now(timezone.utc),
+            asignado_at=utc_now_naive(),
         ))

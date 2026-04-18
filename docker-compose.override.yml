@@ -1,26 +1,21 @@
 # docker-compose.override.yml
 # =========================================================
-# Override para DESARROLLO LOCAL
-# Este archivo se aplica automáticamente sobre docker-compose.yml
-# cuando ejecutas: docker compose up
-#
-# Para producción, usa: docker compose -f docker-compose.yml up
+# Override DESARROLLO LOCAL (se fusiona con docker-compose.yml).
+# Producción: docker compose -f docker-compose.yml up
 # =========================================================
-
-version: "3.9"
 
 services:
   backend:
-    # En desarrollo: hot-reload con uvicorn --reload
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command:
+      [
+        "sh",
+        "-c",
+        "exec uvicorn app.main:app --host 0.0.0.0 --port $${UVICORN_PORT:-8000} --reload",
+      ]
     volumes:
-      # Montar código fuente para hot-reload
       - ./backend:/app
     environment:
       DEBUG: "true"
       ENVIRONMENT: "development"
-
-  db:
-    # En desarrollo: exponer puerto para conectarse desde host (TablePlus, DBeaver, etc.)
-    ports:
-      - "5432:5432"
+      # Dev local: crea/asigna admin al arrancar si .env tiene SEED_ADMIN_EMAIL + PASSWORD + TELEFONO
+      SEED_ADMIN_ON_START: "true"

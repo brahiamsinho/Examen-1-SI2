@@ -1,9 +1,9 @@
 # app/modules/talleres/service.py
-from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException
 
+from app.core.timeutil import utc_now_naive
 from app.modules.talleres.models import Taller, Tecnico, EspecialidadTecnico
 from app.modules.bitacora.service import registrar_accion
 from app.modules.bitacora.models import AccionBitacoraEnum
@@ -21,7 +21,7 @@ async def get_taller_by_id(taller_id: int, db: AsyncSession) -> Taller:
     return t
 
 async def create_taller(data: dict, db: AsyncSession, ejecutor_id: int | None = None) -> Taller:
-    t = Taller(**data, created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    t = Taller(**data, created_at=utc_now_naive(), updated_at=utc_now_naive())
     db.add(t)
     await db.flush()
     await registrar_accion(db=db, usuario_id=ejecutor_id, modulo="talleres", entidad="talleres",
@@ -33,7 +33,7 @@ async def update_taller(taller_id: int, data: dict, db: AsyncSession, ejecutor_i
     for k, v in data.items():
         if v is not None:
             setattr(t, k, v)
-    t.updated_at = datetime.now(timezone.utc)
+    t.updated_at = utc_now_naive()
     await registrar_accion(db=db, usuario_id=ejecutor_id, modulo="talleres", entidad="talleres",
         entidad_id=taller_id, accion=AccionBitacoraEnum.ACTUALIZAR, descripcion=f"Taller actualizado: {taller_id}")
     return t
@@ -56,7 +56,7 @@ async def get_tecnicos(db: AsyncSession, taller_id: int | None = None):
     return list(result.scalars().all())
 
 async def create_tecnico(data: dict, db: AsyncSession, ejecutor_id: int | None = None) -> Tecnico:
-    t = Tecnico(**data, created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
+    t = Tecnico(**data, created_at=utc_now_naive(), updated_at=utc_now_naive())
     db.add(t)
     await db.flush()
     await registrar_accion(db=db, usuario_id=ejecutor_id, modulo="talleres", entidad="tecnicos",
@@ -71,5 +71,5 @@ async def update_tecnico(tecnico_id: int, data: dict, db: AsyncSession, ejecutor
     for k, v in data.items():
         if v is not None:
             setattr(t, k, v)
-    t.updated_at = datetime.now(timezone.utc)
+    t.updated_at = utc_now_naive()
     return t

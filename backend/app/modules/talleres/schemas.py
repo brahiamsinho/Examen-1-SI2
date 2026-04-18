@@ -53,6 +53,8 @@ class TecnicoCreate(BaseModel):
     usuario_id: int
     taller_id: int
     especialidad_id: Optional[int] = None
+    documento_identidad: Optional[str] = None
+    disponibilidad: Optional[str] = None
     estado: EstadoTecnicoEnum = EstadoTecnicoEnum.ACTIVO
 
 class TecnicoRead(BaseModel):
@@ -67,4 +69,6 @@ class TecnicoRead(BaseModel):
 class TecnicoUpdate(BaseModel):
     taller_id: Optional[int] = None
     especialidad_id: Optional[int] = None
+    documento_identidad: Optional[str] = None
+    disponibilidad: Optional[str] = None
     estado: Optional[EstadoTecnicoEnum] = None

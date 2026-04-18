@@ -6,6 +6,7 @@
 // =========================================================
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000/api',
+  /** Dev: mismo origen vía proxy.conf.js → BACKEND_URL en .env raíz */
+  apiUrl: '/api',
   appName: 'Plataforma Emergencias Vehiculares',
 };

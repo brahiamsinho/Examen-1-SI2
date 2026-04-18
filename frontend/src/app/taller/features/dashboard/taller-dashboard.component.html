@@ -1,0 +1,37 @@
+<div class="dash">
+  <h2 class="dash__h">Resumen operativo</h2>
+  <p class="dash__lead">Taller web — ciclo 1</p>
+
+  <div class="dash__alert" *ngIf="error" role="alert">{{ error }}</div>
+  <p class="dash__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="dash__grid" *ngIf="!loading && data">
+    <article class="dash__card">
+      <h3 class="dash__card-title">Técnicos registrados</h3>
+      <p class="dash__metric">{{ data.tecnicos_registrados }}</p>
+      <a routerLink="/taller/panel/tecnicos" class="dash__link">Gestionar →</a>
+    </article>
+    <article class="dash__card">
+      <h3 class="dash__card-title">Técnicos activos</h3>
+      <p class="dash__metric">{{ data.tecnicos_activos }}</p>
+      <span class="dash__hint">Estado operativo en campo</span>
+    </article>
+    <article class="dash__card">
+      <h3 class="dash__card-title">Disponibilidad</h3>
+      <p class="dash__hint" style="line-height: 1.45">{{ data.disponibilidad_general }}</p>
+    </article>
+    <article class="dash__card">
+      <h3 class="dash__card-title">Estado del taller</h3>
+      <p class="dash__metric"><span class="dash__pill">{{ data.taller_estado }}</span></p>
+      <a routerLink="/taller/panel/mi-taller" class="dash__link">Mi taller →</a>
+    </article>
+  </div>
+
+  <section class="dash__section" *ngIf="!loading && data">
+    <h3 class="dash__section-title">Accesos rápidos</h3>
+    <div class="dash__chips">
+      <a routerLink="/taller/panel/mi-taller" class="dash__chip">Mi taller</a>
+      <a routerLink="/taller/panel/tecnicos" class="dash__chip">Técnicos</a>
+    </div>
+  </section>
+</div>

@@ -29,6 +29,12 @@ class UsuarioRead(BaseModel):
     created_at: Optional[datetime]
 
 
+class UsuarioListRead(UsuarioRead):
+    """Listado admin: incluye nombres de roles."""
+
+    roles: list[str] = []
+
+
 class UsuarioUpdate(BaseModel):
     nombres: Optional[str] = None
     apellidos: Optional[str] = None

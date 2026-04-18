@@ -177,6 +177,8 @@ CREATE TABLE tecnicos (
     usuario_id          INTEGER NOT NULL UNIQUE,
     taller_id           INTEGER NOT NULL,
     especialidad_id     INTEGER,
+    documento_identidad VARCHAR(50),
+    disponibilidad      VARCHAR(120),
     estado              estado_tecnico NOT NULL,
     created_at          TIMESTAMP,
     updated_at          TIMESTAMP,
@@ -308,5 +310,18 @@ INSERT INTO permisos (codigo, nombre, modulo, created_at, updated_at) VALUES
     ('talleres:actualizar', 'Editar talleres', 'talleres', NOW(), NOW()),
     ('bitacora:leer', 'Ver bitácora de auditoría', 'bitacora', NOW(), NOW()),
     ('roles:gestionar', 'Gestionar roles y permisos', 'acceso', NOW(), NOW());
+
+-- Permisos efectivos por rol (evita matriz vacía en panel y coherencia con /auth/me)
+INSERT INTO rol_permiso (rol_id, permiso_id, created_at)
+SELECT r.id, p.id, NOW()
+FROM roles r
+CROSS JOIN permisos p
+WHERE r.nombre = 'ADMIN';
+
+INSERT INTO rol_permiso (rol_id, permiso_id, created_at)
+SELECT r.id, p.id, NOW()
+FROM roles r
+JOIN permisos p ON p.codigo IN ('talleres:crear', 'talleres:leer', 'talleres:actualizar')
+WHERE r.nombre = 'TALLER_RESPONSABLE';
 
 COMMIT;

@@ -85,6 +85,8 @@ class Tecnico(Base):
     especialidad_id: Mapped[int | None] = mapped_column(
         ForeignKey("especialidades_tecnico.id", ondelete="SET NULL")
     )
+    documento_identidad: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    disponibilidad: Mapped[str | None] = mapped_column(String(120), nullable=True)
     estado: Mapped[EstadoTecnicoEnum] = mapped_column(
         SAEnum(EstadoTecnicoEnum, name="estado_tecnico"), nullable=False
     )

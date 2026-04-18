@@ -1,0 +1,65 @@
+<div class="dash">
+  <h2 class="dash__h">Resumen</h2>
+  <p class="dash__lead">Vista general del sistema — ciclo 1</p>
+
+  <div class="dash__alert" *ngIf="error" role="alert">{{ error }}</div>
+  <p class="dash__muted" *ngIf="loading">Cargando métricas…</p>
+
+  <div class="dash__grid" *ngIf="!loading">
+    <article class="dash__card">
+      <h3 class="dash__card-title">Usuarios</h3>
+      <p class="dash__metric">{{ totalUsuarios }}</p>
+      <a routerLink="/admin/panel/usuarios" class="dash__link">Gestionar →</a>
+    </article>
+    <article class="dash__card">
+      <h3 class="dash__card-title">Talleres</h3>
+      <p class="dash__metric">{{ totalTalleres }}</p>
+      <a routerLink="/admin/panel/talleres" class="dash__link">Gestionar →</a>
+    </article>
+    <article class="dash__card">
+      <h3 class="dash__card-title">Roles</h3>
+      <p class="dash__metric">{{ totalRoles }}</p>
+      <a routerLink="/admin/panel/roles" class="dash__link">Gestionar →</a>
+    </article>
+    <article class="dash__card">
+      <h3 class="dash__card-title">Actividad</h3>
+      <p class="dash__metric">{{ actividad.length }}</p>
+      <span class="dash__hint">Últimos registros en bitácora</span>
+    </article>
+  </div>
+
+  <section class="dash__section" *ngIf="!loading">
+    <h3 class="dash__section-title">Accesos rápidos</h3>
+    <div class="dash__chips">
+      <a *ngFor="let q of quick" [routerLink]="q.path" class="dash__chip">{{ q.label }}</a>
+    </div>
+  </section>
+
+  <section class="dash__section" *ngIf="!loading">
+    <h3 class="dash__section-title">Actividad reciente</h3>
+    <div class="dash__tablewrap" *ngIf="actividad.length; else emptyAct">
+      <table class="dash__table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Módulo</th>
+            <th>Acción</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of actividad">
+            <td>{{ row.created_at | date : 'short' }}</td>
+            <td>{{ row.modulo }}</td>
+            <td><span class="dash__pill">{{ row.accion }}</span></td>
+            <td>{{ row.descripcion || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #emptyAct>
+      <p class="dash__empty">Sin registros recientes.</p>
+    </ng-template>
+    <a routerLink="/admin/panel/bitacora" class="dash__link dash__link--block">Ver bitácora completa</a>
+  </section>
+</div>

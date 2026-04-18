@@ -31,6 +31,7 @@ frontend/.angular/
 
 # Plantillas / basura local de experimentos Angular
 _ng_temp/
+.ng_temp/
 
 # ── Flutter ───────────────────────────────────────────────
 mobile/.dart_tool/
@@ -44,9 +45,14 @@ mobile/ios/Pods/
 # ── Docker ────────────────────────────────────────────────
 # (no excluir docker-compose pero sí datos locales)
 
-# ── IDEs ───────────────────────────────────────────────────
-.vscode/settings.json
+# ── IDEs y herramientas locales (Cursor, skills, etc.) ────
+# .vscode/: preferencias locales; si el equipo comparte launch/tasks, usa !.vscode/launch.json
+.vscode/
 .idea/
+.cursor/
+.agents/
+skills-lock.json
+script.db
 *.swp
 *.swo
 
@@ -82,6 +88,3 @@ PACKAGE_DESIGN.md
 SEQUENCE_FLOWS.md
 COMPONENTS_OVERVIEW.md
 TESTING_STRATEGY.md
-
-.cursor/
-settings.json

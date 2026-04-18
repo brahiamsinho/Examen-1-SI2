@@ -2,19 +2,13 @@
 # =========================================================
 # Orquestación principal
 # Servicios: db (PostgreSQL), backend (FastAPI), frontend (Angular)
-# 
-# USO:
-#   cp .env.example .env        ← primera vez
-#   docker compose up -d        ← levantar todo
-#   docker compose logs -f      ← ver logs
-#   docker compose down         ← bajar todo
+#
+# Variables: copiar .env.example → .env en la RAÍZ del repo.
+# compose carga automáticamente ./.env
 # =========================================================
-
-version: "3.9"
 
 services:
 
-  # ── PostgreSQL ─────────────────────────────────────────────
   db:
     image: postgres:15-alpine
     container_name: emergencias_db
@@ -25,7 +19,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Script SQL inicial — se ejecuta solo si el volumen está vacío
       - ./backend/migrations/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -38,7 +31,6 @@ services:
       retries: 5
 
 
-  # ── FastAPI Backend ────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -46,52 +38,69 @@ services:
       target: runtime
     container_name: emergencias_backend
     restart: unless-stopped
+    command:
+      [
+        "sh",
+        "-c",
+        "exec uvicorn app.main:app --host 0.0.0.0 --port $${UVICORN_PORT:-8000}",
+      ]
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
+      # Puerto 5432 es el del contenedor Postgres en la red Docker (no POSTGRES_PORT del host).
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-db}:5432/${POSTGRES_DB}
       SECRET_KEY: ${SECRET_KEY}
       ALGORITHM: ${ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200,http://localhost:80}
       ENVIRONMENT: ${ENVIRONMENT:-development}
       DEBUG: ${DEBUG:-true}
       API_PREFIX: ${API_PREFIX:-/api}
+      UVICORN_PORT: ${UVICORN_PORT:-8000}
+      SEED_ADMIN_ON_START: ${SEED_ADMIN_ON_START:-false}
+      # Defaults = .env.example (dev). En prod: define SEED_ADMIN_* en .env o deja SEED_ADMIN_ON_START=false y usa `python -m app.seeds`.
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@emergenciasviales.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-cambiar_password_dev}
+      SEED_ADMIN_TELEFONO: ${SEED_ADMIN_TELEFONO:-+573000000001}
+      SEED_ADMIN_NOMBRES: ${SEED_ADMIN_NOMBRES:-Administrador}
+      SEED_ADMIN_APELLIDOS: ${SEED_ADMIN_APELLIDOS:-Sistema}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
     ports:
-      - "8000:8000"
+      - "${BACKEND_HOST_PORT:-8000}:${UVICORN_PORT:-8000}"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - emergencias_net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test:
+        - CMD-SHELL
+        - python -c "import os,urllib.request as u;p=os.environ.get('UVICORN_PORT','8000');u.urlopen('http://127.0.0.1:'+p+'/health',timeout=5).read()"
       interval: 30s
       timeout: 10s
       retries: 3
 
 
-  # ── Angular Frontend ───────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: emergencias_frontend
     restart: unless-stopped
+    environment:
+      BACKEND_UPSTREAM: ${BACKEND_UPSTREAM:-backend:8000}
     ports:
-      - "80:80"
+      - "${FRONTEND_HTTP_PORT:-80}:80"
     depends_on:
       - backend
     networks:
       - emergencias_net
 
 
-# ── Volumes ────────────────────────────────────────────────
 volumes:
   postgres_data:
     name: emergencias_postgres_data
 
 
-# ── Networks ───────────────────────────────────────────────
 networks:
   emergencias_net:
     name: emergencias_network

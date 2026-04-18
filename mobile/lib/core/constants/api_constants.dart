@@ -5,11 +5,12 @@
 // =========================================================
 
 class ApiConstants {
-  // En desarrollo: apuntar al backend local
-  // En producción: definir con --dart-define=API_BASE_URL=https://tu-dominio.com/api/v1
+  // Sin .env en runtime: usar --dart-define=API_BASE_URL=...
+  // Debe coincidir con BACKEND_URL + API_PREFIX del .env raíz (p. ej. http://127.0.0.1:8000/api).
+  // Android Emulator: suele ser http://10.0.2.2:8000/api
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api', // 10.0.2.2 = localhost desde Android Emulator
+    defaultValue: 'http://10.0.2.2:8000/api',
   );
 
   // Endpoints

@@ -1,18 +1,37 @@
 # app/modules/usuarios/service.py
-from datetime import datetime, timezone
+from collections import defaultdict
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, status
 
 from app.core.security import hash_password
+from app.core.timeutil import utc_now_naive
 from app.modules.usuarios.models import Usuario, Cliente, EstadoUsuarioEnum
+from app.modules.usuarios.schemas import UsuarioListRead, UsuarioRead
 from app.modules.bitacora.service import registrar_accion
 from app.modules.bitacora.models import AccionBitacoraEnum
+from app.modules.acceso.models import Rol, UsuarioRol
 
 
 async def get_usuarios(db: AsyncSession) -> list[Usuario]:
     result = await db.execute(select(Usuario).order_by(Usuario.apellidos))
     return list(result.scalars().all())
+
+
+async def get_usuarios_admin(db: AsyncSession) -> list[UsuarioListRead]:
+    users = await get_usuarios(db)
+    res = await db.execute(
+        select(UsuarioRol.usuario_id, Rol.nombre).join(Rol, Rol.id == UsuarioRol.rol_id)
+    )
+    roles_by_user: defaultdict[int, list[str]] = defaultdict(list)
+    for uid, nombre in res.fetchall():
+        roles_by_user[uid].append(nombre)
+    out: list[UsuarioListRead] = []
+    for u in users:
+        base = UsuarioRead.model_validate(u)
+        out.append(UsuarioListRead(**base.model_dump(), roles=roles_by_user.get(u.id, [])))
+    return out
 
 
 async def get_usuario_by_id(usuario_id: int, db: AsyncSession) -> Usuario:
@@ -21,6 +40,18 @@ async def get_usuario_by_id(usuario_id: int, db: AsyncSession) -> Usuario:
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return user
+
+
+async def get_usuario_list_read(usuario_id: int, db: AsyncSession) -> UsuarioListRead:
+    u = await get_usuario_by_id(usuario_id, db)
+    res = await db.execute(
+        select(Rol.nombre)
+        .join(UsuarioRol, UsuarioRol.rol_id == Rol.id)
+        .where(UsuarioRol.usuario_id == usuario_id)
+    )
+    roles = [row[0] for row in res.fetchall()]
+    base = UsuarioRead.model_validate(u)
+    return UsuarioListRead(**base.model_dump(), roles=roles)
 
 
 async def create_usuario(data: dict, db: AsyncSession, ejecutor_id: int | None = None) -> Usuario:
@@ -37,8 +68,8 @@ async def create_usuario(data: dict, db: AsyncSession, ejecutor_id: int | None =
         username=data.get("username"),
         password_hash=hash_password(data["password"]),
         estado=data.get("estado", EstadoUsuarioEnum.ACTIVO),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=utc_now_naive(),
+        updated_at=utc_now_naive(),
     )
     db.add(user)
     await db.flush()  # obtener ID sin commit
@@ -62,7 +93,7 @@ async def update_usuario(
     for field, value in data.items():
         if value is not None:
             setattr(user, field, value)
-    user.updated_at = datetime.now(timezone.utc)
+    user.updated_at = utc_now_naive()
 
     await registrar_accion(
         db=db,
@@ -76,11 +107,32 @@ async def update_usuario(
     return user
 
 
+async def asignar_roles_usuario(
+    usuario_id: int,
+    rol_ids: list[int],
+    db: AsyncSession,
+    ejecutor_id: int,
+) -> None:
+    await get_usuario_by_id(usuario_id, db)
+    from app.modules.acceso import service as acceso_service
+
+    await acceso_service.asignar_roles_usuario(usuario_id, rol_ids, db)
+    await registrar_accion(
+        db=db,
+        usuario_id=ejecutor_id,
+        modulo="acceso",
+        entidad="usuario_rol",
+        entidad_id=usuario_id,
+        accion=AccionBitacoraEnum.ACTUALIZAR,
+        descripcion=f"Asignación de roles al usuario {usuario_id}",
+    )
+
+
 async def delete_usuario(usuario_id: int, db: AsyncSession, ejecutor_id: int | None = None) -> None:
     """No elimina físicamente — cambia estado a INACTIVO (soft delete)."""
     user = await get_usuario_by_id(usuario_id, db)
     user.estado = EstadoUsuarioEnum.INACTIVO
-    user.updated_at = datetime.now(timezone.utc)
+    user.updated_at = utc_now_naive()
     await registrar_accion(
         db=db,
         usuario_id=ejecutor_id,
@@ -102,8 +154,8 @@ async def create_cliente(data: dict, db: AsyncSession) -> Cliente:
         usuario_id=data["usuario_id"],
         ciudad=data.get("ciudad"),
         direccion=data.get("direccion"),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=utc_now_naive(),
+        updated_at=utc_now_naive(),
     )
     db.add(cliente)
     await db.flush()

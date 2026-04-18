@@ -45,14 +45,33 @@ A diferencia de Django, FastAPI no cuenta con un motor ORM o de migraciones nati
 
 | Acción | Django ORM | Equivalente en FastAPI (Alembic) |
 |--------|------------|----------------------------------|
-| **Preparar migración** detectando los cambios | `python manage.py makemigrations` | `alembic revision --autogenerate -m "Agregado campo X"` |
-| **Ejecutar / Aplicar** migración a la base de datos | `python manage.py migrate` | `alembic upgrade head` |
-| **Deshacer (Rollback)** la última migración | `python manage.py migrate <app> <anterior>` | `alembic downgrade -1` |
+| **Preparar migración** detectando los cambios | `python manage.py makemigrations` | `docker compose exec backend alembic revision --autogenerate -m "Agregado campo X"` |
+| **Ejecutar / Aplicar** migración a la base de datos | `python manage.py migrate` | `docker compose exec backend alembic upgrade head` |
+| **Deshacer (Rollback)** la última migración | `python manage.py migrate <app> <anterior>` | `docker compose exec backend alembic downgrade -1` |
+
+### Alembic en este repositorio
+
+- **Qué es:** versiona el esquema de PostgreSQL (cambios incrementales en archivos Python bajo `backend/alembic/versions/`), parecido a las carpetas `migrations/` de Django.
+- **No sustituye el backend:** FastAPI, routers y modelos siguen igual; solo se añade la herramienta de migración.
+- **Convivencia con `init.sql`:** la primera migración (`0001_baseline`) está vacía: el esquema inicial lo sigue creando Docker con `backend/migrations/init.sql` la primera vez que levantas Postgres.
+- **Una vez por base de datos** creada con ese flujo, marca la línea base para Alembic (sin ejecutar SQL otra vez):
+
+```bash
+docker compose exec backend alembic stamp 0001_baseline
+```
+
+A partir de ahí, cuando **realmente cambies** modelos SQLAlchemy: `revision --autogenerate -m "mensaje útil"` → **revisar a mano** el `.py` generado (autogenerate se equivoca con IDENTITY, índices y nombres de FK) → `upgrade head`.
+
+**Importante:** no ejecutes `--autogenerate` “de prueba” sin cambios en código: suele generar un diff enorme contra la BD creada por `init.sql` y `upgrade head` puede fallar (p. ej. `ALTER COLUMN id` en columnas IDENTITY). Si ya generaste un archivo malo en `alembic/versions/`, bórralo; si `upgrade` falló, la versión en BD suele seguir en `0001_baseline` (transacción revertida).
+
+- **Poblar usuario admin (seed):** `docker compose exec backend python -m app.seeds` (variables `SEED_ADMIN_*` en `.env`).
+
+**Nota:** Alembic usa el driver síncrono **psycopg** (`postgresql+psycopg://…`); la API sigue usando **asyncpg** (`postgresql+asyncpg://…`). La conversión la hace `backend/alembic/env.py`.
 
 ---
 
 ## 🗄️ Base de Datos e Inicialización
-Actualmente, en lugar de correr migraciones pesadas, las tablas y los registros semillas se configuran al crear el contenedor PostgreSQL montando un volúmen al script `backend/migrations/init.sql`.
+Al crear el contenedor PostgreSQL con volumen vacío, se monta `backend/migrations/init.sql` (tablas + roles/permisos base). Alembic gestiona **cambios posteriores** al esquema (ver sección anterior).
 
 | Acción | Comando |
 |--------|---------|

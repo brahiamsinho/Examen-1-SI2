@@ -3,8 +3,8 @@
 # Servicio de bitácora — función reutilizable para registrar acciones
 # Importada por todos los módulos que necesiten auditoría
 # =========================================================
-from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import Bitacora, AccionBitacoraEnum
 
 
@@ -45,7 +45,7 @@ async def registrar_accion(
         accion=accion,
         descripcion=descripcion,
         ip_address=ip_address,
-        created_at=datetime.now(timezone.utc),
+        created_at=utc_now_naive(),
     )
     db.add(registro)
     # No se hace flush/commit aquí — se deja al patrón de get_db

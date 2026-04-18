@@ -5,30 +5,35 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.modules.usuarios import service
+from app.modules.acceso.schemas import AsignarRolesAUsuario
 from app.modules.usuarios.schemas import (
-    UsuarioCreate, UsuarioRead, UsuarioUpdate,
-    ClienteCreate, ClienteRead
+    UsuarioCreate,
+    UsuarioRead,
+    UsuarioListRead,
+    UsuarioUpdate,
+    ClienteCreate,
+    ClienteRead,
 )
 from app.modules.usuarios.models import Usuario
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 
-@router.get("/", response_model=list[UsuarioRead])
+@router.get("/", response_model=list[UsuarioListRead])
 async def listar_usuarios(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    return await service.get_usuarios(db)
+    return await service.get_usuarios_admin(db)
 
 
-@router.get("/{usuario_id}", response_model=UsuarioRead)
+@router.get("/{usuario_id}", response_model=UsuarioListRead)
 async def obtener_usuario(
     usuario_id: int,
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    return await service.get_usuario_by_id(usuario_id, db)
+    return await service.get_usuario_list_read(usuario_id, db)
 
 
 @router.post("/", response_model=UsuarioRead, status_code=status.HTTP_201_CREATED)
@@ -59,6 +64,16 @@ async def desactivar_usuario(
     current_user: Usuario = Depends(get_current_user),
 ):
     await service.delete_usuario(usuario_id, db, ejecutor_id=current_user.id)
+
+
+@router.put("/{usuario_id}/roles", status_code=status.HTTP_204_NO_CONTENT)
+async def asignar_roles_a_usuario(
+    usuario_id: int,
+    body: AsignarRolesAUsuario,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    await service.asignar_roles_usuario(usuario_id, body.rol_ids, db, current_user.id)
 
 
 # ── Clientes ─────────────────────────────────────────────────

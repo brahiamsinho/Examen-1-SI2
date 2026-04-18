@@ -1,9 +1,9 @@
 # app/modules/vehiculos/service.py
-from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException
 
+from app.core.timeutil import utc_now_naive
 from app.modules.vehiculos.models import MarcaVehiculo, ModeloVehiculo, TipoVehiculo, Vehiculo
 from app.modules.bitacora.service import registrar_accion
 from app.modules.bitacora.models import AccionBitacoraEnum
@@ -64,8 +64,8 @@ async def create_vehiculo(data: dict, db: AsyncSession, ejecutor_id: int | None 
         **{k: data[k] for k in ["cliente_id", "placa", "marca_id", "modelo_id", "tipo_vehiculo_id"]},
         anio=data.get("anio"),
         color=data.get("color"),
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=utc_now_naive(),
+        updated_at=utc_now_naive(),
     )
     db.add(v)
     await db.flush()
@@ -81,7 +81,7 @@ async def update_vehiculo(vehiculo_id: int, data: dict, db: AsyncSession, ejecut
     for field, value in data.items():
         if value is not None:
             setattr(v, field, value)
-    v.updated_at = datetime.now(timezone.utc)
+    v.updated_at = utc_now_naive()
     await registrar_accion(
         db=db, usuario_id=ejecutor_id, modulo="vehiculos", entidad="vehiculos",
         entidad_id=vehiculo_id, accion=AccionBitacoraEnum.ACTUALIZAR,

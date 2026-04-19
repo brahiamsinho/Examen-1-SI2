@@ -1,29 +1,42 @@
 // lib/core/constants/api_constants.dart
 // =========================================================
-// Constantes de la API — centralizadas aquí para no duplicar
-// La URL base se lee de --dart-define en tiempo de compilación
+// Rutas de la API — la base y timeouts vienen de mobile/.env (ver AppEnv).
 // =========================================================
 
+import '../config/app_env.dart';
+
 class ApiConstants {
-  // Sin .env en runtime: usar --dart-define=API_BASE_URL=...
-  // Debe coincidir con BACKEND_URL + API_PREFIX del .env raíz (p. ej. http://127.0.0.1:8000/api).
-  // Android Emulator: suele ser http://10.0.2.2:8000/api
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
-  );
+  static String get baseUrl => AppEnv.apiBaseUrl;
 
-  // Endpoints
-  static const String login = '$baseUrl/auth/login';
-  static const String logout = '$baseUrl/auth/logout';
-  static const String me = '$baseUrl/auth/me';
-  static const String usuarios = '$baseUrl/usuarios';
-  static const String vehiculos = '$baseUrl/vehiculos';
-  static const String talleres = '$baseUrl/talleres';
-  static const String tecnicos = '$baseUrl/tecnicos';
-  static const String bitacora = '$baseUrl/bitacora';
+  // Endpoints — auth
+  static String get login => '${AppEnv.apiBaseUrl}/auth/login';
+  static String get logout => '${AppEnv.apiBaseUrl}/auth/logout';
+  static String get me => '${AppEnv.apiBaseUrl}/auth/me';
 
-  // Timeouts
-  static const Duration connectTimeout = Duration(seconds: 10);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  /// Portal taller (responsable): taller y datos del responsable.
+  static String get portalTallerMiTaller => '${AppEnv.apiBaseUrl}/portal/taller/mi-taller';
+
+  // Portal móvil cliente (ciclo 1)
+  static String get portalClienteRegistro => '${AppEnv.apiBaseUrl}/portal/cliente/registro';
+  static String get portalClienteMiPerfil => '${AppEnv.apiBaseUrl}/portal/cliente/mi-perfil';
+  static String get portalClienteMisVehiculos => '${AppEnv.apiBaseUrl}/portal/cliente/mis-vehiculos';
+
+  static String portalClienteMisVehiculo(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/mis-vehiculos/$id';
+
+  static String get usuarios => '${AppEnv.apiBaseUrl}/usuarios';
+  static String get vehiculos => '${AppEnv.apiBaseUrl}/vehiculos';
+  static String get vehiculosMarcas => '${AppEnv.apiBaseUrl}/vehiculos/marcas';
+  static String vehiculosModelos({int? marcaId}) => marcaId != null
+      ? '${AppEnv.apiBaseUrl}/vehiculos/modelos?marca_id=$marcaId'
+      : '${AppEnv.apiBaseUrl}/vehiculos/modelos';
+  static String get vehiculosTipos => '${AppEnv.apiBaseUrl}/vehiculos/tipos';
+  static String get talleres => '${AppEnv.apiBaseUrl}/talleres';
+
+  static String tallerById(int id) => '${AppEnv.apiBaseUrl}/talleres/$id';
+  static String get tecnicos => '${AppEnv.apiBaseUrl}/tecnicos';
+  static String get bitacora => '${AppEnv.apiBaseUrl}/bitacora';
+
+  static Duration get connectTimeout => AppEnv.apiConnectTimeout;
+  static Duration get receiveTimeout => AppEnv.apiReceiveTimeout;
 }

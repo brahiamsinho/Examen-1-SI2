@@ -14,36 +14,56 @@ from app.core.config import settings
 
 _log = logging.getLogger(__name__)
 
+# Evita dos seeds concurrentes en el mismo proceso (p. ej. uvicorn --reload disparando lifespan dos veces).
+_startup_seed_lock = asyncio.Lock()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if settings.SEED_ADMIN_ON_START:
+    if (
+        settings.SEED_ADMIN_ON_START
+        or settings.SEED_CLIENTE_ON_START
+        or settings.SEED_TALLER_ON_START
+        or settings.SEED_TECNICO_ON_START
+    ):
         from app.core.database import AsyncSessionLocal
-        from app.seeds.dev_admin import ensure_dev_admin
+        from app.seeds.dev_admin import ensure_baseline_rol_permisos, ensure_dev_admin
+        from app.seeds.dev_cliente import ensure_dev_cliente
+        from app.seeds.dev_tecnico import ensure_dev_tecnico
+        from app.seeds.dev_taller import ensure_dev_taller
 
-        # Tras `docker compose up`, Postgres puede reiniciarse al terminar init.sql;
-        # un intento único suele dar Connection refused aunque el healthcheck ya sea "healthy".
-        last_err: BaseException | None = None
-        for attempt in range(1, 9):
-            try:
-                async with AsyncSessionLocal() as session:
-                    await ensure_dev_admin(session, require_enabled_flag=True)
-                    await session.commit()
-                break
-            except Exception as e:
-                last_err = e
-                _log.warning(
-                    "Seed admin intento %s/8: %s — reintento en 2s",
-                    attempt,
-                    e,
+        async with _startup_seed_lock:
+            # Tras `docker compose up`, Postgres puede reiniciarse al terminar init.sql;
+            # un intento único suele dar Connection refused aunque el healthcheck ya sea "healthy".
+            last_err: BaseException | None = None
+            for attempt in range(1, 9):
+                try:
+                    async with AsyncSessionLocal() as session:
+                        await ensure_baseline_rol_permisos(session)
+                        if settings.SEED_ADMIN_ON_START:
+                            await ensure_dev_admin(session, require_enabled_flag=False)
+                        if settings.SEED_CLIENTE_ON_START:
+                            await ensure_dev_cliente(session, require_enabled_flag=False)
+                        if settings.SEED_TALLER_ON_START:
+                            await ensure_dev_taller(session, require_enabled_flag=False)
+                        if settings.SEED_TECNICO_ON_START:
+                            await ensure_dev_tecnico(session, require_enabled_flag=False)
+                        await session.commit()
+                    break
+                except Exception as e:
+                    last_err = e
+                    _log.warning(
+                        "Seeds intento %s/8: %s — reintento en 2s",
+                        attempt,
+                        e,
+                    )
+                    await asyncio.sleep(2)
+            else:
+                _log.error(
+                    "Seeds (admin/cliente/taller/técnico) no pudieron tras 8 intentos. "
+                    "Manual: docker compose exec backend python -m app.seeds",
+                    exc_info=last_err,
                 )
-                await asyncio.sleep(2)
-        else:
-            _log.error(
-                "Seed administrador no pudo tras 8 intentos. "
-                "Manual: docker compose exec backend python -m app.seeds",
-                exc_info=last_err,
-            )
     yield
 
 # ── Importar todos los routers ────────────────────────────────
@@ -53,6 +73,7 @@ from app.modules.vehiculos.router import router as vehiculos_router
 from app.modules.talleres.router import router, especialidades_router, tecnicos_router
 from app.modules.bitacora.router import router as bitacora_router
 from app.modules.portal_taller.router import router as portal_taller_router
+from app.modules.portal_cliente.router import router as portal_cliente_router
 
 # ── Crear aplicación ─────────────────────────────────────────
 app = FastAPI(
@@ -90,6 +111,7 @@ app.include_router(especialidades_router, prefix=PREFIX)
 app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
 app.include_router(portal_taller_router, prefix=PREFIX)
+app.include_router(portal_cliente_router, prefix=PREFIX)
 
 
 # ── Health check ─────────────────────────────────────────────

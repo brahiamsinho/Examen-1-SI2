@@ -17,5 +17,7 @@ services:
     environment:
       DEBUG: "true"
       ENVIRONMENT: "development"
-      # Dev local: crea/asigna admin al arrancar si .env tiene SEED_ADMIN_EMAIL + PASSWORD + TELEFONO
+      # Dev local: seeds idempotentes al arrancar (admin + opcional cliente + taller).
       SEED_ADMIN_ON_START: "true"
+      SEED_CLIENTE_ON_START: "true"
+      SEED_TALLER_ON_START: "true"

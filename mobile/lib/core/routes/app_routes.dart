@@ -2,11 +2,15 @@
 // =========================================================
 // Rutas de la aplicación Flutter
 // =========================================================
+/// Referencia de rutas (go_router usa paths completos en `cliente_go_router.dart`).
 class AppRoutes {
-  static const String login = '/login';
-  static const String home = '/home';
-  static const String vehiculos = '/vehiculos';
-  static const String vehiculoDetalle = '/vehiculos/:id';
-  static const String perfil = '/perfil';
-  static const String talleres = '/talleres';
+  static const String splash = '/splash';
+  static const String onboarding = '/onboarding';
+  static const String modo = '/modo';
+  static const String clienteLogin = '/cliente/login';
+  static const String clienteRegistro = '/cliente/registro';
+  static const String clienteRecuperar = '/cliente/recuperar';
+  static const String clienteHome = '/cliente/app/home';
+  static const String clienteVehiculos = '/cliente/app/vehiculos';
+  static const String clientePerfil = '/cliente/app/perfil';
 }

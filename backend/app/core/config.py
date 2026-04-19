@@ -61,5 +61,35 @@ class Settings(BaseSettings):
     SEED_ADMIN_APELLIDOS: str = "Sistema"
     SEED_ADMIN_USERNAME: str | None = "admin"
 
+    # ── Seed cliente demo (app móvil / portal cliente) ─────────
+    SEED_CLIENTE_ON_START: bool = False
+    SEED_CLIENTE_EMAIL: str | None = "cli@test.com"
+    SEED_CLIENTE_PASSWORD: str | None = "cli123"
+    SEED_CLIENTE_TELEFONO: str | None = "+5917000002"
+    SEED_CLIENTE_NOMBRES: str = "Cliente"
+    SEED_CLIENTE_APELLIDOS: str = "Demo"
+    SEED_CLIENTE_CIUDAD: str | None = None
+    SEED_CLIENTE_DIRECCION: str | None = None
+
+    # ── Seed taller demo (portal taller / responsable) ───────
+    SEED_TALLER_ON_START: bool = False
+    SEED_TALLER_EMAIL: str | None = "taller@test.com"
+    SEED_TALLER_PASSWORD: str | None = "taller123"
+    SEED_TALLER_TELEFONO: str | None = "+5917000003"
+    SEED_TALLER_RESPONSABLE_NOMBRES: str = "Responsable"
+    SEED_TALLER_RESPONSABLE_APELLIDOS: str = "Taller Demo"
+    SEED_TALLER_NOMBRE_COMERCIAL: str = "Taller Demo Emergencias"
+    SEED_TALLER_CIUDAD: str = "La Paz"
+    SEED_TALLER_DIRECCION: str = "Av. Seed 100"
+    SEED_TALLER_DESCRIPCION: str | None = "Taller de demostración (seed desarrollo)."
+
+    # ── Seed técnico demo (app móvil técnico; requiere un taller) ─
+    SEED_TECNICO_ON_START: bool = False
+    SEED_TECNICO_EMAIL: str | None = "tec@test.com"
+    SEED_TECNICO_PASSWORD: str | None = "tec123"
+    SEED_TECNICO_TELEFONO: str | None = "+5917000004"
+    SEED_TECNICO_NOMBRES: str = "Técnico"
+    SEED_TECNICO_APELLIDOS: str = "Seed"
+
 
 settings = Settings()

@@ -1,32 +1,11 @@
-// lib/main.dart
-// =========================================================
-// Punto de entrada de la app Flutter
-// =========================================================
 import 'package:flutter/material.dart';
-import 'core/theme/app_theme.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
-  runApp(const EmergenciasApp());
-}
+import 'app.dart';
 
-class EmergenciasApp extends StatelessWidget {
-  const EmergenciasApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Emergencias Vehiculares',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      // TODO: Agregar go_router para navegación declarativa
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            '🚗 Plataforma Emergencias Vehiculares',
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-      ),
-    );
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  runApp(const ProviderScope(child: EmergenciasApp()));
 }

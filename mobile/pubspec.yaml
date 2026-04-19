@@ -17,13 +17,14 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   
   # Navegación declarativa
-  go_router: ^13.0.0
-  
-  # Gestión de estado
-  provider: ^6.1.2
+  go_router: ^17.2.1
   
   # Iconos
   cupertino_icons: ^1.0.6
+  flutter_riverpod: ^3.3.1
+  shadcn_ui: ^0.53.6
+  shared_preferences: ^2.5.5
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -32,3 +33,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env

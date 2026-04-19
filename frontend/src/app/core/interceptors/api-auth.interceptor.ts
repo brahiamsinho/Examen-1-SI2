@@ -15,6 +15,11 @@ export const apiAuthInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  // Login/hydrate/logout pasan Bearer explícito; no sustituir con otra sesión (p. ej. admin + portal taller).
+  if (req.headers.has('Authorization')) {
+    return next(req);
+  }
+
   const portalPrefix = `${api}/portal/taller`;
   const isPortal = req.url.includes(portalPrefix);
   const isPublicRegistro =

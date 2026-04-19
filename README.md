@@ -64,7 +64,7 @@ A partir de ahí, cuando **realmente cambies** modelos SQLAlchemy: `revision --a
 
 **Importante:** no ejecutes `--autogenerate` “de prueba” sin cambios en código: suele generar un diff enorme contra la BD creada por `init.sql` y `upgrade head` puede fallar (p. ej. `ALTER COLUMN id` en columnas IDENTITY). Si ya generaste un archivo malo en `alembic/versions/`, bórralo; si `upgrade` falló, la versión en BD suele seguir en `0001_baseline` (transacción revertida).
 
-- **Poblar usuario admin (seed):** `docker compose exec backend python -m app.seeds` (variables `SEED_ADMIN_*` en `.env`).
+- **Poblar datos demo (seeds):** `docker compose exec backend python -m app.seeds` — admin, cliente, taller, técnico según variables `SEED_*` en el `.env` raíz (valores cortos en `.env.example`).
 
 **Nota:** Alembic usa el driver síncrono **psycopg** (`postgresql+psycopg://…`); la API sigue usando **asyncpg** (`postgresql+asyncpg://…`). La conversión la hace `backend/alembic/env.py`.
 
@@ -99,18 +99,19 @@ El frontend web expone los paneles de administración y consumo de datos consumi
 
 ## 📱 Móvil (Flutter)
 
-Aplicación enfocada a actores logísticos como técnicos o como vista compacta de propietarios (clientes).
+App para **cliente** (registro, vehículos, perfil) y **técnico / responsable de taller** (login, home, perfil, placeholders de servicios). Configuración por `mobile/.env` (`API_BASE_URL`, `APP_NAME`). Detalle: **[mobile/README.md](mobile/README.md)**.
 
-*(Asegúrate de estar en el directorio root `/mobile`)*
+*(Directorio del proyecto: `mobile/`)*
 
-| Acción | Comando Ejecutivo |
-|--------|-------------------|
-| Inicializar proyecto estructural base en caso de ser necesario | `flutter create .` |
-| Descargar/actualizar las librerías definidas en el yaml | `flutter pub get` |
-| Revisar el estado y configuraciones del SDK | `flutter doctor` |
-| Levantar app dentro de un emulador (Previamente abierto) o equipo | `flutter run` |
-| Realizar limpieza del entorno Flutter | `flutter clean` |
-| **Compilar** aplicación en APK de Android. | `flutter build apk` |
+| Acción | Comando |
+|--------|---------|
+| Dependencias | `flutter pub get` |
+| Ejecutar en emulador o dispositivo | `flutter run` |
+| Análisis estático | `dart analyze` |
+| Limpiar build local | `flutter clean` |
+| APK Android | `flutter build apk` |
+
+Usuarios demo del backend (tras `docker compose exec backend python -m app.seeds`): por ejemplo `cli@test.com` / `cli123`, `taller@test.com` / `taller123`, `tec@test.com` / `tec123` (ver `.env.example` raíz y `SEED_*`).
 
 ---
 

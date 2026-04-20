@@ -91,5 +91,32 @@ class Settings(BaseSettings):
     SEED_TECNICO_NOMBRES: str = "Técnico"
     SEED_TECNICO_APELLIDOS: str = "Seed"
 
+    # ── Pagos CU20 — simulación local; desactivar autocmpletar para flujo tipo pasarela (2 pasos) ──
+    PAGO_SIMULADO_AUTOCOMPLETE: bool = True
+    PAGO_PROVEEDOR_DEFAULT: str = "SIMULADO"
+    # Stripe (opcional). Nunca reutilices el nombre SECRET_KEY aquí: en FastAPI es el JWT.
+    STRIPE_SECRET_KEY: str | None = None
+    STRIPE_PUBLISHABLE_KEY: str | None = None
+
+    @property
+    def stripe_enabled(self) -> bool:
+        return bool(self.STRIPE_SECRET_KEY and self.STRIPE_SECRET_KEY.strip())
+
+    # ── Firebase Cloud Messaging (CU19) — opcional; ruta al JSON de cuenta de servicio ──
+    FCM_ENABLED: bool = False
+    FIREBASE_CREDENTIALS_PATH: str | None = None  # ej. firebase-credentials.json (relativo a backend/)
+
+    @property
+    def firebase_credentials_file(self) -> Path | None:
+        if not self.FIREBASE_CREDENTIALS_PATH:
+            return None
+        p = Path(self.FIREBASE_CREDENTIALS_PATH)
+        if p.is_file():
+            return p
+        cand = _BACKEND_DIR / self.FIREBASE_CREDENTIALS_PATH
+        if cand.is_file():
+            return cand
+        return None
+
 
 settings = Settings()

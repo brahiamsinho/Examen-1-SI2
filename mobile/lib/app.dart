@@ -13,15 +13,18 @@ class EmergenciasApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
-    return ShadApp.router(
-      title: AppEnv.appName,
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      theme: EmergenciasShadTheme.dark(),
-      materialThemeBuilder: (context, theme) => AppTheme.dark,
-      locale: const Locale('es', 'BO'),
-      supportedLocales: const [Locale('es', 'BO'), Locale('es')],
-      routerConfig: router,
+    // go_router + ShadApp: asegurar ancestro para SnackBar (p. ej. emergencias / permisos).
+    return ScaffoldMessenger(
+      child: ShadApp.router(
+        title: AppEnv.appName,
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.dark,
+        theme: EmergenciasShadTheme.dark(),
+        materialThemeBuilder: (context, theme) => AppTheme.dark,
+        locale: const Locale('es', 'BO'),
+        supportedLocales: const [Locale('es', 'BO'), Locale('es')],
+        routerConfig: router,
+      ),
     );
   }
 }

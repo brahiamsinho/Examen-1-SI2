@@ -24,6 +24,44 @@ class ApiConstants {
   static String portalClienteMisVehiculo(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/mis-vehiculos/$id';
 
+  /// Ciclo 2 fase 1 — solicitudes de emergencia (cliente autenticado).
+  static String get portalClienteEmergencias => '${AppEnv.apiBaseUrl}/portal/cliente/emergencias';
+
+  static String portalClienteEmergencia(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id';
+
+  /// Ciclo 2 fase 2 — CU16–CU18 (seguimiento, taller, técnico, ETA).
+  static String portalClienteEmergenciaSeguimiento(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/seguimiento';
+
+  static String portalClienteEmergenciaUbicaciones(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/ubicaciones';
+
+  static String portalClienteEmergenciaEvidencias(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/evidencias';
+
+  /// Ciclo 2 fase 3 — CU19 notificaciones, CU21 mensajes, FCM.
+  static String get portalClienteNotificaciones =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/notificaciones';
+
+  static String portalClienteNotificacionLeida(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/notificaciones/$id/leida';
+
+  static String portalClienteEmergenciaMensajes(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/mensajes';
+
+  /// Ciclo 2 fase 4 — CU20 pagos por solicitud.
+  static String portalClienteEmergenciaPagos(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos';
+
+  static String portalClienteEmergenciaPagoCompletarSimulado(int solicitudId, int pagoId) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos/$pagoId/completar-simulado';
+
+  static String portalClienteEmergenciaPagoConfirmarStripe(int solicitudId, int pagoId) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos/$pagoId/confirmar-stripe';
+
+  static String get portalClienteFcm => '${AppEnv.apiBaseUrl}/portal/cliente/dispositivos/fcm';
+
   static String get usuarios => '${AppEnv.apiBaseUrl}/usuarios';
   static String get vehiculos => '${AppEnv.apiBaseUrl}/vehiculos';
   static String get vehiculosMarcas => '${AppEnv.apiBaseUrl}/vehiculos/marcas';

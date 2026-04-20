@@ -49,6 +49,27 @@ class ClienteHomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           _QuickTile(
+            icon: Icons.emergency_share_rounded,
+            title: 'Reportar emergencia',
+            subtitle: 'Ubicación, fotos, audio y detalle',
+            onTap: () => context.push('/cliente/app/emergencias'),
+          ),
+          const SizedBox(height: 12),
+          _QuickTile(
+            icon: Icons.timeline,
+            title: 'Mis solicitudes',
+            subtitle: 'Estado, taller, técnico y ETA',
+            onTap: () => context.push('/cliente/app/emergencias/solicitudes'),
+          ),
+          const SizedBox(height: 12),
+          _QuickTile(
+            icon: Icons.notifications_none_rounded,
+            title: 'Notificaciones',
+            subtitle: 'Novedades de tus solicitudes y mensajes',
+            onTap: () => context.push('/cliente/app/notificaciones'),
+          ),
+          const SizedBox(height: 12),
+          _QuickTile(
             icon: Icons.directions_car,
             title: 'Mis vehículos',
             subtitle: 'Ver y administrar tu flota',

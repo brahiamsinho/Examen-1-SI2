@@ -10,6 +10,21 @@ import '../screens/cliente_auth_screens.dart';
 import '../screens/cliente_home_screen.dart';
 import '../screens/cliente_perfil_screen.dart';
 import '../screens/cliente_vehiculos_flow.dart';
+import '../../pagos/domain/pago_models.dart';
+import '../../pagos/presentation/screens/pago_confirmacion_screen.dart';
+import '../../pagos/presentation/screens/pago_metodo_screen.dart';
+import '../../pagos/presentation/screens/pago_resumen_screen.dart';
+import '../../pagos/presentation/screens/pago_resultado_screen.dart';
+import '../../pagos/presentation/screens/solicitud_pagos_historial_screen.dart';
+import '../../emergencias/presentation/screens/emergencia_detalle_screen.dart';
+import '../../emergencias/presentation/screens/emergencia_seguimiento_screen.dart';
+import '../../emergencias/presentation/screens/emergencia_seleccion_vehiculo_screen.dart';
+import '../../emergencias/presentation/screens/emergencia_wizard_screen.dart';
+import '../../comunicacion/presentation/screens/chat_solicitud_screen.dart';
+import '../../comunicacion/presentation/screens/notificacion_detalle_screen.dart';
+import '../../comunicacion/presentation/screens/notificaciones_centro_screen.dart';
+import '../../comunicacion/domain/notificacion_models.dart';
+import '../../emergencias/presentation/screens/emergencias_mis_solicitudes_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/splash_screen.dart';
 import '../shell/cliente_app_shell.dart';
@@ -157,6 +172,89 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ClienteHomeScreen(),
           ),
           GoRoute(
+            path: '/cliente/app/emergencias',
+            builder: (context, state) => const EmergenciaSeleccionVehiculoScreen(),
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/seguimiento',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return EmergenciaSeguimientoScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/chat',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return ChatSolicitudScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/pagos',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return SolicitudPagosHistorialScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/pago/resumen',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return PagoResumenScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/pago/metodo',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              final extra = state.extra;
+              if (id == null || extra is! PagoDraft) return const SizedBox.shrink();
+              return PagoMetodoScreen(solicitudId: id, draft: extra);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/pago/confirmar',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              final extra = state.extra;
+              if (id == null || extra is! PagoDraft || extra.metodo == null) return const SizedBox.shrink();
+              return PagoConfirmacionScreen(solicitudId: id, draft: extra);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/pago/resultado',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              final extra = state.extra;
+              if (id == null || extra is! PagoRead) return const SizedBox.shrink();
+              return PagoResultadoScreen(solicitudId: id, pagoInicial: extra);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return EmergenciaDetalleScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes',
+            builder: (context, state) => const EmergenciasMisSolicitudesScreen(),
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/crear/:vid',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['vid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return EmergenciaWizardScreen(vehiculoId: id);
+            },
+          ),
+          GoRoute(
             path: '/cliente/app/vehiculos/nuevo',
             builder: (context, state) => const ClienteVehiculoFormScreen(),
           ),
@@ -183,6 +281,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/cliente/app/perfil',
             builder: (context, state) => const ClientePerfilScreen(),
+          ),
+          GoRoute(
+            path: '/cliente/app/notificaciones',
+            builder: (context, state) => const NotificacionesCentroScreen(),
+          ),
+          GoRoute(
+            path: '/cliente/app/notificaciones/:nid',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['nid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              final extra = state.extra;
+              return NotificacionDetalleScreen(
+                notificacionId: id,
+                initial: extra is NotificacionRead ? extra : null,
+              );
+            },
           ),
         ],
       ),

@@ -7,7 +7,9 @@ import enum
 from datetime import datetime
 from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.core.database import Base
+from app.modules.usuarios.models import Usuario
 
 
 # ── ENUMs ───────────────────────────────────────────────────
@@ -96,3 +98,4 @@ class Tecnico(Base):
     # Relaciones
     taller: Mapped["Taller"] = relationship(back_populates="tecnicos")
     especialidad: Mapped["EspecialidadTecnico | None"] = relationship()
+    usuario: Mapped["Usuario"] = relationship(foreign_keys=[usuario_id])

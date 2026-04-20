@@ -88,3 +88,12 @@ PACKAGE_DESIGN.md
 SEQUENCE_FLOWS.md
 COMPONENTS_OVERVIEW.md
 TESTING_STRATEGY.md
+stripe-credentials.json
+
+#importante
+google-credentials.json
+google-services.json
+firebase-credentials.json
+
+scripts/
+.scripts/

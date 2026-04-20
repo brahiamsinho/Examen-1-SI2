@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
     ):
         from app.core.database import AsyncSessionLocal
         from app.seeds.dev_admin import ensure_baseline_rol_permisos, ensure_dev_admin
+        from app.seeds.dev_catalogos_vehiculo import ensure_catalogos_vehiculo_demo
         from app.seeds.dev_cliente import ensure_dev_cliente
         from app.seeds.dev_tecnico import ensure_dev_tecnico
         from app.seeds.dev_taller import ensure_dev_taller
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
                 try:
                     async with AsyncSessionLocal() as session:
                         await ensure_baseline_rol_permisos(session)
+                        await ensure_catalogos_vehiculo_demo(session)
                         if settings.SEED_ADMIN_ON_START:
                             await ensure_dev_admin(session, require_enabled_flag=False)
                         if settings.SEED_CLIENTE_ON_START:
@@ -74,6 +76,14 @@ from app.modules.talleres.router import router, especialidades_router, tecnicos_
 from app.modules.bitacora.router import router as bitacora_router
 from app.modules.portal_taller.router import router as portal_taller_router
 from app.modules.portal_cliente.router import router as portal_cliente_router
+from app.modules.emergencias.router import router as emergencias_router
+from app.modules.comunicaciones.router import (
+    cliente_router as comunicaciones_cliente_router,
+    emergencias_mensajes_cliente_router,
+    emergencias_mensajes_tecnico_router,
+    tecnico_router as comunicaciones_tecnico_router,
+)
+from app.modules.pagos.router import emergencias_pagos_cliente_router
 
 # ── Crear aplicación ─────────────────────────────────────────
 app = FastAPI(
@@ -112,6 +122,12 @@ app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
 app.include_router(portal_taller_router, prefix=PREFIX)
 app.include_router(portal_cliente_router, prefix=PREFIX)
+app.include_router(emergencias_router, prefix=PREFIX)
+app.include_router(comunicaciones_cliente_router, prefix=PREFIX)
+app.include_router(emergencias_mensajes_cliente_router, prefix=PREFIX)
+app.include_router(comunicaciones_tecnico_router, prefix=PREFIX)
+app.include_router(emergencias_mensajes_tecnico_router, prefix=PREFIX)
+app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 
 
 # ── Health check ─────────────────────────────────────────────

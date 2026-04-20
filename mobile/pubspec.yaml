@@ -26,6 +26,18 @@ dependencies:
   shared_preferences: ^2.5.5
   flutter_dotenv: ^5.2.1
 
+  # Ciclo 2 — emergencias (CU11–CU15)
+  geolocator: ^13.0.2
+  permission_handler: ^11.3.1
+  image_picker: ^1.1.2
+  # 6.x evita record_linux 0.7.x incompatible con record_platform_interface 1.5 (fallo al compilar).
+  record: ^6.2.0
+  path_provider: ^2.1.4
+  http_parser: ^4.0.2
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
+  flutter_stripe: ^12.6.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

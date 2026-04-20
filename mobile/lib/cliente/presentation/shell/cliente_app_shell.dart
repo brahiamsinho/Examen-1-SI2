@@ -9,6 +9,7 @@ class ClienteAppShell extends StatelessWidget {
 
   static bool _showBottomNav(String path) {
     if (path.startsWith('/cliente/app/vehiculos/')) return false;
+    if (path.startsWith('/cliente/app/emergencias/')) return false;
     return true;
   }
 

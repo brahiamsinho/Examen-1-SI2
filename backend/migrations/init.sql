@@ -1,7 +1,7 @@
 -- =========================================================
 -- migrations/init.sql
--- Script inicial ejecutado por Docker al crear el contenedor
--- Es el mismo contenido del Script.db adaptado para init
+-- Script inicial ejecutado por Docker al crear el contenedor.
+-- DDL + seed deben mantenerse alineados con Script.db (raíz del repo).
 -- =========================================================
 
 BEGIN;
@@ -323,5 +323,30 @@ SELECT r.id, p.id, NOW()
 FROM roles r
 JOIN permisos p ON p.codigo IN ('talleres:crear', 'talleres:leer', 'talleres:actualizar')
 WHERE r.nombre = 'TALLER_RESPONSABLE';
+
+-- Catálogo mínimo: tipos, marcas y modelos (móvil / registro de vehículo)
+INSERT INTO tipos_vehiculo (nombre) VALUES
+    ('Sedán'), ('SUV'), ('Pickup'), ('Hatchback'), ('Motocicleta')
+ON CONFLICT (nombre) DO NOTHING;
+
+INSERT INTO marcas_vehiculo (nombre) VALUES
+    ('Toyota'), ('Chevrolet'), ('Suzuki'), ('Ford'), ('Hyundai')
+ON CONFLICT (nombre) DO NOTHING;
+
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Corolla' FROM marcas_vehiculo WHERE nombre = 'Toyota' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Hilux' FROM marcas_vehiculo WHERE nombre = 'Toyota' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'RAV4' FROM marcas_vehiculo WHERE nombre = 'Toyota' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Spark' FROM marcas_vehiculo WHERE nombre = 'Chevrolet' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Sail' FROM marcas_vehiculo WHERE nombre = 'Chevrolet' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'D-Max' FROM marcas_vehiculo WHERE nombre = 'Chevrolet' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Swift' FROM marcas_vehiculo WHERE nombre = 'Suzuki' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Vitara' FROM marcas_vehiculo WHERE nombre = 'Suzuki' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Jimny' FROM marcas_vehiculo WHERE nombre = 'Suzuki' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Ranger' FROM marcas_vehiculo WHERE nombre = 'Ford' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'EcoSport' FROM marcas_vehiculo WHERE nombre = 'Ford' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Fiesta' FROM marcas_vehiculo WHERE nombre = 'Ford' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Tucson' FROM marcas_vehiculo WHERE nombre = 'Hyundai' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Accent' FROM marcas_vehiculo WHERE nombre = 'Hyundai' ON CONFLICT (marca_id, nombre) DO NOTHING;
+INSERT INTO modelos_vehiculo (marca_id, nombre) SELECT id, 'Santa Fe' FROM marcas_vehiculo WHERE nombre = 'Hyundai' ON CONFLICT (marca_id, nombre) DO NOTHING;
 
 COMMIT;

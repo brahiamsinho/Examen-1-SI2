@@ -39,12 +39,6 @@ emergencias_mensajes_cliente_router = APIRouter(
 # ── Técnico ────────────────────────────────────────────────────────────────
 tecnico_router = APIRouter(prefix="/portal/tecnico", tags=["Comunicaciones (técnico)"])
 
-emergencias_mensajes_tecnico_router = APIRouter(
-    prefix="/portal/tecnico/emergencias",
-    tags=["Mensajes solicitud (técnico)"],
-)
-
-
 @cliente_router.post(
     "/dispositivos/fcm",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -180,31 +174,3 @@ async def tecnico_marcar_leida(
     db: AsyncSession = Depends(get_db),
 ):
     return await service.marcar_notificacion_leida(current_user, notificacion_id, db)
-
-
-@emergencias_mensajes_tecnico_router.get(
-    "/{solicitud_id}/mensajes",
-    response_model=list[MensajeSolicitudRead],
-    dependencies=[Depends(require_permission("mensajes:leer"))],
-)
-async def tecnico_listar_mensajes(
-    solicitud_id: int,
-    current_user: Usuario = Depends(_ensure_tecnico),
-    db: AsyncSession = Depends(get_db),
-):
-    return await service.listar_mensajes(current_user, solicitud_id, db, actor="tecnico")
-
-
-@emergencias_mensajes_tecnico_router.post(
-    "/{solicitud_id}/mensajes",
-    response_model=MensajeSolicitudRead,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_permission("mensajes:crear"))],
-)
-async def tecnico_enviar_mensaje(
-    solicitud_id: int,
-    body: MensajeSolicitudCreateIn,
-    current_user: Usuario = Depends(_ensure_tecnico),
-    db: AsyncSession = Depends(get_db),
-):
-    return await service.enviar_mensaje(current_user, solicitud_id, body, db, actor="tecnico")

@@ -49,10 +49,8 @@ mobile/ios/Pods/
 # .vscode/: preferencias locales; si el equipo comparte launch/tasks, usa !.vscode/launch.json
 .vscode/
 .idea/
-.cursor/
 .agents/
 skills-lock.json
-script.db
 *.swp
 *.swo
 
@@ -68,32 +66,10 @@ logs/
 # ── Documentación / memoria IA (opcional) ──────────────────
 # OJO: Si ignoras docs/ completo, NADA de docs/ sube a GitHub.
 # Para entregar documentación o docs/ai al equipo, comenta o borra este bloque.
-docs/
-docs/ai/
-docs/ai/sessions/
-Agents.md
-CURRENT_STATE.md
-DECISIONS_LOG.md
-HANDOFF_LATEST.md
-NEXT_STEPS.md
-MASTER_AGENT_SYSTEM.md
-SKILLS_REGISTRY.md
-PROMPTS_LIBRARY.md
-UI_UX_SKILLS.md
-SECURITY_SKILLS.md
-OPEN_SOURCE_INSPIRATION.md
-PUDS_GUIDE.md
-TRACEABILITY_MATRIX.md
-PACKAGE_DESIGN.md
-SEQUENCE_FLOWS.md
-COMPONENTS_OVERVIEW.md
-TESTING_STRATEGY.md
-stripe-credentials.json
+
 
 #importante
 google-credentials.json
 google-services.json
 firebase-credentials.json
-
-scripts/
-.scripts/
+stripe-credentials.json

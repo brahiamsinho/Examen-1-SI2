@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { tallerAuthGuard } from '../core/guards/taller-auth.guard';
+import { tallerPermisoGuard } from '../core/guards/taller-permiso.guard';
 
 /** Rutas bajo `/taller` (login, recuperar, registro, panel). */
 export const TALLER_ROUTES: Routes = [
@@ -37,6 +38,33 @@ export const TALLER_ROUTES: Routes = [
         path: 'tecnicos',
         loadComponent: () =>
           import('./features/tecnicos/taller-tecnicos.component').then((m) => m.TallerTecnicosComponent),
+      },
+      {
+        path: 'emergencias/solicitudes',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'solicitudes_taller:leer' },
+        loadComponent: () =>
+          import('./features/emergencias/bandeja/taller-emergencias-bandeja.component').then(
+            (m) => m.TallerEmergenciasBandejaComponent,
+          ),
+      },
+      {
+        path: 'emergencias/solicitudes/:bandejaId',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'solicitudes_taller:leer' },
+        loadComponent: () =>
+          import('./features/emergencias/incidente-detalle/taller-emergencias-incidente-detalle.component').then(
+            (m) => m.TallerEmergenciasIncidenteDetalleComponent,
+          ),
+      },
+      {
+        path: 'emergencias/disponibilidad',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'disponibilidad:gestionar' },
+        loadComponent: () =>
+          import('./features/emergencias/disponibilidad/taller-emergencias-disponibilidad.component').then(
+            (m) => m.TallerEmergenciasDisponibilidadComponent,
+          ),
       },
     ],
   },

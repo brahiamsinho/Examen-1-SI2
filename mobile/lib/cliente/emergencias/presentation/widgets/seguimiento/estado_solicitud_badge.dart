@@ -15,9 +15,8 @@ class EstadoSolicitudBadge extends StatelessWidget {
       EstadoSolicitudEmergencia.finalizada => scheme.tertiaryContainer,
       EstadoSolicitudEmergencia.registrada => scheme.primaryContainer,
       EstadoSolicitudEmergencia.enRevision => scheme.secondaryContainer,
-      EstadoSolicitudEmergencia.tallerAsignado ||
-      EstadoSolicitudEmergencia.tecnicoAsignado =>
-        scheme.secondaryContainer,
+      EstadoSolicitudEmergencia.tallerAsignado => scheme.primaryContainer,
+      EstadoSolicitudEmergencia.tecnicoAsignado => scheme.secondaryContainer,
       EstadoSolicitudEmergencia.enCamino => scheme.primaryContainer,
       EstadoSolicitudEmergencia.enAtencion => scheme.secondaryContainer,
     };
@@ -29,9 +28,8 @@ class EstadoSolicitudBadge extends StatelessWidget {
       EstadoSolicitudEmergencia.finalizada => scheme.onTertiaryContainer,
       EstadoSolicitudEmergencia.registrada => scheme.onPrimaryContainer,
       EstadoSolicitudEmergencia.enRevision => scheme.onSecondaryContainer,
-      EstadoSolicitudEmergencia.tallerAsignado ||
-      EstadoSolicitudEmergencia.tecnicoAsignado =>
-        scheme.onSecondaryContainer,
+      EstadoSolicitudEmergencia.tallerAsignado => scheme.onPrimaryContainer,
+      EstadoSolicitudEmergencia.tecnicoAsignado => scheme.onSecondaryContainer,
       EstadoSolicitudEmergencia.enCamino => scheme.onPrimaryContainer,
       EstadoSolicitudEmergencia.enAtencion => scheme.onSecondaryContainer,
     };

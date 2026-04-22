@@ -10,6 +10,9 @@ from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
 from app.modules.emergencias import repository
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
+from app.modules.portal_taller_emergencias.repository import (
+    insert_bandeja_pendiente_por_cada_taller,
+)
 from app.modules.emergencias.schemas import (
     EvidenciaCreateIn,
     SolicitudEmergenciaCreateIn,
@@ -88,6 +91,10 @@ async def crear_solicitud(
 
     if body.ubicacion_inicial is not None:
         await _add_ubicacion_internal(db, sol, body.ubicacion_inicial, now)
+
+    await insert_bandeja_pendiente_por_cada_taller(
+        db, solicitud_id=sol.id, creado_at=now
+    )
 
     await registrar_accion(
         db,

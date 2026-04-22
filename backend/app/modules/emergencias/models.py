@@ -68,6 +68,7 @@ class SolicitudEmergencia(Base):
     tecnico_id: Mapped[int | None] = mapped_column(ForeignKey("tecnicos.id", ondelete="SET NULL"))
     tiempo_estimado_min: Mapped[int | None] = mapped_column(Integer)
     finalizada_at: Mapped[datetime | None] = mapped_column(DateTime)
+    tecnico_asignado_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     ubicaciones: Mapped[list["SolicitudUbicacion"]] = relationship(
         back_populates="solicitud",

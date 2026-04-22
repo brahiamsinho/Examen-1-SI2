@@ -75,14 +75,15 @@ from app.modules.vehiculos.router import router as vehiculos_router
 from app.modules.talleres.router import router, especialidades_router, tecnicos_router
 from app.modules.bitacora.router import router as bitacora_router
 from app.modules.portal_taller.router import router as portal_taller_router
+from app.modules.portal_taller_emergencias.router import router as portal_taller_emergencias_router
 from app.modules.portal_cliente.router import router as portal_cliente_router
 from app.modules.emergencias.router import router as emergencias_router
 from app.modules.comunicaciones.router import (
     cliente_router as comunicaciones_cliente_router,
     emergencias_mensajes_cliente_router,
-    emergencias_mensajes_tecnico_router,
     tecnico_router as comunicaciones_tecnico_router,
 )
+from app.modules.portal_tecnico_emergencias.router import router as portal_tecnico_emergencias_router
 from app.modules.pagos.router import emergencias_pagos_cliente_router
 
 # ── Crear aplicación ─────────────────────────────────────────
@@ -121,12 +122,13 @@ app.include_router(especialidades_router, prefix=PREFIX)
 app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
 app.include_router(portal_taller_router, prefix=PREFIX)
+app.include_router(portal_taller_emergencias_router, prefix=PREFIX)
 app.include_router(portal_cliente_router, prefix=PREFIX)
 app.include_router(emergencias_router, prefix=PREFIX)
 app.include_router(comunicaciones_cliente_router, prefix=PREFIX)
 app.include_router(emergencias_mensajes_cliente_router, prefix=PREFIX)
 app.include_router(comunicaciones_tecnico_router, prefix=PREFIX)
-app.include_router(emergencias_mensajes_tecnico_router, prefix=PREFIX)
+app.include_router(portal_tecnico_emergencias_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 
 

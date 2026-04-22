@@ -47,7 +47,8 @@ ALTER TABLE solicitudes_emergencia
     ADD COLUMN IF NOT EXISTS taller_id INTEGER,
     ADD COLUMN IF NOT EXISTS tecnico_id INTEGER,
     ADD COLUMN IF NOT EXISTS tiempo_estimado_min INTEGER,
-    ADD COLUMN IF NOT EXISTS finalizada_at TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS finalizada_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS tecnico_asignado_at TIMESTAMP;
 
 DO $$
 BEGIN

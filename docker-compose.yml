@@ -23,6 +23,12 @@ services:
       - ./backend/migrations/0002_ciclo2_fase1_emergencias.sql:/docker-entrypoint-initdb.d/02_ciclo2_fase1_emergencias.sql:ro
       - ./backend/migrations/0003_ciclo2_fase2_seguimiento.sql:/docker-entrypoint-initdb.d/03_ciclo2_fase2_seguimiento.sql:ro
       - ./backend/migrations/0004_ciclo2_fase3_comunicaciones.sql:/docker-entrypoint-initdb.d/04_ciclo2_fase3_comunicaciones.sql:ro
+      - ./backend/migrations/0005_ciclo2_fase4_pagos.sql:/docker-entrypoint-initdb.d/05_ciclo2_fase4_pagos.sql:ro
+      - ./backend/migrations/0006_tecnico_asignado_at.sql:/docker-entrypoint-initdb.d/06_tecnico_asignado_at.sql:ro
+      - ./backend/migrations/0007_taller_operacion_permisos.sql:/docker-entrypoint-initdb.d/07_taller_operacion_permisos.sql:ro
+      - ./backend/migrations/0008_taller_bandeja_disponibilidad.sql:/docker-entrypoint-initdb.d/08_taller_bandeja_disponibilidad.sql:ro
+      - ./backend/migrations/0009_taller_asignacion_tecnico.sql:/docker-entrypoint-initdb.d/09_taller_asignacion_tecnico.sql:ro
+      - ./backend/migrations/0010_taller_comisiones.sql:/docker-entrypoint-initdb.d/10_taller_comisiones.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:

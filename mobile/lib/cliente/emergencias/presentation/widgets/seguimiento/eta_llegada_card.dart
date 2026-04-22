@@ -19,10 +19,16 @@ class EtaLlegadaCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.schedule_outlined, color: scheme.primary),
                 const SizedBox(width: 8),
-                Text('Tiempo estimado de llegada', style: Theme.of(context).textTheme.titleMedium),
+                Expanded(
+                  child: Text(
+                    'Tiempo estimado de llegada',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),

@@ -40,7 +40,20 @@ async def ensure_baseline_rol_permisos(db: AsyncSession) -> None:
         return
     res_tp = await db.execute(
         select(Permiso.id).where(
-            Permiso.codigo.in_(("talleres:crear", "talleres:leer", "talleres:actualizar"))
+            Permiso.codigo.in_(
+                (
+                    "talleres:crear",
+                    "talleres:leer",
+                    "talleres:actualizar",
+                    "solicitudes_taller:leer",
+                    "solicitudes_taller:aceptar",
+                    "solicitudes_taller:rechazar",
+                    "disponibilidad:gestionar",
+                    "tecnicos:asignar",
+                    "historial_atenciones:leer",
+                    "comisiones:leer",
+                )
+            )
         )
     )
     taller_pids = [row[0] for row in res_tp.fetchall()]
@@ -51,6 +64,35 @@ async def ensure_baseline_rol_permisos(db: AsyncSession) -> None:
     for pid in taller_pids:
         if pid not in have_tr:
             db.add(RolPermiso(rol_id=tr.id, permiso_id=pid, created_at=now))
+
+    r_tc = await db.execute(select(Rol).where(Rol.nombre == "TECNICO"))
+    tc = r_tc.scalar_one_or_none()
+    if tc is not None:
+        res_tc_perm = await db.execute(
+            select(Permiso.id).where(
+                Permiso.codigo.in_(
+                    (
+                        "servicios_tecnico:leer",
+                        "cliente_ubicacion:leer",
+                        "servicios_tecnico:actualizar_estado",
+                        "mensajes_tecnico:crear",
+                        "mensajes_tecnico:leer",
+                        "mensajes:leer",
+                        "mensajes:crear",
+                        "notificaciones:leer",
+                        "dispositivos:fcm",
+                    )
+                )
+            )
+        )
+        tc_pids = [row[0] for row in res_tc_perm.fetchall()]
+        res_have_tc = await db.execute(
+            select(RolPermiso.permiso_id).where(RolPermiso.rol_id == tc.id)
+        )
+        have_tc = {row[0] for row in res_have_tc.fetchall()}
+        for pid in tc_pids:
+            if pid not in have_tc:
+                db.add(RolPermiso(rol_id=tc.id, permiso_id=pid, created_at=now))
 
 
 async def ensure_dev_admin(

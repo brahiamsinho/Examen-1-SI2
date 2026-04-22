@@ -16,6 +16,19 @@ class ApiConstants {
   /// Portal taller (responsable): taller y datos del responsable.
   static String get portalTallerMiTaller => '${AppEnv.apiBaseUrl}/portal/taller/mi-taller';
 
+  /// Portal técnico — emergencias (ciclo 3, CU32–CU35).
+  static String get portalTecnicoEmergenciasServiciosAsignados =>
+      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/servicios-asignados';
+
+  static String portalTecnicoEmergenciaUbicacion(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/ubicacion';
+
+  static String portalTecnicoEmergenciaEstado(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/estado';
+
+  static String portalTecnicoEmergenciaMensajes(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/$solicitudId/mensajes';
+
   // Portal móvil cliente (ciclo 1)
   static String get portalClienteRegistro => '${AppEnv.apiBaseUrl}/portal/cliente/registro';
   static String get portalClienteMiPerfil => '${AppEnv.apiBaseUrl}/portal/cliente/mi-perfil';

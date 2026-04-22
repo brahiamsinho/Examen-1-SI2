@@ -105,6 +105,7 @@ class SolicitudEmergenciaRead(BaseModel):
     tecnico_id: int | None = None
     tiempo_estimado_min: int | None = None
     finalizada_at: datetime | None = None
+    tecnico_asignado_at: datetime | None = None
 
 
 class SolicitudEmergenciaDetailRead(SolicitudEmergenciaRead):

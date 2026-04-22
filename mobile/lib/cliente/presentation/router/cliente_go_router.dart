@@ -32,6 +32,12 @@ import '../../../tecnico/application/tecnico_auth_provider.dart';
 import '../../../tecnico/application/tecnico_auth_state.dart';
 import '../../../tecnico/presentation/screens/tecnico_home_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_login_screen.dart';
+import '../../../tecnico/emergencias/domain/tecnico_servicio_models.dart';
+import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_actualizar_estado_screen.dart';
+import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_chat_screen.dart';
+import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_detalle_screen.dart';
+import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_ubicacion_screen.dart';
+import '../../../tecnico/emergencias/presentation/screens/tecnico_servicios_list_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_placeholder_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_perfil_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_recover_screen.dart';
@@ -132,16 +138,51 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/tecnico/app/servicios',
-            builder: (context, state) => Scaffold(
-              appBar: AppBar(title: const Text('Servicios asignados')),
-              body: const TecnicoPlaceholderScreen(
-                title: '',
-                message:
-                    'Esta funcionalidad será habilitada en ciclos posteriores. '
-                    'Aquí verás servicios asignados a tu cuenta.',
-                icon: Icons.assignment_outlined,
-              ),
-            ),
+            builder: (context, state) => const TecnicoServiciosListScreen(),
+          ),
+          GoRoute(
+            path: '/tecnico/app/servicios/:sid',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              final extra = state.extra;
+              return TecnicoServicioDetalleScreen(
+                solicitudId: id,
+                initial: extra is ServicioAsignadoTecnico ? extra : null,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/tecnico/app/servicios/:sid/ubicacion',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return TecnicoServicioUbicacionScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
+            path: '/tecnico/app/servicios/:sid/estado',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              final extra = state.extra;
+              return TecnicoServicioActualizarEstadoScreen(
+                solicitudId: id,
+                initial: extra is ServicioAsignadoTecnico ? extra : null,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/tecnico/app/servicios/:sid/chat',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              final extra = state.extra;
+              return TecnicoServicioChatScreen(
+                solicitudId: id,
+                initial: extra is ServicioAsignadoTecnico ? extra : null,
+              );
+            },
           ),
           GoRoute(
             path: '/tecnico/app/historial',

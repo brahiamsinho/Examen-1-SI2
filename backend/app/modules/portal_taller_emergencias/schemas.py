@@ -1,0 +1,144 @@
+from __future__ import annotations
+
+from datetime import datetime
+from decimal import Decimal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum
+from app.modules.pagos.models import EstadoPagoEnum
+from app.modules.portal_taller_emergencias.models import (
+    EstadoAsignacionTecnicoEnum,
+    EstadoBandejaTallerEnum,
+    EstadoComisionTallerEnum,
+)
+
+
+class BandejaIncidenteBaseRead(BaseModel):
+    """Información estructurada del incidente (alineada a vw_solicitudes_disponibles_taller)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    bandeja_id: int
+    taller_id: int
+    solicitud_id: int
+    estado_solicitud: EstadoSolicitudSeguimientoEnum
+    descripcion_texto: str | None
+    created_at: datetime
+    vehiculo_id: int
+    placa: str
+    marca: str | None
+    modelo: str | None
+    tipo_vehiculo: str | None
+    cliente_id: int
+    nombres: str
+    apellidos: str
+    latitud: Decimal | None
+    longitud: Decimal | None
+    direccion_referencia: str | None
+
+
+class SolicitudBandejaDetalleRead(BandejaIncidenteBaseRead):
+    estado_bandeja: EstadoBandejaTallerEnum
+    motivo_rechazo: str | None
+    creado_at: datetime
+    respondido_at: datetime | None
+
+
+class TallerDisponibilidadRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    taller_id: int
+    acepta_nuevas_solicitudes: bool
+    capacidad_maxima_diaria: int
+    servicios_activos: int
+    observacion: str | None
+    updated_at: datetime
+    updated_by_usuario_id: int | None
+
+
+class TallerDisponibilidadUpdateIn(BaseModel):
+    acepta_nuevas_solicitudes: bool | None = None
+    capacidad_maxima_diaria: int | None = Field(default=None, ge=1, le=500)
+    observacion: str | None = Field(default=None, max_length=2000)
+
+
+class RechazarBandejaIn(BaseModel):
+    motivo_rechazo: str = Field(min_length=3, max_length=2000)
+
+
+class AsignarTecnicoIn(BaseModel):
+    tecnico_id: int = Field(ge=1)
+    observacion: str | None = Field(default=None, max_length=2000)
+
+
+class AsignacionTecnicoRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    solicitud_id: int
+    taller_id: int
+    tecnico_id: int
+    estado: EstadoAsignacionTecnicoEnum
+    asignado_por_usuario_id: int | None
+    observacion: str | None
+    created_at: datetime
+
+
+class AsignarTecnicoOut(BaseModel):
+    solicitud_id: int
+    estado_solicitud: EstadoSolicitudSeguimientoEnum
+    tecnico_id: int | None
+    tecnico_asignado_at: datetime | None
+    asignacion: AsignacionTecnicoRead
+
+
+class HistorialAtencionRead(BaseModel):
+    """CU30 — alineado a vw_historial_atenciones_taller (filtrado por taller en servicio)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    solicitud_id: int
+    taller_id: int | None
+    tecnico_id: int | None
+    estado: EstadoSolicitudSeguimientoEnum
+    created_at: datetime
+    finalizada_at: datetime | None
+    nombres: str
+    apellidos: str
+    placa: str
+    marca: str | None
+    modelo: str | None
+    tipo_vehiculo: str | None
+
+
+class ComisionTallerRead(BaseModel):
+    """CU31 — fila de comisiones_taller + datos opcionales del pago."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    solicitud_id: int
+    taller_id: int
+    pago_id: int | None
+    porcentaje_plataforma: Decimal
+    monto_servicio: Decimal
+    monto_comision: Decimal
+    monto_taller_neto: Decimal
+    estado: EstadoComisionTallerEnum
+    calculado_at: datetime
+    liquidado_at: datetime | None
+    pago_monto: Decimal | None = None
+    pago_estado: EstadoPagoEnum | None = None
+    pago_pagado_at: datetime | None = None
+    pago_moneda: str | None = None
+
+
+class ResumenComisionesRead(BaseModel):
+    """CU31 — equivalente a vw_resumen_comisiones_taller por taller."""
+
+    taller_id: int
+    total_registros: int
+    total_servicios: Decimal
+    total_comision: Decimal
+    total_neto: Decimal

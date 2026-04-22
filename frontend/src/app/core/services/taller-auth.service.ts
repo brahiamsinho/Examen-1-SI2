@@ -139,6 +139,23 @@ export class TallerAuthService {
       }),
     );
   }
+
+  /**
+   * Vuelve a pedir /auth/me y actualiza localStorage/sessionStorage.
+   * Útil tras migraciones que añaden permisos al rol (sin cerrar sesión).
+   */
+  refreshMeSiHaySesion(): Observable<boolean> {
+    const token = this.getAccessToken();
+    if (!token) return of(false);
+    return this.fetchMe(token).pipe(
+      tap((me) => {
+        const s = this.activeStorage();
+        if (s) s.setItem(ME, JSON.stringify(me));
+      }),
+      map(() => true),
+      catchError(() => of(false)),
+    );
+  }
 }
 
 export class TallerAuthError extends Error {

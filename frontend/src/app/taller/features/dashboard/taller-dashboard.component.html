@@ -1,7 +1,8 @@
 <div class="dash">
   <h2 class="dash__h">Resumen operativo</h2>
-  <p class="dash__lead">Taller web — ciclo 1</p>
+  <p class="dash__lead">Taller web — resumen y accesos a emergencias, técnicos y configuración.</p>
 
+  <div class="dash__alert" *ngIf="permisoDenegado" role="status">{{ permisoDenegado }}</div>
   <div class="dash__alert" *ngIf="error" role="alert">{{ error }}</div>
   <p class="dash__muted" *ngIf="loading">Cargando…</p>
 
@@ -25,6 +26,11 @@
       <p class="dash__metric"><span class="dash__pill">{{ data.taller_estado }}</span></p>
       <a routerLink="/taller/panel/mi-taller" class="dash__link">Mi taller →</a>
     </article>
+    <article class="dash__card dash__card--emergencias" *ngIf="puedeVerSolicitudesEmergencias()">
+      <h3 class="dash__card-title">Emergencias</h3>
+      <p class="dash__hint">Bandeja de solicitudes pendientes; en cada incidente podés aceptar o rechazar y asignar técnico.</p>
+      <a routerLink="/taller/panel/emergencias/solicitudes" class="dash__link dash__link--block">Ir a solicitudes →</a>
+    </article>
   </div>
 
   <section class="dash__section" *ngIf="!loading && data">
@@ -32,6 +38,18 @@
     <div class="dash__chips">
       <a routerLink="/taller/panel/mi-taller" class="dash__chip">Mi taller</a>
       <a routerLink="/taller/panel/tecnicos" class="dash__chip">Técnicos</a>
+      <a
+        *ngIf="puedeVerSolicitudesEmergencias()"
+        routerLink="/taller/panel/emergencias/solicitudes"
+        class="dash__chip dash__chip--accent"
+        >Solicitudes emergencias</a
+      >
+      <a
+        *ngIf="puedeGestionarDisponibilidadEmergencias()"
+        routerLink="/taller/panel/emergencias/disponibilidad"
+        class="dash__chip"
+        >Disponibilidad emergencias</a
+      >
     </div>
   </section>
 </div>

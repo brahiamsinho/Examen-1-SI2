@@ -20,7 +20,10 @@
         }
       </div>
 
-      <button type="button" class="nav__cta nav__cta--desktop" (click)="scrollTo('#contacto')">Solicitar Demo</button>
+      <div class="nav__actions nav__actions--desktop">
+        <a routerLink="/taller" class="nav__secondary-link" (click)="closeMenu()">Ingresar taller</a>
+        <a routerLink="/taller/registro" class="nav__cta">Registrar taller</a>
+      </div>
 
       <button type="button" class="nav__burger" (click)="toggleMenu()" aria-label="Menú">
         @if (menuOpen) {
@@ -40,7 +43,8 @@
         @for (link of navLinks; track link.href) {
           <button type="button" class="nav__mobile-link" (click)="scrollTo(link.href)">{{ link.label }}</button>
         }
-        <button type="button" class="nav__mobile-cta" (click)="scrollTo('#contacto')">Solicitar Demo</button>
+        <a routerLink="/taller" class="nav__mobile-portal" (click)="closeMenu()">Ingresar taller</a>
+        <a routerLink="/taller/registro" class="nav__mobile-cta" (click)="closeMenu()">Registrar taller</a>
       </div>
     }
   </nav>
@@ -60,17 +64,17 @@
           <div class="hero__col hero__col--text">
             <div class="hero__badge">
               <span class="hero__badge-dot"></span>
-              <span>Plataforma en desarrollo activo</span>
+              <span>Prototipo web + móvil en evolución</span>
             </div>
 
             <h1 class="hero__title">
               <span class="hero__title-line">Emergencias</span>
               <span class="hero__title-line">Vehiculares,</span>
-              <span class="hero__title-line hero__title-line--gradient">Resueltas en Minutos.</span>
+              <span class="hero__title-line hero__title-line--gradient">Coordinadas de punta a punta.</span>
             </h1>
             <p class="hero__lead">
-              Conectamos clientes, talleres y mecánicos a través de una plataforma inteligente web y móvil. Atención
-              coordinada, trazable y en tiempo real desde el primer reporte.
+              Cliente reporta desde la app; taller y técnico responden con bandeja, disponibilidad y seguimiento en
+              tiempo real. Aquí entras al <strong>portal web del taller</strong> o revisas cómo está armado el flujo.
             </p>
 
             <div class="hero__stats">
@@ -83,16 +87,17 @@
             </div>
 
             <div class="hero__actions">
-              <button type="button" class="btn btn--primary" (click)="scrollTo('#como-funciona')">
-                <svg class="btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z" />
+              <a routerLink="/taller/registro" class="btn btn--primary">
+                <svg class="btn__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  <path d="M9 22V12h6v10" />
                 </svg>
-                Ver Demo
-                <svg class="btn__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                Registrar taller
+                <svg class="btn__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
-              </button>
-              <button type="button" class="btn btn--ghost" (click)="scrollTo('#caracteristicas')">Conocer más</button>
+              </a>
+              <button type="button" class="btn btn--ghost" (click)="scrollTo('#como-funciona')">Cómo funciona</button>
             </div>
 
             <div class="hero__pills">
@@ -157,6 +162,45 @@
           <li>Roles y permisos alineados a tu modelo de negocio</li>
           <li>API unificada para web (Angular) y app móvil (Flutter)</li>
         </ul>
+      </div>
+    </section>
+
+    <!-- Accesos reales al prototipo (sustituye CTAs tipo “demo”) -->
+    <section id="portales" class="band band--portales">
+      <div class="band__inner band__inner--wide">
+        <h2 class="band__h">Accesos del entorno</h2>
+        <p class="band__p">
+          El taller se gestiona en <strong>Angular</strong> (este sitio). Cliente y técnico usan la <strong>app Flutter</strong>
+          contra la misma API. Elige el rol que quieras probar:
+        </p>
+        <div class="portales__grid">
+          <a routerLink="/taller/registro" class="portal-card">
+            <span class="portal-card__tag">Web</span>
+            <h3 class="portal-card__title">Alta de taller</h3>
+            <p class="portal-card__desc">Crea el usuario responsable y el perfil del taller (verificación por correo en entorno dev).</p>
+            <span class="portal-card__cta">Ir al registro</span>
+          </a>
+          <a routerLink="/taller" class="portal-card">
+            <span class="portal-card__tag">Web</span>
+            <h3 class="portal-card__title">Portal taller</h3>
+            <p class="portal-card__desc">Inicia sesión cuando el taller ya esté activo: panel, emergencias y operación.</p>
+            <span class="portal-card__cta">Abrir login</span>
+          </a>
+          <a routerLink="/admin" class="portal-card">
+            <span class="portal-card__tag">Web</span>
+            <h3 class="portal-card__title">Administración</h3>
+            <p class="portal-card__desc">Backoffice para roles administrativos del prototipo (usuarios, permisos, catálogos).</p>
+            <span class="portal-card__cta">Ir al admin</span>
+          </a>
+          <div class="portal-card portal-card--static">
+            <span class="portal-card__tag">Móvil</span>
+            <h3 class="portal-card__title">Cliente y técnico</h3>
+            <p class="portal-card__desc">
+              Ejecuta la app Flutter del repositorio apuntando a la API local. Registro de cliente, vehículos, emergencias y
+              bandeja del técnico viven ahí.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -251,9 +295,15 @@
     <!-- Contacto -->
     <section id="contacto" class="band band--contact">
       <div class="band__inner band__inner--center">
-        <h2 class="band__h">Contacto</h2>
-        <p class="band__p">¿Quieres una demo o integrar tu taller? Escríbenos desde tu canal interno o deja un mensaje en el repositorio del curso.</p>
-        <button type="button" class="btn btn--primary" (click)="scrollTo('#inicio')">Volver al inicio</button>
+        <h2 class="band__h">Sobre este proyecto</h2>
+        <p class="band__p">
+          Entorno académico / prototipo: sin “solicitud de demo” comercial. Para probar el flujo usa los enlaces de
+          <strong>Accesos</strong>; en desarrollo local los correos de verificación llegan a MailHog.
+        </p>
+        <div class="contact__actions">
+          <button type="button" class="btn btn--ghost" (click)="scrollTo('#portales')">Ver accesos</button>
+          <button type="button" class="btn btn--primary" (click)="scrollTo('#inicio')">Volver arriba</button>
+        </div>
       </div>
     </section>
   </main>

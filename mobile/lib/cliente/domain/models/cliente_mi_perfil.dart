@@ -1,4 +1,4 @@
-/// Perfil cliente devuelto por `GET /portal/cliente/mi-perfil`.
+/// Perfil cliente devuelto por `GET /portal/cliente/mi-perfil` y `POST /registro`.
 final class ClienteMiPerfil {
   const ClienteMiPerfil({
     required this.usuarioId,
@@ -9,6 +9,7 @@ final class ClienteMiPerfil {
     required this.telefono,
     required this.ciudad,
     required this.direccion,
+    this.pendienteVerificacionEmail = false,
   });
 
   final int usuarioId;
@@ -19,6 +20,7 @@ final class ClienteMiPerfil {
   final String telefono;
   final String? ciudad;
   final String? direccion;
+  final bool pendienteVerificacionEmail;
 
   String get nombreCompleto => '$nombres $apellidos'.trim();
 
@@ -32,6 +34,7 @@ final class ClienteMiPerfil {
       telefono: json['telefono'] as String,
       ciudad: json['ciudad'] as String?,
       direccion: json['direccion'] as String?,
+      pendienteVerificacionEmail: json['pendiente_verificacion_email'] as bool? ?? false,
     );
   }
 
@@ -44,5 +47,6 @@ final class ClienteMiPerfil {
         'telefono': telefono,
         'ciudad': ciudad,
         'direccion': direccion,
+        'pendiente_verificacion_email': pendienteVerificacionEmail,
       };
 }

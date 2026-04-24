@@ -50,6 +50,7 @@ def _incidente_select():
             su.latitud,
             su.longitud,
             su.direccion_referencia,
+            SolicitudEmergencia.ai_payload,
             SolicitudTallerBandeja.estado.label("estado_bandeja"),
             SolicitudTallerBandeja.motivo_rechazo,
             SolicitudTallerBandeja.creado_at.label("bandeja_creado_at"),

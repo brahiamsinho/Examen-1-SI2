@@ -85,6 +85,7 @@ from app.modules.comunicaciones.router import (
 )
 from app.modules.portal_tecnico_emergencias.router import router as portal_tecnico_emergencias_router
 from app.modules.pagos.router import emergencias_pagos_cliente_router
+from app.modules.ai.router import router as ai_router
 
 # ── Crear aplicación ─────────────────────────────────────────
 app = FastAPI(
@@ -130,6 +131,7 @@ app.include_router(emergencias_mensajes_cliente_router, prefix=PREFIX)
 app.include_router(comunicaciones_tecnico_router, prefix=PREFIX)
 app.include_router(portal_tecnico_emergencias_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
+app.include_router(ai_router, prefix=PREFIX)
 
 
 # ── Health check ─────────────────────────────────────────────

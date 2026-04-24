@@ -26,6 +26,7 @@ export interface MiTallerDto {
   responsable_apellidos: string;
   responsable_email: string;
   responsable_telefono: string;
+  pendiente_verificacion_email?: boolean;
 }
 
 export interface MiTallerUpdatePayload {

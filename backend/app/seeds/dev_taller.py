@@ -1,5 +1,7 @@
 # Seed idempotente: usuario responsable + rol TALLER_RESPONSABLE + taller (pruebas portal / web).
 import logging
+from decimal import Decimal
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +36,8 @@ def _taller_payload(user_id: int, email: str, telefono: str) -> dict:
         "email_contacto": email,
         "direccion": settings.SEED_TALLER_DIRECCION,
         "ciudad": settings.SEED_TALLER_CIUDAD,
+        "latitud": Decimal("-16.4897"),
+        "longitud": Decimal("-68.1193"),
         "descripcion": settings.SEED_TALLER_DESCRIPCION,
         "estado": EstadoTallerEnum.ACTIVO,
     }
@@ -45,6 +49,8 @@ async def _apply_taller_demo_fields(taller: Taller, email: str, telefono: str) -
     taller.email_contacto = email
     taller.direccion = settings.SEED_TALLER_DIRECCION
     taller.ciudad = settings.SEED_TALLER_CIUDAD
+    taller.latitud = Decimal("-16.4897")
+    taller.longitud = Decimal("-68.1193")
     taller.descripcion = settings.SEED_TALLER_DESCRIPCION
     taller.estado = EstadoTallerEnum.ACTIVO
     taller.updated_at = utc_now_naive()

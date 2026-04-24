@@ -13,8 +13,18 @@
       <p class="taller-reg__card-desc">Crea tu usuario responsable y el perfil del taller (estado inicial pendiente).</p>
 
       <div class="taller-reg__alert" *ngIf="errorMsg" role="alert">{{ errorMsg }}</div>
-      <div class="taller-reg__alert taller-reg__alert--ok" *ngIf="success" role="status">
-        Registro exitoso. Redirigiendo al inicio de sesión…
+      <div class="taller-reg__alert taller-reg__alert--ok" *ngIf="success && pendienteVerificacion" role="status">
+        <p><strong>Revisa tu correo</strong> para activar la cuenta (enlace válido 72 h).</p>
+        <p class="taller-reg__hint" *ngIf="mailhogWebUrl">
+          Desarrollo: correos en
+          <a [href]="mailhogWebUrl" target="_blank" rel="noopener">MailHog</a>
+          — luego podrás iniciar sesión en el taller.
+        </p>
+        <p class="taller-reg__hint"><a routerLink="/taller">Ir al inicio de sesión</a></p>
+      </div>
+      <div class="taller-reg__alert taller-reg__alert--ok" *ngIf="success && !pendienteVerificacion" role="status">
+        Registro exitoso. Ya puedes iniciar sesión.
+        <p class="taller-reg__hint"><a routerLink="/taller">Ir al inicio de sesión</a></p>
       </div>
 
       <form class="taller-reg__form" [formGroup]="form" (ngSubmit)="submit()" *ngIf="!success" novalidate>

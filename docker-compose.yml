@@ -1,10 +1,8 @@
-# docker-compose.yml
+﻿# docker-compose.yml
 # =========================================================
-# Orquestación principal
-# Servicios: db (PostgreSQL), backend (FastAPI), frontend (Angular)
+# Stack: PostgreSQL, FastAPI backend, Angular frontend, Mailhog.
 #
-# Variables: copiar .env.example → .env en la RAÍZ del repo.
-# compose carga automáticamente ./.env
+# Copy .env.example to .env in the repo root; Compose loads ./.env automatically.
 # =========================================================
 
 services:
@@ -29,6 +27,9 @@ services:
       - ./backend/migrations/0008_taller_bandeja_disponibilidad.sql:/docker-entrypoint-initdb.d/08_taller_bandeja_disponibilidad.sql:ro
       - ./backend/migrations/0009_taller_asignacion_tecnico.sql:/docker-entrypoint-initdb.d/09_taller_asignacion_tecnico.sql:ro
       - ./backend/migrations/0010_taller_comisiones.sql:/docker-entrypoint-initdb.d/10_taller_comisiones.sql:ro
+      - ./backend/migrations/0012_ia_modulo.sql:/docker-entrypoint-initdb.d/12_ia_modulo.sql:ro
+      - ./backend/migrations/0011_usuario_tokens_seguridad.sql:/docker-entrypoint-initdb.d/11_usuario_tokens_seguridad.sql:ro
+      - ./backend/migrations/0013_tecnico_ubicacion_compartida.sql:/docker-entrypoint-initdb.d/13_tecnico_ubicacion_compartida.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:
@@ -39,6 +40,15 @@ services:
       timeout: 5s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: emergencias_mailhog
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_WEB_PORT:-8025}:8025"
+    networks:
+      - emergencias_net
 
   backend:
     build:
@@ -90,14 +100,37 @@ services:
       SEED_TALLER_NOMBRE_COMERCIAL: ${SEED_TALLER_NOMBRE_COMERCIAL:-Taller Demo Emergencias}
       SEED_TALLER_CIUDAD: ${SEED_TALLER_CIUDAD:-La Paz}
       SEED_TALLER_DIRECCION: ${SEED_TALLER_DIRECCION:-Av. Seed 100}
-      SEED_TALLER_DESCRIPCION: ${SEED_TALLER_DESCRIPCION:-Taller de demostración (seed)}
+      SEED_TALLER_DESCRIPCION: ${SEED_TALLER_DESCRIPCION:-Taller de demostracion (seed)}
       FCM_ENABLED: ${FCM_ENABLED:-false}
-      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-firebase-credentials.json}
+      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/app/firebase-credentials.json}
+      PAGO_SIMULADO_AUTOCOMPLETE: ${PAGO_SIMULADO_AUTOCOMPLETE:-true}
+      PAGO_PROVEEDOR_DEFAULT: ${PAGO_PROVEEDOR_DEFAULT:-SIMULADO}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_TIMEOUT_SECONDS: ${SMTP_TIMEOUT_SECONDS:-15}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      EMAIL_STRICT: ${EMAIL_STRICT:-false}
+      MAIL_FROM: ${MAIL_FROM:-noreply@emergenciasviales.local}
+      EMAIL_LINK_BASE_URL: ${EMAIL_LINK_BASE_URL:-http://localhost:8000}
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-http://localhost}
+      AI_ENABLED: ${AI_ENABLED:-false}
+      AI_INFERENCE_BASE_URL: ${AI_INFERENCE_BASE_URL:-}
+      AI_INFERENCE_TIMEOUT_S: ${AI_INFERENCE_TIMEOUT_S:-120}
+      AI_INFERENCE_STUB: ${AI_INFERENCE_STUB:-false}
+      AI_MAX_AUDIO_BYTES: ${AI_MAX_AUDIO_BYTES:-15728640}
+      AI_MAX_IMAGE_BYTES: ${AI_MAX_IMAGE_BYTES:-12582912}
     ports:
       - "${BACKEND_HOST_PORT:-8000}:${UVICORN_PORT:-8000}"
     depends_on:
       db:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     networks:
       - emergencias_net
     healthcheck:
@@ -107,7 +140,29 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    volumes:
+      - ./backend/firebase-credentials.json:/app/firebase-credentials.json:ro
 
+
+  ai-inference:
+    profiles: ["ai"]
+    build:
+      context: .
+      dockerfile: services/ai-inference/Dockerfile
+    container_name: emergencias_ai_inference
+    restart: unless-stopped
+    environment:
+      WHISPER_MODEL_SIZE: ${WHISPER_MODEL_SIZE:-small}
+      OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
+      YOLO_ENABLED: ${YOLO_ENABLED:-true}
+      YOLO_TASK: ${YOLO_TASK:-detect}
+      YOLO_MODEL: ${YOLO_MODEL:-yolov8n.pt}
+      YOLO_CONF: ${YOLO_CONF:-0.35}
+      YOLO_IMGSZ: ${YOLO_IMGSZ:-640}
+    volumes:
+      - ai_inference_cache:/root/.cache
+    networks:
+      - emergencias_net
 
   frontend:
     build:
@@ -128,6 +183,8 @@ services:
 volumes:
   postgres_data:
     name: emergencias_postgres_data
+  ai_inference_cache:
+    name: emergencias_ai_inference_cache
 
 
 networks:

@@ -5,7 +5,9 @@
 # =========================================================
 import enum
 from datetime import datetime
-from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, Enum as SAEnum
+from decimal import Decimal
+
+from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, Enum as SAEnum, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -44,6 +46,8 @@ class Taller(Base):
     email_contacto: Mapped[str] = mapped_column(String(120), nullable=False)
     direccion: Mapped[str] = mapped_column(Text, nullable=False)
     ciudad: Mapped[str] = mapped_column(String(100), nullable=False)
+    latitud: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
+    longitud: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
     descripcion: Mapped[str | None] = mapped_column(Text)
     estado: Mapped[EstadoTallerEnum] = mapped_column(
         SAEnum(EstadoTallerEnum, name="estado_taller"), nullable=False

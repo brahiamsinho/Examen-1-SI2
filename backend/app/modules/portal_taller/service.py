@@ -6,6 +6,7 @@ from sqlalchemy import select
 from fastapi import HTTPException, status
 
 from app.core.timeutil import utc_now_naive
+from app.modules.acceso.email_tokens import crear_y_enviar_verificacion_email
 from app.modules.usuarios.models import Usuario, EstadoUsuarioEnum
 from app.modules.usuarios import service as usuarios_service
 from app.modules.acceso.models import Rol
@@ -67,7 +68,7 @@ async def registro_taller_publico(body: RegistroTallerIn, db: AsyncSession) -> M
             "telefono": body.telefono,
             "password": body.password,
             "username": None,
-            "estado": EstadoUsuarioEnum.ACTIVO,
+            "estado": EstadoUsuarioEnum.PENDIENTE,
         },
         db,
         ejecutor_id=None,
@@ -99,6 +100,7 @@ async def registro_taller_publico(body: RegistroTallerIn, db: AsyncSession) -> M
         ejecutor_id=user.id,
     )
     u2 = await usuarios_service.get_usuario_by_id(user.id, db)
+    await crear_y_enviar_verificacion_email(db, u2)
     return await build_mi_taller_read(taller, u2)
 
 
@@ -117,6 +119,7 @@ async def build_mi_taller_read(taller: Taller, responsable: Usuario) -> MiTaller
         responsable_apellidos=responsable.apellidos,
         responsable_email=responsable.email,
         responsable_telefono=responsable.telefono,
+        pendiente_verificacion_email=(responsable.estado == EstadoUsuarioEnum.PENDIENTE),
     )
 
 

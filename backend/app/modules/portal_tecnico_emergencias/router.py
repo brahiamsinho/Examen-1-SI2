@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission
 from app.modules.comunicaciones.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
 from app.modules.comunicaciones.router import _ensure_tecnico
+from app.modules.emergencias.schemas import UbicacionCreateIn, UbicacionTecnicoCompartidaRead
 from app.modules.usuarios.models import Usuario
 
 from . import service
@@ -41,6 +42,21 @@ async def ubicacion_cliente_actual(
 ):
     """CU33 — ubicación actual (solicitud asignada al técnico)."""
     return await service.obtener_ubicacion_cliente(current_user, solicitud_id, db)
+
+
+@router.post(
+    "/solicitudes/{solicitud_id}/ubicacion-tecnico",
+    response_model=UbicacionTecnicoCompartidaRead,
+    dependencies=[Depends(require_permission("tecnico_ubicacion:compartir"))],
+)
+async def compartir_ubicacion_tecnico(
+    solicitud_id: int,
+    body: UbicacionCreateIn,
+    current_user: Usuario = Depends(_ensure_tecnico),
+    db: AsyncSession = Depends(get_db),
+):
+    """Envía la posición actual del técnico asociada a la solicitud (el cliente puede consultarla)."""
+    return await service.compartir_ubicacion_tecnico(current_user, solicitud_id, body, db)
 
 
 @router.patch(

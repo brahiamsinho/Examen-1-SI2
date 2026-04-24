@@ -118,5 +118,30 @@ class Settings(BaseSettings):
             return cand
         return None
 
+    # ── Correo (MailHog en Docker: SMTP 1025, UI 8025) ─────────
+    EMAIL_ENABLED: bool = True
+    # Si true, un fallo SMTP hace fallar la petición (recomendado en producción).
+    EMAIL_STRICT: bool = False
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 1025
+    SMTP_TIMEOUT_SECONDS: int = 15
+    SMTP_USE_TLS: bool = False
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    MAIL_FROM: str = "noreply@emergenciasviales.local"
+    # URL base donde el navegador abre la API (enlaces en correos).
+    EMAIL_LINK_BASE_URL: str = "http://localhost:8000"
+    # SPA taller (restablecer contraseña con token en query).
+    FRONTEND_PUBLIC_URL: str = "http://localhost"
+
+    # ── Servicio de inferencia IA (contenedor Docker ai-inference) ──
+    AI_ENABLED: bool = False
+    AI_INFERENCE_BASE_URL: str | None = None
+    AI_INFERENCE_TIMEOUT_S: float = 120.0
+    AI_MAX_AUDIO_BYTES: int = 15 * 1024 * 1024
+    AI_MAX_IMAGE_BYTES: int = 12 * 1024 * 1024
+    # Si true, no llama al worker: útil en tests o sin contenedor IA.
+    AI_INFERENCE_STUB: bool = False
+
 
 settings = Settings()

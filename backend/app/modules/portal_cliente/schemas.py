@@ -21,6 +21,7 @@ class ClienteMiPerfilRead(BaseModel):
     telefono: str
     ciudad: str | None
     direccion: str | None
+    pendiente_verificacion_email: bool = False
 
 
 class ClienteMiPerfilUpdate(BaseModel):

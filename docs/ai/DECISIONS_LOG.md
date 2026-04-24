@@ -59,3 +59,23 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-04-22
 **Decisión:** Incluir `tecnico_asignado_at TIMESTAMP` (nullable) en el mismo `ALTER` de fase 2 (`0003_ciclo2_fase2_seguimiento.sql`) y además en un parche idempotente `0006_tecnico_asignado_at.sql` montado en `docker-compose` como script `05` (después de comunicaciones) para BDs creadas con un `0003` antiguo sin la columna.
 **Por qué:** El ORM y `portal_taller_emergencias` dependen de esa marca de tiempo al asignar técnico; sin columna, cualquier `INSERT`/`SELECT` a la tabla falla y el cliente móvil no puede registrar emergencias. Init de Postgres solo corre en volumen vacío: los entornos existentes requieren `ADD COLUMN IF NOT EXISTS` manual o ejecutar `0006` contra la instancia.
+
+## DEC-010 — IA modular: backend + contenedor `ai-inference` opcional
+**Fecha:** 2026-04-23  
+**Decisión:** La lógica de producto (reglas, prioridad, persistencia de `ai_payload`) vive en **`backend/app/modules/ai/`**. STT y visión pesada (Whisper, Ultralytics YOLO) corren en un **servicio aparte** `ai-inference` en la red Docker, invocado por HTTP desde el backend (`AI_INFERENCE_BASE_URL`). El servicio se declara con **perfil Compose `ai`** para que clones sin GPU no arranquen el worker por defecto si no lo necesitan. Modelo de clasificación entrenado fuera del repo se monta con override **`docker-compose.ai-custom-model.yml`** y peso local `backend/incidentes_emergencias_v1.pt` (ignorado por git).  
+**Por qué:** Separa dependencias pesadas (torch, modelos) del ciclo de vida del API principal, permite escalar o sustituir el worker, y mantiene el backend liviano para tests y despliegues sin IA.
+
+## DEC-011 — Clasificación YOLO: `probs.top5` como lista o tensor
+**Fecha:** 2026-04-23  
+**Decisión:** En `services/ai-inference/app/main.py`, `_yolo_classify` convierte `top5` y `top5conf` a listas de enteros y floats **sin asumir** que sean tensores PyTorch (acepta `list`/`tuple`, tensor, numpy).  
+**Por qué:** Versiones recientes de Ultralytics exponen `probs.top5` ya como lista; llamar `.cpu()` rompía la inferencia (500 en el worker, 502 en el gateway del backend).
+
+## DEC-012 — Silero VAD: eliminar parámetro `force_onnx`
+**Fecha:** 2026-04-23  
+**Decisión:** En `_silero()` de `services/ai-inference/app/main.py`, llamar `torch.hub.load` sin el argumento `force_onnx=False`.  
+**Por qué:** La firma actual de `silero_vad` en `snakers4/silero-vad` ya no acepta `force_onnx`; su presencia causaba `TypeError` y el worker no arrancaba.
+
+## DEC-013 — Validación completa de endpoints IA (2026-04-23)
+**Fecha:** 2026-04-23  
+**Decisión:** Se validaron los 6 endpoints del módulo `ai/` en Swagger con respuestas 200, incluyendo `/assignment/rank` que consulta la BD y retorna score compuesto (proximidad + especialidad + prioridad + carga).  
+**Por qué:** Confirma que el diseño híbrido (worker para cómputo pesado + reglas en backend para lógica de producto) es correcto y funcional. Los scores del ranker de talleres son explicables campo a campo, lo que facilita debugging y ajuste de pesos sin reentrenar modelos.

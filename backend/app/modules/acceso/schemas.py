@@ -2,7 +2,7 @@
 # =========================================================
 # Schemas Pydantic para el módulo de Acceso
 # =========================================================
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from typing import Optional
 from app.modules.acceso.models import EstadoSesionEnum
@@ -21,6 +21,17 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int  # segundos
+
+
+class SolicitarRecuperacionIn(BaseModel):
+    """Solicitud de correo con enlace para restablecer contraseña."""
+
+    email: str
+
+
+class RestablecerPasswordIn(BaseModel):
+    token: str = Field(..., min_length=10)
+    password: str = Field(..., min_length=6, max_length=128)
 
 
 # ── ROLES ────────────────────────────────────────────────────

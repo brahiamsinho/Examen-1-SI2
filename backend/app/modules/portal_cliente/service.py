@@ -10,6 +10,7 @@ from app.modules.acceso.models import Rol, UsuarioRol
 from app.modules.acceso.service import asignar_roles_usuario
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
+from app.modules.acceso.email_tokens import crear_y_enviar_verificacion_email
 from app.modules.usuarios.models import Cliente, EstadoUsuarioEnum, Usuario
 from app.modules.usuarios import service as usuarios_service
 from app.modules.vehiculos import service as vehiculos_service
@@ -68,7 +69,7 @@ async def registro_cliente_publico(body: RegistroClienteMovilIn, db: AsyncSessio
             "telefono": body.telefono.strip(),
             "password": body.password,
             "username": None,
-            "estado": EstadoUsuarioEnum.ACTIVO,
+            "estado": EstadoUsuarioEnum.PENDIENTE,
         },
         db,
         ejecutor_id=None,
@@ -88,6 +89,7 @@ async def registro_cliente_publico(body: RegistroClienteMovilIn, db: AsyncSessio
         usuario_id=user.id,
         entidad_id=cliente.id,
     )
+    await crear_y_enviar_verificacion_email(db, user)
     return await mi_perfil_read(user, cliente, db)
 
 
@@ -102,6 +104,7 @@ async def mi_perfil_read(user: Usuario, cliente: Cliente, db: AsyncSession) -> C
         telefono=user.telefono,
         ciudad=cliente.ciudad,
         direccion=cliente.direccion,
+        pendiente_verificacion_email=(user.estado == EstadoUsuarioEnum.PENDIENTE),
     )
 
 

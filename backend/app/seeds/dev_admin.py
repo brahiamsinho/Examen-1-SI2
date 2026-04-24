@@ -81,6 +81,7 @@ async def ensure_baseline_rol_permisos(db: AsyncSession) -> None:
                         "mensajes:crear",
                         "notificaciones:leer",
                         "dispositivos:fcm",
+                        "tecnico_ubicacion:compartir",
                     )
                 )
             )

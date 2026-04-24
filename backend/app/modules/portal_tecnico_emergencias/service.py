@@ -9,9 +9,11 @@ from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
 from app.modules.comunicaciones import service as comunicaciones_service
+from app.modules.comunicaciones.models import TipoNotificacionEnum
 from app.modules.comunicaciones.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
 from app.modules.emergencias import repository as emergencias_repository
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
+from app.modules.emergencias.schemas import UbicacionCreateIn, UbicacionTecnicoCompartidaRead
 from app.modules.portal_tecnico.service import get_tecnico_row_for_usuario
 from app.modules.portal_tecnico_emergencias import repository
 from app.modules.portal_tecnico_emergencias.schemas import (
@@ -20,6 +22,18 @@ from app.modules.portal_tecnico_emergencias.schemas import (
     UbicacionClienteActualRead,
 )
 from app.modules.usuarios.models import Usuario
+
+
+def _etiqueta_estado_cliente(nuevo: EstadoSolicitudSeguimientoEnum) -> str:
+    return {
+        EstadoSolicitudSeguimientoEnum.EN_CAMINO: "el técnico va en camino",
+        EstadoSolicitudSeguimientoEnum.EN_ATENCION: "atención en curso",
+        EstadoSolicitudSeguimientoEnum.FINALIZADA: "el servicio fue finalizado",
+    }.get(
+        nuevo,
+        f"estado: {nuevo.value.replace('_', ' ').lower()}",
+    )
+
 
 _ALLOWED_TRANSITIONS: dict[
     EstadoSolicitudSeguimientoEnum, frozenset[EstadoSolicitudSeguimientoEnum]
@@ -56,6 +70,52 @@ async def obtener_ubicacion_cliente(
             detail="Ubicación no disponible o solicitud no asignada a tu cuenta.",
         )
     return UbicacionClienteActualRead.model_validate(row)
+
+
+async def compartir_ubicacion_tecnico(
+    user: Usuario, solicitud_id: int, body: UbicacionCreateIn, db: AsyncSession
+) -> UbicacionTecnicoCompartidaRead:
+    t = await get_tecnico_row_for_usuario(user.id, db)
+    res = await db.execute(select(SolicitudEmergencia).where(SolicitudEmergencia.id == solicitud_id))
+    se = res.scalar_one_or_none()
+    if se is None or se.tecnico_id != t.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Solicitud no encontrada.",
+        )
+    if _estado_terminal(se.estado):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La solicitud ya está cerrada.",
+        )
+
+    now = utc_now_naive()
+    await emergencias_repository.update_tecnico_ultima_ubicacion(
+        db,
+        solicitud_id=solicitud_id,
+        latitud=body.latitud,
+        longitud=body.longitud,
+        precision_metros=body.precision_metros,
+        ubicacion_at=now,
+    )
+
+    await registrar_accion(
+        db,
+        "portal_tecnico_emergencias",
+        "solicitudes_emergencia",
+        AccionBitacoraEnum.ACTUALIZAR,
+        descripcion=f"solicitud_id={solicitud_id} tecnico_ubicacion_compartida",
+        usuario_id=user.id,
+        entidad_id=solicitud_id,
+    )
+
+    return UbicacionTecnicoCompartidaRead(
+        solicitud_id=solicitud_id,
+        latitud=body.latitud,
+        longitud=body.longitud,
+        precision_metros=body.precision_metros,
+        actualizado_at=now,
+    )
 
 
 async def actualizar_estado_servicio(
@@ -114,6 +174,15 @@ async def actualizar_estado_servicio(
         descripcion=f"solicitud_id={solicitud_id} estado={body.nuevo_estado.value}",
         usuario_id=user.id,
         entidad_id=solicitud_id,
+    )
+
+    etiqueta = _etiqueta_estado_cliente(body.nuevo_estado)
+    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+        db,
+        solicitud=se,
+        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+        titulo="Estado de tu servicio",
+        mensaje=f"Te informamos: {etiqueta}.",
     )
 
     row = await repository.get_servicio_asignado_detalle(db, solicitud_id=solicitud_id, tecnico_id=t.id)

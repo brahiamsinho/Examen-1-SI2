@@ -18,6 +18,7 @@ import '../../pagos/presentation/screens/pago_resultado_screen.dart';
 import '../../pagos/presentation/screens/solicitud_pagos_historial_screen.dart';
 import '../../emergencias/presentation/screens/emergencia_detalle_screen.dart';
 import '../../emergencias/presentation/screens/emergencia_seguimiento_screen.dart';
+import '../../emergencias/presentation/screens/emergencia_ubicacion_tecnico_screen.dart';
 import '../../emergencias/presentation/screens/emergencia_seleccion_vehiculo_screen.dart';
 import '../../emergencias/presentation/screens/emergencia_wizard_screen.dart';
 import '../../comunicacion/presentation/screens/chat_solicitud_screen.dart';
@@ -37,6 +38,7 @@ import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_actua
 import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_chat_screen.dart';
 import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_detalle_screen.dart';
 import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_ubicacion_screen.dart';
+import '../../../tecnico/emergencias/presentation/screens/tecnico_servicio_compartir_ubicacion_screen.dart';
 import '../../../tecnico/emergencias/presentation/screens/tecnico_servicios_list_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_placeholder_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_perfil_screen.dart';
@@ -161,6 +163,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
+            path: '/tecnico/app/servicios/:sid/compartir-ubicacion',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return TecnicoServicioCompartirUbicacionScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
             path: '/tecnico/app/servicios/:sid/estado',
             builder: (context, state) {
               final id = int.tryParse(state.pathParameters['sid'] ?? '');
@@ -222,6 +232,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               final id = int.tryParse(state.pathParameters['sid'] ?? '');
               if (id == null) return const SizedBox.shrink();
               return EmergenciaSeguimientoScreen(solicitudId: id);
+            },
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/ubicacion-tecnico',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return EmergenciaUbicacionTecnicoScreen(solicitudId: id);
             },
           ),
           GoRoute(

@@ -9,6 +9,7 @@ from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
 from app.modules.emergencias import repository
+from app.modules.ai.services.post_create import enrich_solicitud_ai_after_create
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.portal_taller_emergencias.repository import (
     insert_bandeja_pendiente_por_cada_taller,
@@ -26,6 +27,7 @@ from app.modules.emergencias.schemas import (
     TallerSeguimientoRead,
     TecnicoSeguimientoRead,
     UbicacionCreateIn,
+    UbicacionTecnicoCompartidaRead,
 )
 from app.modules.usuarios.models import Usuario
 
@@ -106,6 +108,8 @@ async def crear_solicitud(
         entidad_id=sol.id,
     )
 
+    await enrich_solicitud_ai_after_create(db, solicitud_id=sol.id, cliente_id=cliente_id)
+
     s2 = await repository.get_solicitud_for_cliente(
         db, solicitud_id=sol.id, cliente_id=cliente_id, with_children=True
     )
@@ -152,6 +156,7 @@ def _to_seguimiento(s: SolicitudEmergencia) -> SolicitudSeguimientoRead:
         solicitud_id=s.id,
         estado=s.estado,
         updated_at=s.updated_at,
+        ai_payload=s.ai_payload,
         tiempo_estimado_min=s.tiempo_estimado_min,
         finalizada_at=s.finalizada_at,
         taller=taller,
@@ -312,3 +317,30 @@ async def agregar_evidencia(
     )
     assert s2 is not None
     return _to_detail(s2)
+
+
+async def obtener_ubicacion_tecnico_compartida_cliente(
+    cliente_id: int,
+    solicitud_id: int,
+    db: AsyncSession,
+) -> UbicacionTecnicoCompartidaRead:
+    s = await repository.get_solicitud_for_cliente(db, solicitud_id=solicitud_id, cliente_id=cliente_id)
+    if s is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Solicitud no encontrada")
+    if s.tecnico_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Aún no hay técnico asignado a esta solicitud.",
+        )
+    if s.tecnico_ult_ubicacion_at is None or s.tecnico_ult_latitud is None or s.tecnico_ult_longitud is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El técnico aún no ha compartido su ubicación.",
+        )
+    return UbicacionTecnicoCompartidaRead(
+        solicitud_id=s.id,
+        latitud=s.tecnico_ult_latitud,
+        longitud=s.tecnico_ult_longitud,
+        precision_metros=s.tecnico_ult_precision_metros,
+        actualizado_at=s.tecnico_ult_ubicacion_at,
+    )

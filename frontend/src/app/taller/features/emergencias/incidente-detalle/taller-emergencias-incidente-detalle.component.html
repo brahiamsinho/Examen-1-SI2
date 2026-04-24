@@ -94,6 +94,34 @@
         <p class="emg__muted" *ngIf="detalle.motivo_rechazo"><strong>Motivo rechazo:</strong> {{ detalle.motivo_rechazo }}</p>
       </section>
 
+      <section class="emg__card emg__card--wide" *ngIf="detalle">
+        <h3 class="emg__card-title">Análisis asistido (IA)</h3>
+        <ng-container *ngIf="aiTieneContenido(detalle); else sinIaTaller">
+          <p class="emg__text" *ngIf="aiCategoriaUi(detalle) as cat">
+            <strong>Categoría sugerida:</strong> {{ cat
+            }}<ng-container *ngIf="aiConfianzaClasificacion(detalle) as conf">
+              ({{ (conf * 100) | number : '1.0-0' }}%)
+            </ng-container>
+          </p>
+          <p class="emg__text" *ngIf="aiPrioridadUi(detalle) as pr"><strong>Prioridad sugerida:</strong> {{ pr }}</p>
+          <p class="emg__muted" *ngIf="aiPrioridadMotivos(detalle).length">
+            {{ aiPrioridadMotivos(detalle).join(' · ') }}
+          </p>
+          <p class="emg__text" *ngIf="aiResumenTexto(detalle) as r"><strong>Resumen:</strong> {{ r }}</p>
+          <ul class="emg__asig-list" *ngIf="aiHallazgosVision(detalle).length">
+            <li *ngFor="let h of aiHallazgosVision(detalle)">{{ h }}</li>
+          </ul>
+        </ng-container>
+        <ng-template #sinIaTaller>
+          <p class="emg__muted">
+            No hay análisis asistido aún, o el servicio de IA no estaba activo al procesar la solicitud.
+          </p>
+        </ng-template>
+        <p class="emg__muted" style="margin-top: 0.75rem; font-style: italic">
+          Indicación automática; puede requerir validación humana.
+        </p>
+      </section>
+
       <section class="emg__card emg__card--wide" *ngIf="debeMostrarBloqueAsignacion(detalle)">
         <h3 class="emg__card-title">Asignación de técnico (CU28)</h3>
         <p class="emg__muted" *ngIf="loadingAsignData">Cargando técnicos e historial…</p>

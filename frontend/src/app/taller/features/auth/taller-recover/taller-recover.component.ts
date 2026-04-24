@@ -6,6 +6,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthPublicApiService } from '../../../../core/services/auth-public-api.service';
 
 @Component({
   selector: 'app-taller-recover',
@@ -16,6 +18,7 @@ import { RouterLink } from '@angular/router';
 })
 export class TallerRecoverComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly authPublic = inject(AuthPublicApiService);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -33,10 +36,20 @@ export class TallerRecoverComponent {
       return;
     }
     this.submitting = true;
-    // Ciclo 1: backend sin flujo de correo; UX de prototipo (confirmación simulada).
-    setTimeout(() => {
-      this.submitting = false;
-      this.success = true;
-    }, 600);
+    const email = this.form.getRawValue().email.trim();
+    this.authPublic.solicitarRecuperacionContrasena(email).subscribe({
+      next: () => {
+        this.submitting = false;
+        this.success = true;
+      },
+      error: (err: unknown) => {
+        this.submitting = false;
+        if (err instanceof HttpErrorResponse && err.status === 0) {
+          this.errorMsg = 'No hay conexión con la API.';
+          return;
+        }
+        this.errorMsg = 'No se pudo enviar la solicitud. Intenta más tarde.';
+      },
+    });
   }
 }

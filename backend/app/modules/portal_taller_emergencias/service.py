@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
+from app.modules.comunicaciones import service as comunicaciones_service
+from app.modules.comunicaciones.models import TipoNotificacionEnum
 from app.modules.emergencias import repository as emergencias_repository
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.portal_taller_emergencias import repository
@@ -151,6 +153,17 @@ async def rechazar_solicitud(
         usuario_id=user.id,
         entidad_id=bandeja_id,
     )
+    se_r = await db.execute(
+        select(SolicitudEmergencia).where(SolicitudEmergencia.id == bandeja.solicitud_id)
+    )
+    if (se_n := se_r.scalar_one_or_none()) is not None:
+        await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+            db,
+            solicitud=se_n,
+            tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+            titulo="Actualización de emergencia",
+            mensaje="Un taller no pudo aceptar tu solicitud. Revisa el estado de tu caso en la app.",
+        )
     return await obtener_detalle_bandeja(taller_id, bandeja_id, db)
 
 
@@ -329,6 +342,14 @@ async def asignar_tecnico_a_solicitud(
         entidad_id=asignacion.id,
     )
 
+    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+        db,
+        solicitud=se,
+        tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
+        titulo="Técnico asignado",
+        mensaje="Se asignó un técnico a tu emergencia. Sigue el avance en la app.",
+    )
+
     return _to_asignar_out(se, asignacion)
 
 
@@ -432,6 +453,14 @@ async def aceptar_solicitud(
         descripcion=f"Aceptación bandeja_id={bandeja_id} solicitud_id={bandeja.solicitud_id}",
         usuario_id=user.id,
         entidad_id=bandeja_id,
+    )
+
+    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+        db,
+        solicitud=se,
+        tipo=TipoNotificacionEnum.TALLER_ASIGNADO,
+        titulo="Taller asignado",
+        mensaje="Un taller aceptó atender tu emergencia. Puedes ver el detalle en la app.",
     )
 
     return await obtener_detalle_bandeja(taller_id, bandeja_id, db)

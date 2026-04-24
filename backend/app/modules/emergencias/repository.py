@@ -157,6 +157,42 @@ async def insert_ubicacion(
     return row
 
 
+async def update_solicitud_ai_payload(
+    db: AsyncSession,
+    *,
+    solicitud_id: int,
+    payload: dict,
+    updated_at,
+) -> None:
+    await db.execute(
+        update(SolicitudEmergencia)
+        .where(SolicitudEmergencia.id == solicitud_id)
+        .values(ai_payload=payload, updated_at=updated_at)
+    )
+
+
+async def update_tecnico_ultima_ubicacion(
+    db: AsyncSession,
+    *,
+    solicitud_id: int,
+    latitud,
+    longitud,
+    precision_metros,
+    ubicacion_at,
+) -> None:
+    await db.execute(
+        update(SolicitudEmergencia)
+        .where(SolicitudEmergencia.id == solicitud_id)
+        .values(
+            tecnico_ult_latitud=latitud,
+            tecnico_ult_longitud=longitud,
+            tecnico_ult_precision_metros=precision_metros,
+            tecnico_ult_ubicacion_at=ubicacion_at,
+            updated_at=ubicacion_at,
+        )
+    )
+
+
 async def insert_evidencia(
     db: AsyncSession,
     *,

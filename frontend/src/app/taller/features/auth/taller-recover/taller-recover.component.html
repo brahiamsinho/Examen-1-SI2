@@ -10,13 +10,13 @@
     <section class="recover__card" aria-labelledby="taller-recover-heading">
       <h2 id="taller-recover-heading" class="recover__card-title">Enlace de recuperación</h2>
       <p class="recover__card-desc">
-        Indica el correo de tu cuenta de responsable de taller. Cuando exista servicio de correo en la API, aquí se
-        enviará el enlace.
+        Indica el correo de tu cuenta de responsable de taller. Recibirás un enlace para elegir una nueva contraseña
+        (desarrollo: revisa MailHog en el puerto 8025).
       </p>
 
       <div class="recover__alert recover__alert--error" *ngIf="errorMsg" role="alert">{{ errorMsg }}</div>
       <div class="recover__alert recover__alert--ok" *ngIf="success" role="status">
-        Si el correo existe en el sistema, recibirás instrucciones. (Prototipo ciclo 1: sin envío real aún.)
+        Si el correo existe en el sistema, te enviamos instrucciones. Revisa tu bandeja (MailHog en desarrollo).
       </div>
 
       <form class="recover__form" [formGroup]="form" (ngSubmit)="submit()" *ngIf="!success" novalidate>

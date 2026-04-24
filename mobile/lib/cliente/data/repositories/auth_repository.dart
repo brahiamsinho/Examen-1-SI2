@@ -33,6 +33,17 @@ final class AuthRepository {
     }
   }
 
+  Future<void> solicitarRecuperacionContrasena({required String email}) async {
+    try {
+      await _dio.post<void>(
+        ApiConstants.authSolicitarRecuperacionContrasena,
+        data: {'email': email.trim()},
+      );
+    } on DioException catch (e) {
+      throw Exception(messageFromDio(e));
+    }
+  }
+
   Future<void> logout() async {
     try {
       await _dio.post<void>(ApiConstants.logout);

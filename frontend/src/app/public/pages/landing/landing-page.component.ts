@@ -26,11 +26,12 @@ export class LandingPageComponent {
   readonly navLinks: { label: string; href: string }[] = [
     { label: 'Inicio', href: '#inicio' },
     { label: 'Características', href: '#caracteristicas' },
+    { label: 'Accesos', href: '#portales' },
     { label: 'Cómo funciona', href: '#como-funciona' },
     { label: 'Módulos', href: '#modulos' },
     { label: 'Beneficios', href: '#beneficios' },
-    { label: 'Tecnologías', href: '#tecnologias' },
-    { label: 'Contacto', href: '#contacto' },
+    { label: 'Stack', href: '#tecnologias' },
+    { label: 'Proyecto', href: '#contacto' },
   ];
 
   readonly stats = [
@@ -50,7 +51,7 @@ export class LandingPageComponent {
     },
     {
       title: 'Caso #0821 Resuelto',
-      sub: 'Satisfacción: ★★★★★',
+      sub: 'Valoración pos-atención: excelente',
       accent: 'blue' as const,
     },
     {
@@ -140,9 +141,8 @@ export class LandingPageComponent {
       title: 'Empresa',
       links: [
         { label: 'Sobre el proyecto', href: '#inicio' },
-        { label: 'Equipo de desarrollo', href: '#contacto' },
-        { label: 'Contacto', href: '#contacto' },
-        { label: 'Solicitar demo', href: '#contacto' },
+        { label: 'Accesos (taller / admin)', href: '#portales' },
+        { label: 'Proyecto académico', href: '#contacto' },
       ],
     },
   ];
@@ -160,5 +160,9 @@ export class LandingPageComponent {
 
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
+  }
+
+  closeMenu(): void {
+    this.menuOpen = false;
   }
 }

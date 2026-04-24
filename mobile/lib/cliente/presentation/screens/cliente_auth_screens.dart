@@ -7,6 +7,7 @@ import '../../../core/config/app_env.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../application/client_auth_provider.dart';
 import '../../application/client_auth_state.dart';
+import '../../application/cliente_injection.dart';
 
 class ClienteLoginScreen extends ConsumerStatefulWidget {
   const ClienteLoginScreen({super.key});
@@ -21,6 +22,17 @@ class _ClienteLoginScreenState extends ConsumerState<ClienteLoginScreen> {
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   bool _obscurePassword = true;
+  String? _postRegisterHint;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_postRegisterHint != null) return;
+    final extra = GoRouterState.of(context).extra;
+    if (extra is String && extra.trim().isNotEmpty) {
+      _postRegisterHint = extra.trim();
+    }
+  }
 
   @override
   void dispose() {
@@ -135,6 +147,23 @@ class _ClienteLoginScreenState extends ConsumerState<ClienteLoginScreen> {
                                     height: 1.35,
                                   ),
                                 ),
+                                if (_postRegisterHint != null) ...[
+                                  const SizedBox(height: 16),
+                                  DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: Colors.teal.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Colors.teal.withValues(alpha: 0.45)),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Text(
+                                        _postRegisterHint!,
+                                        style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 22),
                                 Text(
                                   'Correo electrónico',
@@ -396,7 +425,23 @@ class _ClienteRegisterScreenState extends ConsumerState<ClienteRegisterScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(clientAuthNotifierProvider);
     ref.listen<ClientAuthState>(clientAuthNotifierProvider, (p, n) {
-      if (n.isAuthenticated) context.go('/cliente/app/home');
+      if (n.isAuthenticated) {
+        context.go('/cliente/app/home');
+        return;
+      }
+      // Tras registro con verificación por correo: llevar al login con el mismo aviso.
+      if (n.infoMessage != null &&
+          !n.isLoggingIn &&
+          p != null &&
+          p.isLoggingIn &&
+          !p.isAuthenticated) {
+        final msg = n.infoMessage!;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          ref.read(clientAuthNotifierProvider.notifier).clearInfoMessage();
+          context.go('/cliente/login', extra: msg);
+        });
+      }
     });
 
     return Scaffold(
@@ -430,6 +475,23 @@ class _ClienteRegisterScreenState extends ConsumerState<ClienteRegisterScreen> {
           if (_localError != null) ...[
             const SizedBox(height: 12),
             Text(_localError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ],
+          if (auth.infoMessage != null) ...[
+            const SizedBox(height: 12),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.teal.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.teal.withValues(alpha: 0.45)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  auth.infoMessage!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
+                ),
+              ),
+            ),
           ],
           if (auth.authError != null) ...[
             const SizedBox(height: 8),
@@ -489,21 +551,43 @@ class _ClienteRegisterScreenState extends ConsumerState<ClienteRegisterScreen> {
   }
 }
 
-class ClienteRecoverScreen extends StatefulWidget {
+class ClienteRecoverScreen extends ConsumerStatefulWidget {
   const ClienteRecoverScreen({super.key});
 
   @override
-  State<ClienteRecoverScreen> createState() => _ClienteRecoverScreenState();
+  ConsumerState<ClienteRecoverScreen> createState() => _ClienteRecoverScreenState();
 }
 
-class _ClienteRecoverScreenState extends State<ClienteRecoverScreen> {
+class _ClienteRecoverScreenState extends ConsumerState<ClienteRecoverScreen> {
   final _email = TextEditingController();
   bool _sent = false;
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
     _email.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_email.text.trim().isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authRepositoryProvider).solicitarRecuperacionContrasena(email: _email.text);
+      setState(() {
+        _sent = true;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -519,7 +603,8 @@ class _ClienteRecoverScreenState extends State<ClienteRecoverScreen> {
                   const Icon(Icons.mark_email_read_outlined, size: 48),
                   const SizedBox(height: 16),
                   Text(
-                    'Si el correo existe en el sistema, recibirás instrucciones para restablecer tu contraseña.',
+                    'Si el correo existe en el sistema, recibirás un enlace para restablecer la contraseña. '
+                    'En desarrollo revisa MailHog (puerto 8025) si usas Docker.',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 24),
@@ -532,8 +617,7 @@ class _ClienteRecoverScreenState extends State<ClienteRecoverScreen> {
             : ListView(
                 children: [
                   Text(
-                    'Ingresa el correo de tu cuenta. '
-                    '(En ciclo 1 el envío real depende del backend; aquí confirmamos la solicitud en la app.)',
+                    'Ingresa el correo de tu cuenta. Te enviaremos un enlace (válido 2 horas).',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 20),
@@ -544,13 +628,16 @@ class _ClienteRecoverScreenState extends State<ClienteRecoverScreen> {
                     placeholder: const Text('correo@ejemplo.com'),
                     keyboardType: TextInputType.emailAddress,
                   ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ],
                   const SizedBox(height: 24),
                   ShadButton(
-                    onPressed: () {
-                      if (_email.text.trim().isEmpty) return;
-                      setState(() => _sent = true);
-                    },
-                    child: const Text('Enviar solicitud'),
+                    onPressed: _loading ? null : _submit,
+                    child: _loading
+                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Enviar solicitud'),
                   ),
                   TextButton(onPressed: () => context.go('/cliente/login'), child: const Text('Volver')),
                 ],

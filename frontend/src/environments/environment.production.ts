@@ -8,4 +8,5 @@ export const environment = {
   production: true,
   apiUrl: '/api',   // Relativo — nginx hace proxy al backend
   appName: 'Plataforma Emergencias Vehiculares',
+  mailhogWebUrl: '',
 };

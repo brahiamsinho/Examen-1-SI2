@@ -12,6 +12,13 @@ export const TALLER_ROUTES: Routes = [
       ),
   },
   {
+    path: 'restablecer-contrasena',
+    loadComponent: () =>
+      import('./features/auth/taller-reset-password/taller-reset-password.component').then(
+        (m) => m.TallerResetPasswordComponent,
+      ),
+  },
+  {
     path: 'registro',
     loadComponent: () =>
       import('./features/auth/taller-register/taller-register.component').then(

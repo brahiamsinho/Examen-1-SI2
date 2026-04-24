@@ -36,6 +36,10 @@ class BandejaIncidenteBaseRead(BaseModel):
     latitud: Decimal | None
     longitud: Decimal | None
     direccion_referencia: str | None
+    ai_payload: dict | None = Field(
+        None,
+        description="Pipeline IA (clasificación, prioridad, resumen) asociado a la solicitud.",
+    )
 
 
 class SolicitudBandejaDetalleRead(BandejaIncidenteBaseRead):

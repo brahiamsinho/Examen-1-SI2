@@ -10,7 +10,7 @@ from fastapi import HTTPException, status, Request
 from app.core.security import verify_password, create_access_token, create_refresh_token, hash_password
 from app.core.config import settings
 from app.core.timeutil import utc_now_naive
-from app.modules.usuarios.models import Usuario
+from app.modules.usuarios.models import EstadoUsuarioEnum, Usuario
 from app.modules.acceso.models import (
     Rol, Permiso, RolPermiso, UsuarioRol, Sesion,
     EstadoSesionEnum
@@ -46,7 +46,12 @@ async def login(
             detail="Credenciales incorrectas",
         )
 
-    if user.estado.value != "ACTIVO":
+    if user.estado == EstadoUsuarioEnum.PENDIENTE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cuenta pendiente de verificación. Revisa tu correo y abre el enlace de activación.",
+        )
+    if user.estado != EstadoUsuarioEnum.ACTIVO:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Usuario {user.estado.value}. No puede iniciar sesión.",
@@ -109,6 +114,38 @@ async def login(
         "token_type": "bearer",
         "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     }
+
+
+async def solicitar_recuperacion_contrasena(email: str, db: AsyncSession) -> None:
+    """Idempotente: si el email no existe, no revela error. No envía a BLOQUEADO."""
+    from sqlalchemy import func
+
+    em = email.strip().lower()
+    if not em:
+        return
+    result = await db.execute(select(Usuario).where(func.lower(Usuario.email) == em))
+    user = result.scalar_one_or_none()
+    if user is None or user.estado == EstadoUsuarioEnum.BLOQUEADO:
+        return
+    from app.modules.acceso.email_tokens import crear_y_enviar_reset_password
+
+    await crear_y_enviar_reset_password(db, user)
+
+
+async def restablecer_contrasena_con_token(token: str, password: str, db: AsyncSession) -> None:
+    from app.modules.acceso.email_tokens import consumir_token_reset_password
+
+    if len(password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="La contraseña debe tener al menos 6 caracteres.",
+        )
+    u = await consumir_token_reset_password(db, token.strip(), password)
+    if u is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Enlace inválido o expirado. Solicita uno nuevo desde «Olvidé mi contraseña».",
+        )
 
 
 async def logout(usuario_id: int, jti: str, db: AsyncSession, request: Request) -> None:

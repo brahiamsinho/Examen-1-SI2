@@ -18,6 +18,7 @@ from sqlalchemy import (
     Index,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -61,6 +62,7 @@ class SolicitudEmergencia(Base):
     )
     estado: Mapped[EstadoSolicitudSeguimientoEnum] = mapped_column(_estado_seguimiento_sa, nullable=False)
     descripcion_texto: Mapped[str | None] = mapped_column(Text)
+    ai_payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
@@ -69,6 +71,11 @@ class SolicitudEmergencia(Base):
     tiempo_estimado_min: Mapped[int | None] = mapped_column(Integer)
     finalizada_at: Mapped[datetime | None] = mapped_column(DateTime)
     tecnico_asignado_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+    tecnico_ult_latitud: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
+    tecnico_ult_longitud: Mapped[Decimal | None] = mapped_column(Numeric(10, 7), nullable=True)
+    tecnico_ult_precision_metros: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    tecnico_ult_ubicacion_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     ubicaciones: Mapped[list["SolicitudUbicacion"]] = relationship(
         back_populates="solicitud",

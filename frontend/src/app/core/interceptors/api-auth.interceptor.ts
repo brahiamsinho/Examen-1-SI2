@@ -11,7 +11,12 @@ export const apiAuthInterceptor: HttpInterceptorFn = (req, next) => {
   if (!isApi) {
     return next(req);
   }
-  if (req.url.includes(`${api}/auth/login`)) {
+  const authPublic =
+    req.url.includes(`${api}/auth/login`) ||
+    req.url.includes(`${api}/auth/solicitar-recuperacion-contrasena`) ||
+    req.url.includes(`${api}/auth/restablecer-contrasena`) ||
+    (req.url.includes(`${api}/auth/verificar-email`) && req.method === 'GET');
+  if (authPublic) {
     return next(req);
   }
 

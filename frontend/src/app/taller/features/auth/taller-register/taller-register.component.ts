@@ -7,8 +7,9 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 import { TallerApiService } from '../../../../core/services/taller-api.service';
 
 function passwordsMatch(c: AbstractControl): ValidationErrors | null {
@@ -28,7 +29,6 @@ function passwordsMatch(c: AbstractControl): ValidationErrors | null {
 export class TallerRegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(TallerApiService);
-  private readonly router = inject(Router);
 
   readonly form = this.fb.nonNullable.group(
     {
@@ -50,6 +50,8 @@ export class TallerRegisterComponent {
   success = false;
   errorMsg: string | null = null;
   showPassword = false;
+  pendienteVerificacion = false;
+  readonly mailhogWebUrl = environment.mailhogWebUrl;
 
   submit(): void {
     this.errorMsg = null;
@@ -72,10 +74,10 @@ export class TallerRegisterComponent {
         password: v.password,
       })
       .subscribe({
-        next: () => {
+        next: (dto) => {
           this.submitting = false;
           this.success = true;
-          setTimeout(() => void this.router.navigate(['/taller']), 2000);
+          this.pendienteVerificacion = dto.pendiente_verificacion_email !== false;
         },
         error: (err: unknown) => {
           this.submitting = false;

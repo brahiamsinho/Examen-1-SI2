@@ -133,6 +133,92 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
     return `https://www.openstreetmap.org/?mlat=${d.latitud}&mlon=${d.longitud}#map=16/${d.latitud}/${d.longitud}`;
   }
 
+  /** `ai_payload` v1: hay algo útil para mostrar (resumen, clasificación, etc.). */
+  aiTieneContenido(d: SolicitudBandejaDetalleDto | null): boolean {
+    if (!d?.ai_payload || typeof d.ai_payload !== 'object') return false;
+    const p = d.ai_payload as Record<string, unknown>;
+    const rs = p['resumen_estructurado'];
+    if (rs && typeof rs === 'object' && 'resumen' in (rs as object)) {
+      const t = String((rs as { resumen?: unknown }).resumen ?? '').trim();
+      if (t.length > 0) return true;
+    }
+    if (p['clasificacion'] || p['prioridad']) return true;
+    if (Array.isArray(p['hallazgos_vision']) && (p['hallazgos_vision'] as unknown[]).length) return true;
+    const tr = p['transcripcion_audio'];
+    if (typeof tr === 'string' && tr.trim().length > 0) return true;
+    return false;
+  }
+
+  aiResumenTexto(d: SolicitudBandejaDetalleDto | null): string {
+    if (!d?.ai_payload) return '';
+    const p = d.ai_payload as Record<string, unknown>;
+    const rs = p['resumen_estructurado'];
+    if (rs && typeof rs === 'object' && 'resumen' in (rs as object)) {
+      return String((rs as { resumen?: unknown }).resumen ?? '');
+    }
+    return '';
+  }
+
+  aiCategoriaUi(d: SolicitudBandejaDetalleDto | null): string | null {
+    const c = this.aiCategoriaRaw(d);
+    if (!c) return null;
+    const m: Record<string, string> = {
+      BATERIA: 'Batería',
+      LLANTA: 'Llanta / pinchazo',
+      CHOQUE: 'Choque / colisión',
+      MOTOR: 'Motor',
+      OTROS: 'Otros',
+    };
+    return m[c] ?? c;
+  }
+
+  private aiCategoriaRaw(d: SolicitudBandejaDetalleDto | null): string | null {
+    if (!d?.ai_payload || typeof d.ai_payload !== 'object') return null;
+    const c = (d.ai_payload as Record<string, unknown>)['clasificacion'];
+    if (!c || typeof c !== 'object') return null;
+    const cat = (c as { categoria?: unknown }).categoria;
+    return typeof cat === 'string' ? cat : null;
+  }
+
+  aiConfianzaClasificacion(d: SolicitudBandejaDetalleDto | null): number | null {
+    if (!d?.ai_payload || typeof d.ai_payload !== 'object') return null;
+    const c = (d.ai_payload as Record<string, unknown>)['clasificacion'];
+    if (!c || typeof c !== 'object') return null;
+    const n = (c as { confianza?: unknown }).confianza;
+    return typeof n === 'number' && Number.isFinite(n) ? n : null;
+  }
+
+  aiPrioridadUi(d: SolicitudBandejaDetalleDto | null): string | null {
+    if (!d?.ai_payload || typeof d.ai_payload !== 'object') return null;
+    const pr = (d.ai_payload as Record<string, unknown>)['prioridad'];
+    if (!pr || typeof pr !== 'object') return null;
+    const n = (pr as { nivel_prioridad?: unknown }).nivel_prioridad;
+    if (typeof n !== 'string') return null;
+    const m: Record<string, string> = {
+      ALTA: 'Alta',
+      MEDIA: 'Media',
+      BAJA: 'Baja',
+      REVISION_MANUAL: 'Revisión manual',
+    };
+    return m[n] ?? n;
+  }
+
+  aiPrioridadMotivos(d: SolicitudBandejaDetalleDto | null): string[] {
+    if (!d?.ai_payload || typeof d.ai_payload !== 'object') return [];
+    const pr = (d.ai_payload as Record<string, unknown>)['prioridad'];
+    if (!pr || typeof pr !== 'object') return [];
+    const m = (pr as { motivo?: unknown }).motivo;
+    if (!Array.isArray(m)) return [];
+    return m.filter((x): x is string => typeof x === 'string');
+  }
+
+  aiHallazgosVision(d: SolicitudBandejaDetalleDto | null): string[] {
+    if (!d?.ai_payload || typeof d.ai_payload !== 'object') return [];
+    const h = (d.ai_payload as Record<string, unknown>)['hallazgos_vision'];
+    if (!Array.isArray(h)) return [];
+    return h.map((x) => String(x));
+  }
+
   openAceptar(): void {
     this.modalAceptar = true;
   }

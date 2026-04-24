@@ -30,6 +30,7 @@ con trazabilidad completa a través de una bitácora de auditoría.
 
 ### Ciclo 2 — emergencias (en producto; implementación en backend + móvil + portal taller)
 - Flujo: cliente reporta emergencia (API `/portal/cliente/emergencias`) → taller en bandeja, acepta o rechaza → asigna técnico (CU28) → operación y seguimiento (incl. técnico móvil).
+- **Asistencia IA (modular):** el backend expone módulo `ai` (reglas, prioridad, payloads); STT y visión pesada pueden ejecutarse en un **contenedor opcional** `ai-inference` (Docker, perfil `ai`) con YOLO COCO o modelo de clasificación propio. Ver `ARCHITECTURE.md`, `HANDOFF_LATEST.md` y `DECISIONS_LOG` **DEC-010**.
 - Geolocalización y notificaciones: pendientes o parciales según módulo (ver `CURRENT_STATE.md`).
 
 ### Ciclo 3 (futuro)
@@ -48,4 +49,5 @@ con trazabilidad completa a través de una bitácora de auditoría.
 | Base dato | PostgreSQL 15        |
 | Frontend  | Angular 17           |
 | Móvil     | Flutter 3            |
+| IA (opc.) | Worker Docker `ai-inference` (Whisper + Ultralytics); orquestado por backend |
 | Deploy    | Docker + Azure VM    |

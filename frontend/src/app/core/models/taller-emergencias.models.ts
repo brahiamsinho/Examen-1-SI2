@@ -30,6 +30,8 @@ export interface BandejaIncidenteBaseDto {
   latitud: string | null;
   longitud: string | null;
   direccion_referencia: string | null;
+  /** Pipeline IA (post-crear solicitud): misma forma que almacena el backend. */
+  ai_payload?: Record<string, unknown> | null;
 }
 
 export interface SolicitudBandejaDetalleDto extends BandejaIncidenteBaseDto {

@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../pagos/presentation/widgets/solicitud_pago_cta_block.dart';
 import '../../application/emergencias_providers.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
+import '../widgets/ai/solicitud_ai_resumen_card.dart';
 import '../widgets/seguimiento/eta_llegada_card.dart';
 import '../widgets/seguimiento/seguimiento_timeline.dart';
 import '../widgets/seguimiento/taller_asignado_card.dart';
@@ -54,6 +55,10 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
               Text('Tiempo estimado (CU18)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               EtaLlegadaCard(minutos: s.tiempoEstimadoMin, actualizadoEn: s.updatedAt),
+              const SizedBox(height: 20),
+              Text('Análisis asistido (IA)', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 10),
+              SolicitudAiResumenCard(payload: s.aiPayload),
               const SizedBox(height: 24),
               Text('Taller (CU17)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
@@ -80,6 +85,13 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
                   onPressed: () => context.push('/cliente/app/emergencias/solicitudes/$solicitudId/chat'),
                   leading: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
                   child: const Text('Abrir chat con el técnico'),
+                ),
+                const SizedBox(height: 10),
+                ShadButton.outline(
+                  onPressed: () =>
+                      context.push('/cliente/app/emergencias/solicitudes/$solicitudId/ubicacion-tecnico'),
+                  leading: const Icon(Icons.engineering_outlined, size: 20),
+                  child: const Text('Ver ubicación del técnico'),
                 ),
               ],
               const SizedBox(height: 24),

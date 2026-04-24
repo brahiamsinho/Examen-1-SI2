@@ -151,8 +151,16 @@ class _DetalleBody extends StatelessWidget {
         const SizedBox(height: 24),
         _BigAction(
           icon: Icons.map_outlined,
-          label: 'Ver ubicación',
+          label: 'Ver ubicación del cliente',
           onPressed: () => context.push('/tecnico/app/servicios/${servicio.solicitudId}/ubicacion'),
+        ),
+        const SizedBox(height: 12),
+        _BigAction(
+          icon: Icons.share_location_rounded,
+          label: 'Compartir mi ubicación',
+          onPressed: servicio.esTerminal
+              ? null
+              : () => context.push('/tecnico/app/servicios/${servicio.solicitudId}/compartir-ubicacion'),
         ),
         const SizedBox(height: 12),
         _BigAction(

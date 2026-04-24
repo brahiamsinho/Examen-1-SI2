@@ -1,6 +1,8 @@
 // Modelos de dominio — API `/portal/cliente/emergencias` (snake_case JSON).
 import 'package:flutter/foundation.dart';
 
+import 'solicitud_ai_payload.dart';
+
 double _asDouble(Object? v) {
   if (v is num) return v.toDouble();
   if (v is String) return double.parse(v);
@@ -145,6 +147,7 @@ class SolicitudEmergenciaDetail {
     this.tecnicoId,
     this.tiempoEstimadoMin,
     this.finalizadaAt,
+    this.aiPayload,
   });
 
   final int id;
@@ -160,6 +163,7 @@ class SolicitudEmergenciaDetail {
   final int? tecnicoId;
   final int? tiempoEstimadoMin;
   final DateTime? finalizadaAt;
+  final SolicitudAiPayloadV1? aiPayload;
 
   factory SolicitudEmergenciaDetail.fromJson(Map<String, dynamic> j) {
     return SolicitudEmergenciaDetail(
@@ -182,6 +186,7 @@ class SolicitudEmergenciaDetail {
       tecnicoId: j['tecnico_id'] as int?,
       tiempoEstimadoMin: j['tiempo_estimado_min'] as int?,
       finalizadaAt: j['finalizada_at'] != null ? _asDateTime(j['finalizada_at']) : null,
+      aiPayload: SolicitudAiPayloadV1.tryParse(j['ai_payload']),
     );
   }
 }
@@ -200,6 +205,7 @@ class SolicitudEmergenciaListItem {
     this.tecnicoId,
     this.tiempoEstimadoMin,
     this.finalizadaAt,
+    this.aiPayload,
   });
 
   final int id;

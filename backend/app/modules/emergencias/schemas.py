@@ -99,6 +99,7 @@ class SolicitudEmergenciaRead(BaseModel):
     vehiculo_id: int
     estado: EstadoSolicitudSeguimientoEnum
     descripcion_texto: str | None
+    ai_payload: dict | None = None
     created_at: datetime
     updated_at: datetime
     taller_id: int | None = None
@@ -106,6 +107,20 @@ class SolicitudEmergenciaRead(BaseModel):
     tiempo_estimado_min: int | None = None
     finalizada_at: datetime | None = None
     tecnico_asignado_at: datetime | None = None
+    tecnico_ult_latitud: Decimal | None = None
+    tecnico_ult_longitud: Decimal | None = None
+    tecnico_ult_precision_metros: Decimal | None = None
+    tecnico_ult_ubicacion_at: datetime | None = None
+
+
+class UbicacionTecnicoCompartidaRead(BaseModel):
+    """Última posición compartida por el técnico en la solicitud (lectura cliente o confirmación POST)."""
+
+    solicitud_id: int
+    latitud: Decimal
+    longitud: Decimal
+    precision_metros: Decimal | None = None
+    actualizado_at: datetime
 
 
 class SolicitudEmergenciaDetailRead(SolicitudEmergenciaRead):
@@ -151,6 +166,10 @@ class SolicitudSeguimientoRead(BaseModel):
     solicitud_id: int
     estado: EstadoSolicitudSeguimientoEnum
     updated_at: datetime
+    ai_payload: dict | None = Field(
+        None,
+        description="Resultado del pipeline IA tras crear la solicitud (version, clasificacion, prioridad, resumen, etc.).",
+    )
     tiempo_estimado_min: int | None = Field(
         None,
         description="CU18: minutos estimados hasta llegada (mantenido por taller/sistema).",

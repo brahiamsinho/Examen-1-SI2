@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../pagos/presentation/widgets/solicitud_pago_cta_block.dart';
 import '../../application/emergencias_providers.dart';
+import '../widgets/ai/solicitud_ai_resumen_card.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
 
 /// Detalle de una solicitud (API fase 1 + campos fase 2 en JSON).
@@ -62,6 +63,10 @@ class EmergenciaDetalleScreen extends ConsumerWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 20),
+              Text('Análisis asistido', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 10),
+              SolicitudAiResumenCard(payload: d.aiPayload),
               if (d.tiempoEstimadoMin != null) ...[
                 const SizedBox(height: 12),
                 Text(

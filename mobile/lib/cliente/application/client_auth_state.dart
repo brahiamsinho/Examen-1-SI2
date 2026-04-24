@@ -20,6 +20,7 @@ final class ClientAuthState {
     required this.status,
     this.profile,
     this.authError,
+    this.infoMessage,
     this.isLoggingIn = false,
   });
 
@@ -27,11 +28,14 @@ final class ClientAuthState {
       : status = ClientAuthStatus.checking,
         profile = null,
         authError = null,
+        infoMessage = null,
         isLoggingIn = false;
 
   final ClientAuthStatus status;
   final ClienteMiPerfil? profile;
   final String? authError;
+  /// Mensaje informativo (p. ej. registro con verificación por correo).
+  final String? infoMessage;
   final bool isLoggingIn;
 
   bool get isAuthenticated => status == ClientAuthStatus.authenticated && profile != null;
@@ -40,13 +44,16 @@ final class ClientAuthState {
     ClientAuthStatus? status,
     ClienteMiPerfil? profile,
     String? authError,
+    String? infoMessage,
     bool clearError = false,
+    bool clearInfoMessage = false,
     bool? isLoggingIn,
   }) {
     return ClientAuthState(
       status: status ?? this.status,
       profile: profile ?? this.profile,
       authError: clearError ? null : (authError ?? this.authError),
+      infoMessage: clearInfoMessage ? null : (infoMessage ?? this.infoMessage),
       isLoggingIn: isLoggingIn ?? this.isLoggingIn,
     );
   }

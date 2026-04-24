@@ -48,6 +48,7 @@ class MiTallerRead(BaseModel):
     responsable_apellidos: str
     responsable_email: str
     responsable_telefono: str
+    pendiente_verificacion_email: bool = False
 
 
 class TecnicoPortalCreate(BaseModel):

@@ -5,6 +5,7 @@ import '../data/emergencias_repository.dart';
 import '../data/optional_public_upload_service.dart';
 import '../domain/solicitud_emergencia_models.dart';
 import '../domain/solicitud_seguimiento_models.dart';
+import '../domain/ubicacion_tecnico_compartida.dart';
 
 final emergenciasRepositoryProvider = Provider<EmergenciasRepository>((ref) {
   return EmergenciasRepository(ref.watch(dioProvider));
@@ -30,4 +31,10 @@ final emergenciaDetailProvider =
 final emergenciaSeguimientoProvider =
     FutureProvider.autoDispose.family<SolicitudSeguimiento, int>((ref, solicitudId) async {
   return ref.watch(emergenciasRepositoryProvider).fetchSeguimiento(solicitudId);
+});
+
+/// Última posición compartida por el técnico (polling).
+final emergenciaUbicacionTecnicoProvider =
+    FutureProvider.autoDispose.family<UbicacionTecnicoCompartida, int>((ref, solicitudId) async {
+  return ref.watch(emergenciasRepositoryProvider).fetchUbicacionTecnico(solicitudId);
 });

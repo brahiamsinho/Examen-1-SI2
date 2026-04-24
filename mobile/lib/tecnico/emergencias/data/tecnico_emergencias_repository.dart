@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../cliente/comunicacion/domain/mensaje_solicitud_models.dart';
 import '../../../cliente/emergencias/domain/solicitud_emergencia_models.dart';
+import '../../../cliente/emergencias/domain/ubicacion_tecnico_compartida.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_error.dart';
 import '../domain/tecnico_servicio_models.dart';
@@ -32,6 +33,30 @@ final class TecnicoEmergenciasRepository {
       final data = res.data;
       if (data == null) throw Exception('Respuesta vacía de ubicación.');
       return UbicacionClienteActual.fromJson(data);
+    } on DioException catch (e) {
+      throw Exception(messageFromDio(e));
+    }
+  }
+
+  Future<UbicacionTecnicoCompartida> compartirUbicacionTecnico(
+    int solicitudId, {
+    required double latitud,
+    required double longitud,
+    double? precisionMetros,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.portalTecnicoEmergenciaUbicacionTecnico(solicitudId),
+        data: {
+          'latitud': latitud,
+          'longitud': longitud,
+          if (precisionMetros != null) 'precision_metros': precisionMetros,
+          'es_actual': true,
+        },
+      );
+      final data = res.data;
+      if (data == null) throw Exception('Respuesta vacía al compartir ubicación.');
+      return UbicacionTecnicoCompartida.fromJson(data);
     } on DioException catch (e) {
       throw Exception(messageFromDio(e));
     }

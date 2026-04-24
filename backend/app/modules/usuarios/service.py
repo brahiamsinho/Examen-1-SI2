@@ -60,6 +60,10 @@ async def create_usuario(data: dict, db: AsyncSession, ejecutor_id: int | None =
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
+    existing_phone = await db.execute(select(Usuario).where(Usuario.telefono == data["telefono"]))
+    if existing_phone.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="El teléfono ya está registrado")
+
     user = Usuario(
         nombres=data["nombres"],
         apellidos=data["apellidos"],

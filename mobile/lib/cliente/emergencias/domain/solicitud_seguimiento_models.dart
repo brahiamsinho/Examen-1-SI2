@@ -1,6 +1,7 @@
 // Modelos — GET `/portal/cliente/emergencias/{id}/seguimiento` (CU16–CU18).
 import 'package:flutter/foundation.dart';
 
+import 'solicitud_ai_payload.dart';
 import 'solicitud_emergencia_models.dart';
 
 DateTime _asDateTime(Object? v) {
@@ -104,6 +105,7 @@ class SolicitudSeguimiento {
     this.taller,
     this.tecnico,
     required this.historialEstados,
+    this.aiPayload,
   });
 
   final int solicitudId;
@@ -114,12 +116,14 @@ class SolicitudSeguimiento {
   final TallerSeguimientoRead? taller;
   final TecnicoSeguimientoRead? tecnico;
   final List<SolicitudHistorialEstadoRead> historialEstados;
+  final SolicitudAiPayloadV1? aiPayload;
 
   factory SolicitudSeguimiento.fromJson(Map<String, dynamic> j) {
     return SolicitudSeguimiento(
       solicitudId: j['solicitud_id'] as int,
       estado: EstadoSolicitudEmergencia.parse(j['estado'] as String),
       updatedAt: _asDateTime(j['updated_at']),
+      aiPayload: SolicitudAiPayloadV1.tryParse(j['ai_payload']),
       tiempoEstimadoMin: j['tiempo_estimado_min'] as int?,
       finalizadaAt: j['finalizada_at'] != null ? _asDateTime(j['finalizada_at']) : null,
       taller: j['taller'] != null && j['taller'] is Map<String, dynamic>

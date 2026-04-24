@@ -12,6 +12,8 @@ class ApiConstants {
   static String get login => '${AppEnv.apiBaseUrl}/auth/login';
   static String get logout => '${AppEnv.apiBaseUrl}/auth/logout';
   static String get me => '${AppEnv.apiBaseUrl}/auth/me';
+  static String get authSolicitarRecuperacionContrasena =>
+      '${AppEnv.apiBaseUrl}/auth/solicitar-recuperacion-contrasena';
 
   /// Portal taller (responsable): taller y datos del responsable.
   static String get portalTallerMiTaller => '${AppEnv.apiBaseUrl}/portal/taller/mi-taller';
@@ -22,6 +24,9 @@ class ApiConstants {
 
   static String portalTecnicoEmergenciaUbicacion(int solicitudId) =>
       '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/ubicacion';
+
+  static String portalTecnicoEmergenciaUbicacionTecnico(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/ubicacion-tecnico';
 
   static String portalTecnicoEmergenciaEstado(int solicitudId) =>
       '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/estado';
@@ -46,6 +51,9 @@ class ApiConstants {
   /// Ciclo 2 fase 2 — CU16–CU18 (seguimiento, taller, técnico, ETA).
   static String portalClienteEmergenciaSeguimiento(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/seguimiento';
+
+  static String portalClienteEmergenciaUbicacionTecnico(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/ubicacion-tecnico';
 
   static String portalClienteEmergenciaUbicaciones(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/ubicaciones';
@@ -74,6 +82,8 @@ class ApiConstants {
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos/$pagoId/confirmar-stripe';
 
   static String get portalClienteFcm => '${AppEnv.apiBaseUrl}/portal/cliente/dispositivos/fcm';
+
+  static String get portalTecnicoFcm => '${AppEnv.apiBaseUrl}/portal/tecnico/dispositivos/fcm';
 
   static String get usuarios => '${AppEnv.apiBaseUrl}/usuarios';
   static String get vehiculos => '${AppEnv.apiBaseUrl}/vehiculos';

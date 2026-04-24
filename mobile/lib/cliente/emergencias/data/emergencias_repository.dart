@@ -5,6 +5,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_error.dart';
 import '../domain/solicitud_emergencia_models.dart';
 import '../domain/solicitud_seguimiento_models.dart';
+import '../domain/ubicacion_tecnico_compartida.dart';
 
 final class EmergenciasRepository {
   EmergenciasRepository(this._dio);
@@ -44,6 +45,19 @@ final class EmergenciasRepository {
       final m = res.data;
       if (m == null) throw Exception('Seguimiento no disponible');
       return SolicitudSeguimiento.fromJson(m);
+    } on DioException catch (e) {
+      throw Exception(messageFromDio(e));
+    }
+  }
+
+  Future<UbicacionTecnicoCompartida> fetchUbicacionTecnico(int solicitudId) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        ApiConstants.portalClienteEmergenciaUbicacionTecnico(solicitudId),
+      );
+      final m = res.data;
+      if (m == null) throw Exception('Ubicación no disponible');
+      return UbicacionTecnicoCompartida.fromJson(m);
     } on DioException catch (e) {
       throw Exception(messageFromDio(e));
     }

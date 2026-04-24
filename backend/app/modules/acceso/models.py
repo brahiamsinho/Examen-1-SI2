@@ -128,3 +128,21 @@ class Sesion(Base):
     estado: Mapped[EstadoSesionEnum] = mapped_column(
         SAEnum(EstadoSesionEnum, name="estado_sesion"), nullable=False
     )
+
+
+# ── Tokens email (verificación registro / reset password) ───
+class UsuarioTokenSeguridad(Base):
+    """Tabla usuario_tokens_seguridad — token opaco guardado como SHA-256 hex."""
+
+    __tablename__ = "usuario_tokens_seguridad"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    )
+    tipo: Mapped[str] = mapped_column(String(32), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    usado_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

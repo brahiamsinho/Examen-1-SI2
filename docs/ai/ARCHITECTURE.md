@@ -31,6 +31,7 @@ app/
 │   ├── portal_taller/ ← Portal responsable de taller (mi-taller, técnicos)
 │   ├── portal_taller_emergencias/ ← Ciclo 3 taller: bandeja, disponibilidad, asignación técnico, historial atenciones, comisiones
 │   ├── portal_tecnico_emergencias/ ← Ciclo 3 fase 3: servicios, ubicación, estado, mensajes (técnico)
+│   ├── ai/            ← Inferencia asistida: proxy a worker, reglas, prioridad, integración con emergencias
 │   └── bitacora/      ← Auditoría (solo lectura desde API)
 └── main.py            ← Registro de routers + CORS
 ```
@@ -64,6 +65,10 @@ PostgreSQL             ← tablas + índices + ENUMs
 ## Esquema y migraciones (Docker)
 
 En desarrollo con `docker-compose`, el contenedor Postgres ejecuta los SQL de `backend/migrations/` en orden (`init`, `0002`–`0004`, `0006` como `05_`, ver `docker-compose.yml`). Scripts adicionales en `scripts/` pueden aplicarse a mano en otros entornos; el modelo **debe** coincidir con la BD (ej. `solicitudes_emergencia.tecnico_asignado_at` alineado con `emergencias/models.py`). Volúmenes ya creados no re-ejecutan init: parches idempotentes (`0006`) o `ALTER` manual. Ver `DECISIONS_LOG` **DEC-009**.
+
+## Servicio de inferencia (`ai-inference`)
+
+Contenedor **opcional** (perfil Compose `ai`) definido en `docker-compose.yml`, build desde `services/ai-inference/Dockerfile`. Expone API HTTP interna (p. ej. visión en `/internal/vision/analyze`). El backend usa `AI_INFERENCE_BASE_URL` (p. ej. `http://ai-inference:8080`) y `httpx` para delegar audio/imagen. Override `docker-compose.ai-custom-model.yml` ajusta YOLO a **clasificación** con peso montado desde el host. Ver `DECISIONS_LOG` **DEC-010** y `HANDOFF_LATEST.md`.
 
 ## Patrón de auditoría
 

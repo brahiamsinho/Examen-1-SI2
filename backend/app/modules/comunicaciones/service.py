@@ -6,6 +6,7 @@ import logging
 from typing import Literal
 
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -21,7 +22,7 @@ from app.modules.comunicaciones.schemas import (
 from app.modules.emergencias.models import SolicitudEmergencia
 from app.modules.portal_cliente.service import get_cliente_row_for_usuario, require_cliente_rol
 from app.modules.portal_tecnico.service import get_tecnico_row_for_usuario, require_tecnico_rol
-from app.modules.usuarios.models import Usuario
+from app.modules.usuarios.models import Cliente, Usuario
 
 _log = logging.getLogger(__name__)
 
@@ -77,6 +78,28 @@ async def crear_notificacion_y_push(
     }
     await _notificar_push(db, usuario_destino_id=usuario_destino_id, titulo=titulo, cuerpo=mensaje, data=data)
     return NotificacionRead.model_validate(row)
+
+
+async def notificar_cliente_solicitud_emergencia(
+    db: AsyncSession,
+    *,
+    solicitud: SolicitudEmergencia,
+    tipo: TipoNotificacionEnum,
+    titulo: str,
+    mensaje: str,
+) -> None:
+    res = await db.execute(select(Cliente).where(Cliente.id == solicitud.cliente_id))
+    cli = res.scalar_one_or_none()
+    if cli is None:
+        return
+    await crear_notificacion_y_push(
+        db,
+        usuario_destino_id=cli.usuario_id,
+        solicitud_id=solicitud.id,
+        tipo=tipo,
+        titulo=titulo,
+        mensaje=mensaje,
+    )
 
 
 async def registrar_fcm_token(user: Usuario, body: FcmTokenRegisterIn, db: AsyncSession) -> dict[str, str]:

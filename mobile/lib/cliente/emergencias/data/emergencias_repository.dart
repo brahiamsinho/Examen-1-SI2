@@ -1,4 +1,4 @@
-// Repositorio — consumo del API de emergencias (ciclo 2 fase 1).
+// Repositorio — consumo del API de emergencias.
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -37,7 +37,7 @@ final class EmergenciasRepository {
     }
   }
 
-  /// CU16–CU18: estado, historial, taller, técnico y ETA.
+  /// Estado, historial, taller, técnico y ETA.
   Future<SolicitudSeguimiento> fetchSeguimiento(int solicitudId) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(

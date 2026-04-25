@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_env.dart';
 
-/// Selector de actor: cliente (ciclo 1) / técnico (placeholder).
+/// Selector de actor: cliente / técnico (placeholder).
 class ActorSelectScreen extends StatelessWidget {
   const ActorSelectScreen({super.key});
 
@@ -29,14 +29,14 @@ class ActorSelectScreen extends StatelessWidget {
             const SizedBox(height: 32),
             _ActorCard(
               title: 'Cliente',
-              subtitle: 'Registro, vehículos y perfil (ciclo 1)',
+              subtitle: 'Registro, vehículos y perfil',
               icon: Icons.person_search,
               onTap: () => context.go('/cliente/login'),
             ),
             const SizedBox(height: 16),
             _ActorCard(
               title: 'Técnico / mecánico',
-              subtitle: 'Inicio de sesión, perfil y base operativa (ciclo 1)',
+              subtitle: 'Inicio de sesión, perfil y base operativa',
               icon: Icons.build_circle_outlined,
               accentIcon: true,
               onTap: () => context.go('/tecnico/splash'),

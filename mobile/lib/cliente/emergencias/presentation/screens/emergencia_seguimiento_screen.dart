@@ -52,7 +52,7 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              Text('Tiempo estimado (CU18)', style: Theme.of(context).textTheme.titleMedium),
+              Text('Tiempo estimado', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               EtaLlegadaCard(minutos: s.tiempoEstimadoMin, actualizadoEn: s.updatedAt),
               const SizedBox(height: 20),
@@ -60,7 +60,7 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               SolicitudAiResumenCard(payload: s.aiPayload),
               const SizedBox(height: 24),
-              Text('Taller (CU17)', style: Theme.of(context).textTheme.titleMedium),
+              Text('Taller', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               if (s.taller == null)
                 const _InfoPlaceholder(
@@ -95,7 +95,7 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 24),
-              Text('Historial de estado (CU16)', style: Theme.of(context).textTheme.titleMedium),
+              Text('Historial de estado', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               ShadCard(
                 child: Padding(
@@ -104,7 +104,7 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              Text('Pago del servicio (CU20)', style: Theme.of(context).textTheme.titleMedium),
+              Text('Pago del servicio', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               SolicitudPagoCtaBlock(solicitudId: solicitudId, estado: s.estado),
               const SizedBox(height: 24),

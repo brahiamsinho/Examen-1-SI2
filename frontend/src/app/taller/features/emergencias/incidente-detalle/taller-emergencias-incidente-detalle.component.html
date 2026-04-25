@@ -123,7 +123,7 @@
       </section>
 
       <section class="emg__card emg__card--wide" *ngIf="debeMostrarBloqueAsignacion(detalle)">
-        <h3 class="emg__card-title">Asignación de técnico (CU28)</h3>
+        <h3 class="emg__card-title">Asignación de técnico</h3>
         <p class="emg__muted" *ngIf="loadingAsignData">Cargando técnicos e historial…</p>
         <ng-container *ngIf="!loadingAsignData">
           <p class="emg__text" *ngIf="asignaciones.length">
@@ -180,11 +180,27 @@
 
       <section class="emg__card emg__card--wide">
         <h3 class="emg__card-title">Fotos y audio</h3>
-        <p class="emg__muted">
-          La API actual del detalle de bandeja no incluye URLs de evidencias. Contrato sugerido para fase posterior:
-          <code>GET /api/portal/taller/emergencias/solicitudes/{{ detalle.solicitud_id }}/evidencias</code> devolviendo
-          lista tipada (FOTO | AUDIO, url, created_at).
-        </p>
+        <p class="emg__muted" *ngIf="!evidenciasSafe(detalle).length">No hay fotos ni audios adjuntos en esta solicitud.</p>
+        <div class="emg__media-grid" *ngIf="evidenciasSafe(detalle).length">
+          <figure *ngFor="let ev of evidenciasSafe(detalle)" class="emg__media-item">
+            <ng-container *ngIf="ev.tipo === 'FOTO'; else evAudio">
+              <img
+                [src]="evidenciaSrc(ev.archivo_url)"
+                [alt]="ev.nombre_archivo || 'Evidencia fotográfica'"
+                class="emg__media-img"
+                loading="lazy"
+              />
+              <figcaption class="emg__media-cap">
+                {{ ev.nombre_archivo || 'Foto' }} · {{ ev.created_at | date : 'short' }}
+              </figcaption>
+            </ng-container>
+            <ng-template #evAudio>
+              <p class="emg__text">{{ ev.nombre_archivo || 'Audio' }}</p>
+              <audio [src]="evidenciaSrc(ev.archivo_url)" class="emg__media-audio" controls preload="metadata"></audio>
+              <p class="emg__muted emg__media-cap">{{ ev.created_at | date : 'short' }}</p>
+            </ng-template>
+          </figure>
+        </div>
       </section>
     </div>
   </ng-container>

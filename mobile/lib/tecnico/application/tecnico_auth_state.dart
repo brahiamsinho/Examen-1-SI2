@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../domain/models/tecnico_perfil.dart';
 
-/// Estado de sesión del flujo **técnico / mecánico** (ciclo 1).
+/// Estado de sesión del flujo técnico/mecánico.
 enum TecnicoAuthStatus {
   checking,
   guest,

@@ -12,6 +12,17 @@ export type EstadoSolicitudSeguimiento =
 
 export type EstadoBandejaTaller = 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA' | 'EXPIRADA';
 
+export type TipoEvidenciaSolicitud = 'FOTO' | 'AUDIO';
+
+export interface SolicitudEvidenciaTallerDto {
+  id: number;
+  tipo: TipoEvidenciaSolicitud;
+  archivo_url: string;
+  mime_type: string | null;
+  nombre_archivo: string | null;
+  created_at: string;
+}
+
 export interface BandejaIncidenteBaseDto {
   bandeja_id: number;
   taller_id: number;
@@ -30,6 +41,8 @@ export interface BandejaIncidenteBaseDto {
   latitud: string | null;
   longitud: string | null;
   direccion_referencia: string | null;
+  /** Nivel de prioridad sugerido (IA o reglas), p.ej. ALTA, MEDIA, BAJA. */
+  nivel_prioridad?: string | null;
   /** Pipeline IA (post-crear solicitud): misma forma que almacena el backend. */
   ai_payload?: Record<string, unknown> | null;
 }
@@ -39,6 +52,8 @@ export interface SolicitudBandejaDetalleDto extends BandejaIncidenteBaseDto {
   motivo_rechazo: string | null;
   creado_at: string;
   respondido_at: string | null;
+  /** Fotos y audios adjuntos por el cliente. */
+  evidencias?: SolicitudEvidenciaTallerDto[];
 }
 
 export interface TallerDisponibilidadDto {

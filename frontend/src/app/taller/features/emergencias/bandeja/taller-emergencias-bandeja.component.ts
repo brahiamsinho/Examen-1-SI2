@@ -93,4 +93,36 @@ export class TallerEmergenciasBandejaComponent implements OnInit {
     }
     return fallback;
   }
+
+  /** Código de prioridad (p. ej. ALTA); usa `nivel_prioridad` o `ai_payload.prioridad` como respaldo. */
+  private prioridadCodigo(r: BandejaIncidenteBaseDto): string | null {
+    if (r.nivel_prioridad) return r.nivel_prioridad;
+    const p = r.ai_payload?.['prioridad'];
+    if (p && typeof p === 'object' && 'nivel_prioridad' in p) {
+      const n = (p as { nivel_prioridad?: unknown }).nivel_prioridad;
+      if (typeof n === 'string') return n;
+    }
+    return null;
+  }
+
+  prioridadTexto(r: BandejaIncidenteBaseDto): string | null {
+    const c = this.prioridadCodigo(r);
+    if (!c) return null;
+    const m: Record<string, string> = {
+      ALTA: 'Alta',
+      MEDIA: 'Media',
+      BAJA: 'Baja',
+      REVISION_MANUAL: 'Revisión manual',
+    };
+    return m[c] ?? c;
+  }
+
+  prioridadPillClass(r: BandejaIncidenteBaseDto): string {
+    const c = this.prioridadCodigo(r);
+    if (c === 'ALTA') return 'emg__pill--pri-alta';
+    if (c === 'MEDIA') return 'emg__pill--pri-media';
+    if (c === 'BAJA') return 'emg__pill--pri-baja';
+    if (c === 'REVISION_MANUAL') return 'emg__pill--pri-revision';
+    return 'emg__pill--pri-unknown';
+  }
 }

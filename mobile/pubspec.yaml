@@ -26,7 +26,7 @@ dependencies:
   shared_preferences: ^2.5.5
   flutter_dotenv: ^5.2.1
 
-  # Ciclo 2 — emergencias (CU11–CU15)
+  # Emergencias
   geolocator: ^13.0.2
   permission_handler: ^11.3.1
   image_picker: ^1.1.2

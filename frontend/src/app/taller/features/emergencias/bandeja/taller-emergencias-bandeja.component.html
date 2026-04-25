@@ -1,6 +1,6 @@
 <div class="emg">
   <h2 class="emg__h">Solicitudes disponibles</h2>
-  <p class="emg__lead">Bandeja operativa — emergencias (ciclo 3 · fase 1)</p>
+  <p class="emg__lead">Bandeja operativa — emergencias</p>
 
   <div class="emg__success" *ngIf="successFlash" role="status">
     {{ successFlash }}
@@ -32,6 +32,7 @@
           <th>Solicitud</th>
           <th>Cliente</th>
           <th>Vehículo</th>
+          <th>Prioridad</th>
           <th>Estado</th>
           <th>Registro</th>
           <th>Acciones</th>
@@ -49,6 +50,12 @@
             ><span class="emg__muted" *ngIf="r.marca || r.modelo"
               ><br />{{ r.marca || '' }} {{ r.modelo || '' }}</span
             >
+          </td>
+          <td>
+            <span *ngIf="prioridadTexto(r) as pr; else sinPrio" class="emg__pill" [ngClass]="prioridadPillClass(r)">{{
+              pr
+            }}</span>
+            <ng-template #sinPrio><span class="emg__muted">—</span></ng-template>
           </td>
           <td><span class="emg__pill">{{ r.estado_solicitud }}</span></td>
           <td class="emg__muted" style="font-size: 0.8rem">{{ r.created_at | date : 'short' }}</td>

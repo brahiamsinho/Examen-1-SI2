@@ -1,7 +1,7 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-04-23
+# Fecha: 2026-04-25
 # =========================================================
 
 ## Normativa
@@ -13,6 +13,12 @@
 Plataforma de **emergencias vehiculares**: clientes, talleres, técnicos, auditoría. Stack: **FastAPI + PostgreSQL + Angular 17 + Flutter + Docker**.
 
 ## Cambios recientes (2026-04-23) — Validación completa módulo IA ✅
+
+## Cambios recientes (2026-04-25) — Limpieza de textos UI ✅
+
+- **Frontend Angular:** se removieron referencias internas de planificación en textos visibles (`Ciclo`, `fase`, `CUxx`) en módulos admin/taller para una UX más profesional.
+- **Mobile Flutter:** se removieron etiquetas `CUxx` y `ciclo` en textos de pantallas cliente/técnico (wizard, seguimiento, detalle y selector de actor), más normalización de comentarios descriptivos.
+- **Verificación:** búsqueda global sin coincidencias de `Ciclo\\d`/`CU\\d` en `frontend/src` y `mobile/lib`.
 
 Todos los endpoints del módulo `ai/` fueron probados en Swagger con respuestas **200** correctas:
 

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../domain/models/cliente_mi_perfil.dart';
 
-/// Estado de sesión del **cliente móvil** (ciclo 1).
+/// Estado de sesión del cliente móvil.
 enum ClientAuthStatus {
   /// Restaurando token / perfil al arranque.
   checking,

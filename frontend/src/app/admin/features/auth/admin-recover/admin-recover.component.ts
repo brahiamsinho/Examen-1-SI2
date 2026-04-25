@@ -33,7 +33,7 @@ export class AdminRecoverComponent {
       return;
     }
     this.submitting = true;
-    // Ciclo 1: backend sin flujo de correo; UX de prototipo (confirmación simulada).
+    // Backend sin flujo de correo; UX de prototipo (confirmación simulada).
     setTimeout(() => {
       this.submitting = false;
       this.success = true;

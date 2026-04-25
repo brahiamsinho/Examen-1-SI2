@@ -12,6 +12,7 @@ from app.modules.talleres.models import Taller
 from app.modules.emergencias.models import (
     EstadoSolicitudSeguimientoEnum,
     SolicitudEmergencia,
+    SolicitudEvidencia,
     SolicitudUbicacion,
 )
 from app.modules.pagos.models import Pago
@@ -126,6 +127,18 @@ async def get_bandeja_row(
         )
     )
     return res.scalar_one_or_none()
+
+
+async def list_evidencias_por_solicitud(
+    db: AsyncSession, *, solicitud_id: int
+) -> list[SolicitudEvidencia]:
+    """Fotos y audios asociados a la solicitud (orden cronológico)."""
+    r = await db.execute(
+        select(SolicitudEvidencia)
+        .where(SolicitudEvidencia.solicitud_id == solicitud_id)
+        .order_by(SolicitudEvidencia.created_at.asc())
+    )
+    return list(r.scalars().all())
 
 
 async def get_disponibilidad(

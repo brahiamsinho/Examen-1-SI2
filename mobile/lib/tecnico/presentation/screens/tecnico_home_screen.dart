@@ -8,7 +8,7 @@ import '../../emergencias/application/tecnico_emergencias_providers.dart';
 import '../../emergencias/domain/tecnico_servicio_models.dart';
 import '../../../cliente/emergencias/domain/solicitud_emergencia_models.dart';
 
-/// Home técnico — resumen operativo ciclo 1 (sin casos reales aún).
+/// Home técnico — resumen operativo (sin casos reales aún).
 class TecnicoHomeScreen extends ConsumerWidget {
   const TecnicoHomeScreen({super.key});
 

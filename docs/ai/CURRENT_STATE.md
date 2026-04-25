@@ -1,10 +1,19 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-04-23 — TODOS los endpoints de IA validados en Swagger ✅
+# Última actualización: 2026-04-25 — limpieza de copy UI (sin referencias internas de ciclo/CU) ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA completo ✅
+
+### Ajuste de UX/copy (2026-04-25) ✅
+- [x] Frontend Angular (admin/taller): removidas etiquetas visibles tipo `Ciclo X`, `fase X`, `CUxx` en login, recover, dashboard, shell, permisos/roles, bandeja y detalle.
+- [x] Mobile Flutter (cliente/técnico): removidas etiquetas visibles `CUxx` en wizard/seguimiento/detalle y textos de actor select; comentarios internos y descripciones también normalizados para consistencia.
+
+### Portal taller emergencias — prioridad y evidencias (2026-04-25) ✅
+- [x] **API** `GET /api/portal/taller/emergencias/bandeja/disponibles` y `GET .../bandeja/{id}`: campo `nivel_prioridad` (desde `ai_payload.prioridad.nivel_prioridad`); en detalle, `evidencias[]` (filas de `solicitud_evidencias` para la solicitud).
+- [x] **Angular** bandeja: columna **Prioridad** con chips por nivel; detalle: galería de **fotos** y reproductor **audio** (URLs internas reescritas a ruta `/api/media/evidencias/...` bajo el mismo origen).
+- [x] **Backend** `rechazar_solicitud`: corregida referencia incorrecta a variable `bandeja` al notificar al cliente.
 
 ## Lo que existe
 

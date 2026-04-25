@@ -1,6 +1,6 @@
 <div class="roles">
   <h2 class="roles__h">Gestión de roles</h2>
-  <p class="roles__lead">Catálogo de roles y permisos asociados — ciclo 1</p>
+  <p class="roles__lead">Catálogo de roles y permisos asociados</p>
 
   <div class="roles__alert" *ngIf="error" role="alert">{{ error }}</div>
 
@@ -37,7 +37,7 @@
           <td class="roles__actions">
             <button type="button" class="roles__mini" (click)="openView(r)">Ver</button>
             <button type="button" class="roles__mini" (click)="openPerm(r)">Permisos</button>
-            <button type="button" class="roles__mini roles__mini--disabled" disabled title="No expuesto en API ciclo 1">
+            <button type="button" class="roles__mini roles__mini--disabled" disabled title="No expuesto en la API actual">
               Eliminar
             </button>
           </td>

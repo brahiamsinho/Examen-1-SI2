@@ -18,7 +18,7 @@ class ApiConstants {
   /// Portal taller (responsable): taller y datos del responsable.
   static String get portalTallerMiTaller => '${AppEnv.apiBaseUrl}/portal/taller/mi-taller';
 
-  /// Portal técnico — emergencias (ciclo 3, CU32–CU35).
+  /// Portal técnico — emergencias.
   static String get portalTecnicoEmergenciasServiciosAsignados =>
       '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/servicios-asignados';
 
@@ -34,7 +34,7 @@ class ApiConstants {
   static String portalTecnicoEmergenciaMensajes(int solicitudId) =>
       '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/$solicitudId/mensajes';
 
-  // Portal móvil cliente (ciclo 1)
+  // Portal móvil cliente
   static String get portalClienteRegistro => '${AppEnv.apiBaseUrl}/portal/cliente/registro';
   static String get portalClienteMiPerfil => '${AppEnv.apiBaseUrl}/portal/cliente/mi-perfil';
   static String get portalClienteMisVehiculos => '${AppEnv.apiBaseUrl}/portal/cliente/mis-vehiculos';
@@ -42,13 +42,13 @@ class ApiConstants {
   static String portalClienteMisVehiculo(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/mis-vehiculos/$id';
 
-  /// Ciclo 2 fase 1 — solicitudes de emergencia (cliente autenticado).
+  /// Solicitudes de emergencia (cliente autenticado).
   static String get portalClienteEmergencias => '${AppEnv.apiBaseUrl}/portal/cliente/emergencias';
 
   static String portalClienteEmergencia(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id';
 
-  /// Ciclo 2 fase 2 — CU16–CU18 (seguimiento, taller, técnico, ETA).
+  /// Seguimiento, taller, técnico y ETA.
   static String portalClienteEmergenciaSeguimiento(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/seguimiento';
 
@@ -64,7 +64,7 @@ class ApiConstants {
   static String portalClienteEmergenciaEvidenciasArchivo(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/evidencias/archivo';
 
-  /// Ciclo 2 fase 3 — CU19 notificaciones, CU21 mensajes, FCM.
+  /// Notificaciones, mensajes y FCM.
   static String get portalClienteNotificaciones =>
       '${AppEnv.apiBaseUrl}/portal/cliente/notificaciones';
 
@@ -74,7 +74,7 @@ class ApiConstants {
   static String portalClienteEmergenciaMensajes(int solicitudId) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/mensajes';
 
-  /// Ciclo 2 fase 4 — CU20 pagos por solicitud.
+  /// Pagos por solicitud.
   static String portalClienteEmergenciaPagos(int solicitudId) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos';
 

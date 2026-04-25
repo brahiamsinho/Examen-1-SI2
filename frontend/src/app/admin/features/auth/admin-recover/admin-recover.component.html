@@ -4,7 +4,7 @@
     <header class="recover__brand">
       <p class="recover__eyebrow">EMERGENCIASVIALES</p>
       <h1 class="recover__title">Restablecer contraseña</h1>
-      <p class="recover__subtitle">Administrador web — ciclo 1</p>
+      <p class="recover__subtitle">Administrador web</p>
     </header>
 
     <section class="recover__card" aria-labelledby="recover-heading">
@@ -16,7 +16,7 @@
 
       <div class="recover__alert recover__alert--error" *ngIf="errorMsg" role="alert">{{ errorMsg }}</div>
       <div class="recover__alert recover__alert--ok" *ngIf="success" role="status">
-        Si el correo existe en el sistema, recibirás instrucciones. (Prototipo ciclo 1: sin envío real aún.)
+        Si el correo existe en el sistema, recibirás instrucciones. (Sin envío real de correo aún.)
       </div>
 
       <form class="recover__form" [formGroup]="form" (ngSubmit)="submit()" *ngIf="!success" novalidate>
@@ -38,6 +38,6 @@
       <a routerLink="/admin" class="recover__back">← Volver al inicio de sesión</a>
     </section>
 
-    <footer class="recover__footer">© 2026 EmergenciasViales — Administrador web — Ciclo 1</footer>
+    <footer class="recover__footer">© 2026 EmergenciasViales — Administrador web</footer>
   </main>
 </div>

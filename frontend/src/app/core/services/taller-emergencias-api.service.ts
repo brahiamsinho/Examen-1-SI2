@@ -42,7 +42,7 @@ export class TallerEmergenciasApiService {
     return this.http.put<TallerDisponibilidadDto>(`${this.base}/disponibilidad`, body);
   }
 
-  /** CU28 — asignar o reasignar técnico a la solicitud. */
+  /** Asignar o reasignar técnico a la solicitud. */
   asignarTecnico(solicitudId: number, body: AsignarTecnicoPayload): Observable<AsignarTecnicoResultDto> {
     return this.http.post<AsignarTecnicoResultDto>(
       `${this.base}/solicitudes/${solicitudId}/asignar-tecnico`,

@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum
+from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum, TipoEvidenciaSolicitudEnum
 from app.modules.pagos.models import EstadoPagoEnum
 from app.modules.portal_taller_emergencias.models import (
     EstadoAsignacionTecnicoEnum,
@@ -40,6 +40,23 @@ class BandejaIncidenteBaseRead(BaseModel):
         None,
         description="Pipeline IA (clasificación, prioridad, resumen) asociado a la solicitud.",
     )
+    nivel_prioridad: str | None = Field(
+        default=None,
+        description="Nivel de prioridad sugerido (IA o reglas), p.ej. ALTA, MEDIA, BAJA, REVISION_MANUAL.",
+    )
+
+
+class SolicitudEvidenciaTallerRead(BaseModel):
+    """Evidencia foto/audio asociada a la solicitud (lectura taller)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    tipo: TipoEvidenciaSolicitudEnum
+    archivo_url: str
+    mime_type: str | None
+    nombre_archivo: str | None
+    created_at: datetime
 
 
 class SolicitudBandejaDetalleRead(BandejaIncidenteBaseRead):
@@ -47,6 +64,7 @@ class SolicitudBandejaDetalleRead(BandejaIncidenteBaseRead):
     motivo_rechazo: str | None
     creado_at: datetime
     respondido_at: datetime | None
+    evidencias: list[SolicitudEvidenciaTallerRead] = Field(default_factory=list)
 
 
 class TallerDisponibilidadRead(BaseModel):

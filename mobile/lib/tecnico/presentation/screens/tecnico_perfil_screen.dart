@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/tecnico_auth_provider.dart';
 
-/// Perfil técnico — lectura ciclo 1; edición preparada (sin persistencia aún).
+/// Perfil técnico en lectura; edición preparada (sin persistencia aún).
 class TecnicoPerfilScreen extends ConsumerWidget {
   const TecnicoPerfilScreen({super.key});
 

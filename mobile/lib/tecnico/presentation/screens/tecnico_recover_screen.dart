@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-/// CU4 — Restablecer contraseña (flujo informativo ciclo 1; backend según despliegue).
+/// Restablecer contraseña (flujo informativo; backend según despliegue).
 class TecnicoRecoverScreen extends StatefulWidget {
   const TecnicoRecoverScreen({super.key});
 

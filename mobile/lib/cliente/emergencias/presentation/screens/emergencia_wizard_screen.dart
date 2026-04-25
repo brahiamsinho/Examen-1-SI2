@@ -423,7 +423,7 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
         ];
       case 1:
         return [
-          Text('Paso 2 — Ubicación (CU12)', style: Theme.of(context).textTheme.titleMedium),
+          Text('Paso 2 — Ubicación', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             'Enviá tu posición al servidor. «Ver en mapa» usa OpenStreetMap solo en el teléfono; '
@@ -447,7 +447,7 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
       case 2:
         final uReg = _ultimaUbicacionRegistrada;
         return [
-          Text('Paso 3 — Foto (CU13)', style: Theme.of(context).textTheme.titleMedium),
+          Text('Paso 3 — Foto', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             'Elegí de la galería o sacá una foto: se sube al servidor y queda asociada a la solicitud. '
@@ -491,7 +491,7 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
         ];
       case 3:
         return [
-          Text('Paso 4 — Audio (CU14)', style: Theme.of(context).textTheme.titleMedium),
+          Text('Paso 4 — Audio', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             _recording
@@ -522,7 +522,7 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
         ];
       case 4:
         return [
-          Text('Paso 5 — Texto adicional (CU15)', style: Theme.of(context).textTheme.titleMedium),
+          Text('Paso 5 — Texto adicional', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             'Completá o ajustá el relato. Podés dejar vacío para omitir cambios.',

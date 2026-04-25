@@ -86,7 +86,7 @@ class EmergenciaDetalleScreen extends ConsumerWidget {
                 child: Text(d.tecnicoId != null ? 'Chat con el técnico' : 'Chat (se habilita con técnico asignado)'),
               ),
               const SizedBox(height: 20),
-              Text('Pago (CU20)', style: Theme.of(context).textTheme.titleMedium),
+              Text('Pago', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               SolicitudPagoCtaBlock(solicitudId: solicitudId, estado: d.estado),
               const SizedBox(height: 12),

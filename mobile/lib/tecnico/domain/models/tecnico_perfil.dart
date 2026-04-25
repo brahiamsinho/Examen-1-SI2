@@ -1,6 +1,6 @@
 import 'auth_me.dart';
 
-/// Perfil agregado para UI técnico / responsable (ciclo 1).
+/// Perfil agregado para UI técnico/responsable.
 final class TecnicoPerfil {
   const TecnicoPerfil({
     required this.usuarioId,

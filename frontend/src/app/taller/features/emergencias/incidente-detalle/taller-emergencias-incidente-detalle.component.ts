@@ -9,6 +9,7 @@ import { TallerAuthService } from '../../../../core/services/taller-auth.service
 import type {
   AsignacionTecnicoDto,
   SolicitudBandejaDetalleDto,
+  SolicitudEvidenciaTallerDto,
 } from '../../../../core/models/taller-emergencias.models';
 import type { TecnicoPortalDto } from '../../../../core/models/taller-api.models';
 
@@ -217,6 +218,29 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
     const h = (d.ai_payload as Record<string, unknown>)['hallazgos_vision'];
     if (!Array.isArray(h)) return [];
     return h.map((x) => String(x));
+  }
+
+  /** Lista segura (evita undefined si el backend aún no envía el campo). */
+  evidenciasSafe(d: SolicitudBandejaDetalleDto | null): SolicitudEvidenciaTallerDto[] {
+    if (!d?.evidencias?.length) return [];
+    return d.evidencias;
+  }
+
+  /**
+   * Las URLs se guardan con el host del backend; en el navegador se sirve por el mismo sitio bajo /api/...
+   */
+  evidenciaSrc(url: string): string {
+    if (!url) return '';
+    if (url.startsWith('/')) return url;
+    try {
+      const u = new URL(url);
+      if (u.pathname.includes('/media/evidencias/')) {
+        return u.pathname + (u.search || '');
+      }
+    } catch {
+      /* no absoluta */
+    }
+    return url;
   }
 
   openAceptar(): void {

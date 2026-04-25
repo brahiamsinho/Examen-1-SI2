@@ -1,7 +1,7 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-04-23 — módulo IA 100% validado, stack operativo
+# Actualizado: 2026-04-25 — limpieza de copy UI aplicada
 # =========================================================
 
 ## ALTA — Entorno listo en 5 min
@@ -51,3 +51,4 @@
 
 - ~~`flutter create` / `ng new`~~ — proyectos ya inicializados.
 - ~~Alembic baseline~~ — configurado; usar `alembic stamp` / `upgrade` según doc del README raíz.
+- ~~Remover etiquetas internas `Ciclo` / `CUxx` en frontend/mobile~~ — aplicado en vistas y copys visibles.

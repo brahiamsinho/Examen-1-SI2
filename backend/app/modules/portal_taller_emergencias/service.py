@@ -31,6 +31,7 @@ from app.modules.portal_taller_emergencias.schemas import (
     RechazarBandejaIn,
     ResumenComisionesRead,
     SolicitudBandejaDetalleRead,
+    SolicitudEvidenciaTallerRead,
     TallerDisponibilidadRead,
     TallerDisponibilidadUpdateIn,
 )
@@ -41,19 +42,38 @@ from app.modules.usuarios.models import Usuario
 _BASE_KEYS = frozenset(BandejaIncidenteBaseRead.model_fields.keys())
 
 
+def _extract_nivel_prioridad(ai_payload: dict | None) -> str | None:
+    if not ai_payload or not isinstance(ai_payload, dict):
+        return None
+    pr = ai_payload.get("prioridad")
+    if not isinstance(pr, dict):
+        return None
+    n = pr.get("nivel_prioridad")
+    return n if isinstance(n, str) else None
+
+
+def _enrich_row(row: dict) -> dict:
+    r = dict(row)
+    r["nivel_prioridad"] = _extract_nivel_prioridad(r.get("ai_payload"))
+    return r
+
+
 def _row_to_list_item(row: dict) -> BandejaIncidenteBaseRead:
-    slim = {k: row[k] for k in _BASE_KEYS if k in row}
+    r = _enrich_row(row)
+    slim = {k: r[k] for k in _BASE_KEYS if k in r}
     return BandejaIncidenteBaseRead.model_validate(slim)
 
 
-def _row_to_detalle(row: dict) -> SolicitudBandejaDetalleRead:
-    slim = {k: row[k] for k in _BASE_KEYS if k in row}
+def _row_to_detalle(row: dict, evidencias: list) -> SolicitudBandejaDetalleRead:
+    r = _enrich_row(row)
+    slim = {k: r[k] for k in _BASE_KEYS if k in r}
     return SolicitudBandejaDetalleRead(
         **slim,
         estado_bandeja=row["estado_bandeja"],
         motivo_rechazo=row.get("motivo_rechazo"),
         creado_at=row["bandeja_creado_at"],
         respondido_at=row.get("respondido_at"),
+        evidencias=[SolicitudEvidenciaTallerRead.model_validate(x) for x in evidencias],
     )
 
 
@@ -76,7 +96,8 @@ async def obtener_detalle_bandeja(
     row = await repository.get_bandeja_detalle_por_taller(db, bandeja_id=bandeja_id, taller_id=taller_id)
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entrada de bandeja no encontrada")
-    return _row_to_detalle(row)
+    evs = await repository.list_evidencias_por_solicitud(db, solicitud_id=row["solicitud_id"])
+    return _row_to_detalle(row, evs)
 
 
 async def obtener_disponibilidad(taller_id: int, db: AsyncSession) -> TallerDisponibilidadRead:
@@ -153,17 +174,19 @@ async def rechazar_solicitud(
         usuario_id=user.id,
         entidad_id=bandeja_id,
     )
-    se_r = await db.execute(
-        select(SolicitudEmergencia).where(SolicitudEmergencia.id == bandeja.solicitud_id)
-    )
-    if (se_n := se_r.scalar_one_or_none()) is not None:
-        await comunicaciones_service.notificar_cliente_solicitud_emergencia(
-            db,
-            solicitud=se_n,
-            tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
-            titulo="Actualización de emergencia",
-            mensaje="Un taller no pudo aceptar tu solicitud. Revisa el estado de tu caso en la app.",
+    b_row = await repository.get_bandeja_row(db, bandeja_id=bandeja_id, taller_id=taller_id)
+    if b_row is not None:
+        se_r = await db.execute(
+            select(SolicitudEmergencia).where(SolicitudEmergencia.id == b_row.solicitud_id)
         )
+        if (se_n := se_r.scalar_one_or_none()) is not None:
+            await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+                db,
+                solicitud=se_n,
+                tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+                titulo="Actualización de emergencia",
+                mensaje="Un taller no pudo aceptar tu solicitud. Revisa el estado de tu caso en la app.",
+            )
     return await obtener_detalle_bandeja(taller_id, bandeja_id, db)
 
 

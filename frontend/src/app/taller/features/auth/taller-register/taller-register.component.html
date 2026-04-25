@@ -5,7 +5,7 @@
     <header class="taller-reg__brand">
       <p class="taller-reg__eyebrow">EMERGENCIASVIALES</p>
       <h1 class="taller-reg__title">Registrar taller</h1>
-      <p class="taller-reg__subtitle">Taller web — ciclo 1</p>
+      <p class="taller-reg__subtitle">Taller web</p>
     </header>
 
     <section class="taller-reg__card" aria-labelledby="reg-title">
@@ -83,7 +83,7 @@
         <p class="taller-reg__err" *ngIf="form.errors?.['mismatch'] && form.touched">Las contraseñas no coinciden.</p>
         <label class="taller-reg__check">
           <input type="checkbox" formControlName="terms" />
-          <span>Acepto los términos del servicio (prototipo ciclo 1).</span>
+          <span>Acepto los términos del servicio.</span>
         </label>
         <button class="taller-reg__submit" type="submit" [disabled]="submitting">
           {{ submitting ? 'Registrando…' : 'Registrar taller' }}
@@ -98,6 +98,6 @@
       </form>
     </section>
 
-    <footer class="taller-reg__footer">© 2026 EmergenciasViales — Taller web — Ciclo 1</footer>
+    <footer class="taller-reg__footer">© 2026 EmergenciasViales — Taller web</footer>
   </main>
 </div>

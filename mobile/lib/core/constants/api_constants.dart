@@ -61,6 +61,9 @@ class ApiConstants {
   static String portalClienteEmergenciaEvidencias(int id) =>
       '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/evidencias';
 
+  static String portalClienteEmergenciaEvidenciasArchivo(int id) =>
+      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/evidencias/archivo';
+
   /// Ciclo 2 fase 3 — CU19 notificaciones, CU21 mensajes, FCM.
   static String get portalClienteNotificaciones =>
       '${AppEnv.apiBaseUrl}/portal/cliente/notificaciones';

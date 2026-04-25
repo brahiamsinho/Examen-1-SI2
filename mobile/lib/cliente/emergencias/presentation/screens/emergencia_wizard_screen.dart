@@ -1,6 +1,4 @@
 // Asistente CU11–CU15: crear solicitud, ubicación, foto, audio, texto y confirmación.
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,7 +12,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../application/vehiculos_providers.dart';
 import '../../application/emergencias_providers.dart';
 import '../../data/emergencias_repository.dart';
-import '../../data/optional_public_upload_service.dart';
 import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/emergencia_ubicacion_osm_map.dart';
 
@@ -81,7 +78,6 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
   }
 
   EmergenciasRepository get _repo => ref.read(emergenciasRepositoryProvider);
-  OptionalPublicUploadService get _upload => ref.read(optionalPublicUploadServiceProvider);
 
   Future<bool> _ensureLocationReady() async {
     final svc = await Geolocator.isLocationServiceEnabled();
@@ -201,7 +197,6 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
       path: x.path,
       mime: _mimeFromPath(x.path),
       nombre: x.name,
-      tamano: await x.length(),
     );
   }
 
@@ -221,7 +216,6 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
       path: x.path,
       mime: _mimeFromPath(x.path),
       nombre: x.name,
-      tamano: await x.length(),
     );
   }
 
@@ -231,33 +225,21 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
     required String path,
     required String mime,
     required String nombre,
-    required int tamano,
   }) async {
     await _guard(() async {
-      String url;
-      try {
-        url = await _upload.uploadFile(filePath: path, filename: nombre, mimeType: mime);
-      } catch (_) {
-        if (!mounted) return;
-        final manual = await _pedirUrlHttps(titulo: 'URL de la foto');
-        if (manual == null || manual.isEmpty) return;
-        url = manual;
-      }
-      final d = await _repo.postEvidencia(
+      final d = await _repo.postEvidenciaArchivo(
         sid,
         tipoApi: tipoApi,
-        archivoUrl: url,
-        mimeType: mime.startsWith('application/') ? null : mime,
-        nombreArchivo: nombre,
-        tamanoBytes: tamano,
+        filePath: path,
+        filename: nombre.isNotEmpty ? nombre : 'foto.jpg',
+        mimeType: mime == 'application/octet-stream' ? null : mime,
       );
+      if (!mounted) return;
       setState(() {
         _detail = d;
         _step = 3;
       });
-      if (mounted) {
-        _toast('Foto registrada.');
-      }
+      _toast('Foto registrada.');
     });
   }
 
@@ -285,66 +267,21 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
     final path = await _recorder.stop();
     setState(() => _recording = false);
     if (path == null || path.isEmpty) return;
-    final file = File(path);
-    final len = await file.length();
     await _guard(() async {
-      String url;
-      try {
-        url = await _upload.uploadFile(
-          filePath: path,
-          filename: 'audio.m4a',
-          mimeType: 'audio/mp4',
-        );
-      } catch (_) {
-        if (!mounted) return;
-        final manual = await _pedirUrlHttps(titulo: 'URL del audio');
-        if (manual == null || manual.isEmpty) return;
-        url = manual;
-      }
-      final d = await _repo.postEvidencia(
+      final d = await _repo.postEvidenciaArchivo(
         sid,
         tipoApi: 'AUDIO',
-        archivoUrl: url,
+        filePath: path,
+        filename: 'grabacion.m4a',
         mimeType: 'audio/mp4',
-        nombreArchivo: 'grabacion.m4a',
-        tamanoBytes: len,
       );
+      if (!mounted) return;
       setState(() {
         _detail = d;
         _step = 4;
       });
-      if (mounted) {
-        _toast('Audio registrado.');
-      }
+      _toast('Audio registrado.');
     });
-  }
-
-  Future<String?> _pedirUrlHttps({required String titulo}) async {
-    final dialogCtx = _scaffoldBodyContext ?? context;
-    final ctrl = TextEditingController();
-    final r = await showDialog<String>(
-      context: dialogCtx,
-      builder: (ctx) => AlertDialog(
-        title: Text(titulo),
-        content: TextField(
-          controller: ctrl,
-          keyboardType: TextInputType.url,
-          decoration: const InputDecoration(
-            hintText: 'https://…',
-            helperText: 'El backend solo acepta enlaces HTTPS públicos.',
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Usar enlace'),
-          ),
-        ],
-      ),
-    );
-    ctrl.dispose();
-    return r;
   }
 
   Future<void> _enviarFotoPorUrlManual() async {
@@ -513,7 +450,8 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
           Text('Paso 3 — Foto (CU13)', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            'Elegí una imagen o pegá un enlace HTTPS si el archivo ya está en la nube. Si configuraste FILE_UPLOAD_URL, se intentará subir automáticamente.',
+            'Elegí de la galería o sacá una foto: se sube al servidor y queda asociada a la solicitud. '
+            'Si ya tenés la imagen en un bucket, podés pegar una URL HTTPS abajo.',
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           if (uReg != null) ...[
@@ -558,7 +496,7 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
           Text(
             _recording
                 ? 'Grabando… tocá «Detener y subir» para finalizar.'
-                : 'Tocá «Grabar» para iniciar; tocá de nuevo para detener y enviar.',
+                : 'Tocá «Grabar» para iniciar; tocá de nuevo para detener y subir el audio al servidor.',
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),

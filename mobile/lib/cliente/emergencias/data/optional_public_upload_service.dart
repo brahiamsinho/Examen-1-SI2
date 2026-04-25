@@ -1,4 +1,4 @@
-// Subida opcional a FILE_UPLOAD_URL (sin JWT del API principal).
+// Subida opcional a FILE_UPLOAD_URL (CDN propio; el asistente de emergencias usa el API directamente).
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 

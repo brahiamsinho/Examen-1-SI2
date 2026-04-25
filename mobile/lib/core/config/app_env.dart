@@ -44,8 +44,8 @@ final class AppEnv {
     return Duration(seconds: (s ?? 30).clamp(5, 300));
   }
 
-  /// Opcional — subida de archivos (foto/audio) a un endpoint que devuelva JSON `{"url":"https://..."}`.
-  /// Sin esto, el flujo de evidencias usa enlace HTTPS pegado manualmente (API del backend).
+  /// Opcional — subida previa a un CDN propio (JSON `{"url":"https://..."}`). El flujo normal
+  /// sube foto/audio al propio API (`POST .../evidencias/archivo`); esto solo sirve si integrás otro bucket.
   static String? get fileUploadUrl {
     final u = dotenv.env['FILE_UPLOAD_URL']?.trim();
     if (u == null || u.isEmpty) return null;

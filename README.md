@@ -292,6 +292,9 @@ cp mobile/.env.example mobile/.env   # editar API_BASE_URL
 # 2. Levantar el stack (con IA + modelo custom)
 docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build
 
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up
+ -d --build --force-recreate ai-inference
+
 # 3. Esperar a que Postgres esté healthy, luego correr seeds
 docker compose exec backend python -m app.seeds
 
@@ -303,8 +306,15 @@ docker compose exec backend python -m app.seeds
 
 1
 docker compose down -v --rmi all
+
+docker compose --profile ai -f docker-compose.yml -f docker-compose.override.yml down -v --rmi all
 2
 docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build --force-recreate ai-inference
+
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml --profile ai up -d --build
+
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build
+
 3
 docker compose exec backend alembic current
 4

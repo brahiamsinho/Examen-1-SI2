@@ -67,6 +67,9 @@ logs/
 # Para entregar documentación o docs/ai al equipo, comenta o borra este bloque.
 
 
+# Evidencias (foto/audio) guardadas por el API en disco
+backend/uploads/
+
 # Pesos IA (grandes; el entrenamiento en Colab genera .pt en backend/)
 # Para usar el modelo: descargarlo de Drive/Colab y colocarlo en backend/
 backend/*.pt

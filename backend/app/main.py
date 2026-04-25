@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 
@@ -132,6 +133,15 @@ app.include_router(comunicaciones_tecnico_router, prefix=PREFIX)
 app.include_router(portal_tecnico_emergencias_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 app.include_router(ai_router, prefix=PREFIX)
+
+# Archivos de evidencia (foto/audio) servidos en HTTPS/HTTP según el entorno.
+_evid_dir = settings.evidencias_upload_dir
+_evid_dir.mkdir(parents=True, exist_ok=True)
+app.mount(
+    f"{PREFIX}/media/evidencias",
+    StaticFiles(directory=str(_evid_dir)),
+    name="evidencias_media",
+)
 
 
 # ── Health check ─────────────────────────────────────────────

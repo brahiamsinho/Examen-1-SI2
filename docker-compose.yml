@@ -107,6 +107,8 @@ services:
       PAGO_PROVEEDOR_DEFAULT: ${PAGO_PROVEEDOR_DEFAULT:-SIMULADO}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      EVIDENCIAS_PUBLIC_BASE_URL: ${EVIDENCIAS_PUBLIC_BASE_URL:-}
+      EVIDENCIA_MAX_UPLOAD_BYTES: ${EVIDENCIA_MAX_UPLOAD_BYTES:-15728640}
       SMTP_HOST: ${SMTP_HOST:-mailhog}
       SMTP_PORT: ${SMTP_PORT:-1025}
       SMTP_USE_TLS: ${SMTP_USE_TLS:-false}
@@ -142,6 +144,7 @@ services:
       retries: 3
     volumes:
       - ./backend/firebase-credentials.json:/app/firebase-credentials.json:ro
+      - ./backend/uploads:/app/uploads
 
 
   ai-inference:

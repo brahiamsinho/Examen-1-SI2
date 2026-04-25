@@ -1,7 +1,7 @@
 # API REST — actor Cliente (JWT + perfil cliente + permisos incidentes/ubicación/evidencias)
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -10,6 +10,7 @@ from app.modules.portal_cliente.service import get_cliente_row_for_usuario, requ
 from app.modules.usuarios.models import Usuario
 
 from . import service
+from .models import TipoEvidenciaSolicitudEnum
 from .schemas import (
     EvidenciaCreateIn,
     SolicitudEmergenciaCreateIn,
@@ -137,6 +138,33 @@ async def enviar_ubicacion(
     """CU12 — tiempo real vía polling o envíos repetidos desde el móvil."""
     cid = await _cliente_id(current_user, db)
     return await service.agregar_ubicacion(current_user, cid, solicitud_id, body, db)
+
+
+@router.post(
+    "/{solicitud_id}/evidencias/archivo",
+    response_model=SolicitudEmergenciaDetailRead,
+    dependencies=[Depends(require_permission("evidencias:crear"))],
+)
+async def adjuntar_evidencia_archivo(
+    solicitud_id: int,
+    request: Request,
+    tipo: str = Form(..., description="FOTO o AUDIO"),
+    file: UploadFile = File(...),
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU13/CU14 — sube foto o audio al propio API (sin URL externa obligatoria)."""
+    try:
+        tipo_e = TipoEvidenciaSolicitudEnum(tipo.strip().upper())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="tipo debe ser FOTO o AUDIO",
+        ) from None
+    cid = await _cliente_id(current_user, db)
+    return await service.agregar_evidencia_archivo(
+        current_user, cid, solicitud_id, request, tipo_e, file, db
+    )
 
 
 @router.post(

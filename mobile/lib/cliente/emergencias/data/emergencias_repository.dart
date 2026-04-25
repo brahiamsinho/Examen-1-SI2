@@ -1,5 +1,6 @@
 // Repositorio — consumo del API de emergencias (ciclo 2 fase 1).
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_error.dart';
@@ -117,6 +118,37 @@ final class EmergenciasRepository {
           if (direccionReferencia != null) 'direccion_referencia': direccionReferencia,
           'es_actual': esActual,
         },
+      );
+      final m = res.data;
+      if (m == null) throw Exception('Respuesta vacía');
+      return SolicitudEmergenciaDetail.fromJson(m);
+    } on DioException catch (e) {
+      throw Exception(messageFromDio(e));
+    }
+  }
+
+  /// Subida directa al API (multipart). Preferido frente a [postEvidencia] con URL externa.
+  Future<SolicitudEmergenciaDetail> postEvidenciaArchivo(
+    int solicitudId, {
+    required String tipoApi,
+    required String filePath,
+    required String filename,
+    String? mimeType,
+  }) async {
+    try {
+      final form = FormData.fromMap({
+        'tipo': tipoApi,
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: filename,
+          contentType: mimeType != null && mimeType.isNotEmpty
+              ? MediaType.parse(mimeType)
+              : null,
+        ),
+      });
+      final res = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.portalClienteEmergenciaEvidenciasArchivo(solicitudId),
+        data: form,
       );
       final m = res.data;
       if (m == null) throw Exception('Respuesta vacía');

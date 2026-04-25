@@ -219,6 +219,7 @@ class SolicitudEmergenciaListItem {
   final int? tecnicoId;
   final int? tiempoEstimadoMin;
   final DateTime? finalizadaAt;
+  final SolicitudAiPayloadV1? aiPayload;
 
   factory SolicitudEmergenciaListItem.fromJson(Map<String, dynamic> j) {
     return SolicitudEmergenciaListItem(
@@ -233,6 +234,7 @@ class SolicitudEmergenciaListItem {
       tecnicoId: j['tecnico_id'] as int?,
       tiempoEstimadoMin: j['tiempo_estimado_min'] as int?,
       finalizadaAt: j['finalizada_at'] != null ? _asDateTime(j['finalizada_at']) : null,
+      aiPayload: SolicitudAiPayloadV1.tryParse(j['ai_payload']),
     );
   }
 }

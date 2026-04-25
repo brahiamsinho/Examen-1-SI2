@@ -143,5 +143,15 @@ class Settings(BaseSettings):
     # Si true, no llama al worker: útil en tests o sin contenedor IA.
     AI_INFERENCE_STUB: bool = False
 
+    # Evidencias CU13/CU14 — subida directa al API (multipart). URL pública del fichero (IA / taller).
+    # Si es None, se usa el Host de cada petición (útil en dev). En Docker, a veces hace falta
+    # `http://emergencias_backend:8000` para que el propio backend pueda descargar el archivo.
+    EVIDENCIAS_PUBLIC_BASE_URL: str | None = None
+    EVIDENCIA_MAX_UPLOAD_BYTES: int = 15 * 1024 * 1024
+
+    @property
+    def evidencias_upload_dir(self) -> Path:
+        return _BACKEND_DIR / "uploads" / "evidencias"
+
 
 settings = Settings()

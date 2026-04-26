@@ -153,6 +153,19 @@
             <ng-template #sinTecnicos>
               <p class="emg__muted">No hay técnicos activos en el taller. Registrá uno en <a routerLink="/taller/panel/tecnicos" class="emg__link">Técnicos</a>.</p>
             </ng-template>
+            <label class="emg__lbl" for="emg-eta-min">Tiempo estimado de llegada (minutos, opcional)</label>
+            <input
+              id="emg-eta-min"
+              type="number"
+              class="emg__select"
+              style="max-width: 8rem"
+              min="1"
+              max="10080"
+              [disabled]="busy"
+              [(ngModel)]="tiempoEstimadoMin"
+              placeholder="p. ej. 25"
+            />
+            <p class="emg__muted" style="margin-top: 0.25rem">Se muestra al cliente en la app móvil como ETA.</p>
             <label class="emg__lbl" for="emg-obs-asig">Observación (opcional)</label>
             <textarea
               id="emg-obs-asig"

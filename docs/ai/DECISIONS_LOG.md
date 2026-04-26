@@ -79,3 +79,13 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-04-23  
 **Decisión:** Se validaron los 6 endpoints del módulo `ai/` en Swagger con respuestas 200, incluyendo `/assignment/rank` que consulta la BD y retorna score compuesto (proximidad + especialidad + prioridad + carga).  
 **Por qué:** Confirma que el diseño híbrido (worker para cómputo pesado + reglas en backend para lógica de producto) es correcto y funcional. Los scores del ranker de talleres son explicables campo a campo, lo que facilita debugging y ajuste de pesos sin reentrenar modelos.
+
+## DEC-014 — Dockerfiles sin `syntax=` ni `RUN --mount=cache` (estabilidad Windows)
+**Fecha:** 2026-04-25  
+**Decisión:** En `backend/Dockerfile` y `frontend/Dockerfile`, quitar la directiva `# syntax=docker/dockerfile:1` y reemplazar `RUN --mount=type=cache` por `RUN` lineal (pip / npm).  
+**Por qué:** En Docker Desktop sobre Windows, BuildKit a veces falla con `failed to solve: frontend grpc server closed unexpectedly` al usar el frontend externo o mounts de caché; el Dockerfile en vanilla BuildKit basta para multi-stage. Coste: builds algo más lentos (sin caché compartida de pip/npm en el mount); beneficio: menos dependencia del daemon y del pull de `docker/dockerfile:1`.
+
+## DEC-015 — Fusión multimodal v1 para incidentes compuestos
+**Fecha:** 2026-04-25  
+**Decisión:** Para Fase 1, mantener el worker actual por evidencia (`audio/image`) y resolver incidentes compuestos en backend con un **fusionador multimodal por reglas ponderadas** (`backend/app/modules/ai/services/evidence_fusion.py`), soportando múltiples fotos y múltiples transcripciones sin romper endpoints existentes.  
+**Por qué:** Permite entregar valor inmediato (multi-daño explicable, prioridad más robusta, conflicto detectable) sin introducir complejidad de entrenamiento/serving adicional en esta iteración. Deja base limpia para fase multi-label entrenada en siguiente ciclo.

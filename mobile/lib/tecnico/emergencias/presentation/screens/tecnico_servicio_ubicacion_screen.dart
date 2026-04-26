@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../cliente/emergencias/presentation/widgets/emergencia_ubicacion_osm_map.dart';
+import '../../../../core/utils/bolivia_time.dart';
 import '../../application/tecnico_emergencias_providers.dart';
 
 /// CU33 — ubicación actual del cliente (solo solicitud asignada al técnico).
@@ -12,8 +12,6 @@ class TecnicoServicioUbicacionScreen extends ConsumerWidget {
   const TecnicoServicioUbicacionScreen({super.key, required this.solicitudId});
 
   final int solicitudId;
-
-  static final _fmt = DateFormat('dd/MM/yyyy HH:mm');
 
   Future<void> _abrirNavegacionExterna(double lat, double lng) async {
     final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
@@ -71,7 +69,7 @@ class TecnicoServicioUbicacionScreen extends ConsumerWidget {
               ],
               const SizedBox(height: 8),
               Text(
-                'Registrado: ${u.registradoAt.isUtc ? _fmt.format(u.registradoAt.toLocal()) : _fmt.format(u.registradoAt)}',
+                'Registrado: ${BoliviaTime.formatWithZone(u.registradoAt)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),

@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1
-# Backend FastAPI — multi-stage, slim bookworm, pip cache mount
+# Backend FastAPI — multi-stage, slim bookworm
+# Sin # syntax= ni --mount=cache: evita fallos "frontend grpc server closed" en Docker Desktop/Windows
 # Deps: wheels only (asyncpg/crypto have manylinux wheels) → no apt build chain
 
 FROM python:3.11-slim-bookworm AS builder
@@ -11,8 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 COPY requirements.txt .
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade pip && \
+RUN pip install --upgrade pip && \
     pip install --prefix=/install --no-cache-dir -r requirements.txt
 
 FROM python:3.11-slim-bookworm AS runtime

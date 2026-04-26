@@ -80,6 +80,8 @@ export interface RechazarBandejaPayload {
 export interface AsignarTecnicoPayload {
   tecnico_id: number;
   observacion?: string | null;
+  /** Minutos hasta llegada aproximada; el backend la guarda en la solicitud (ETA móvil). */
+  tiempo_estimado_min?: number | null;
 }
 
 export type EstadoAsignacionTecnico = 'ASIGNADO' | 'REASIGNADO' | 'CANCELADO';

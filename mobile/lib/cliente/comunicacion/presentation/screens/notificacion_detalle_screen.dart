@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../../application/cliente_injection.dart';
 import '../../application/comunicacion_providers.dart';
 import '../../domain/notificacion_models.dart';
@@ -111,7 +112,7 @@ class _NotificacionDetalleScreenState extends ConsumerState<NotificacionDetalleS
   }
 
   Widget _buildScaffold(BuildContext context, ShadThemeData theme, NotificacionRead n) {
-    final fecha = DateFormat.yMMMd('es').add_Hm().format(n.createdAt.toLocal());
+    final fecha = BoliviaTime.formatWithZone(n.createdAt);
 
     return Scaffold(
       appBar: AppBar(

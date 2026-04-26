@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../application/tecnico_emergencias_providers.dart';
 import '../../domain/tecnico_servicio_models.dart';
 import '../widgets/tecnico_estado_servicio_badge.dart';
@@ -17,8 +17,6 @@ class TecnicoServicioDetalleScreen extends ConsumerWidget {
 
   final int solicitudId;
   final ServicioAsignadoTecnico? initial;
-
-  static final _fmt = DateFormat('dd/MM/yyyy HH:mm');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,7 +52,7 @@ class TecnicoServicioDetalleScreen extends ConsumerWidget {
               retryLabel: 'Volver a la lista',
             );
           }
-          return _DetalleBody(servicio: s, fmt: _fmt);
+          return _DetalleBody(servicio: s);
         },
       ),
     );
@@ -62,10 +60,9 @@ class TecnicoServicioDetalleScreen extends ConsumerWidget {
 }
 
 class _DetalleBody extends StatelessWidget {
-  const _DetalleBody({required this.servicio, required this.fmt});
+  const _DetalleBody({required this.servicio});
 
   final ServicioAsignadoTecnico servicio;
-  final DateFormat fmt;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +93,17 @@ class _DetalleBody extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6),
             child: _line(Icons.category_outlined, servicio.tipoVehiculo!.trim()),
           ),
+        if (servicio.categoriaUi != null || servicio.prioridadUi != null) ...[
+          const SizedBox(height: 12),
+          Text('Incidente', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          if (servicio.categoriaUi != null) _line(Icons.report_problem_outlined, 'Tipo: ${servicio.categoriaUi}'),
+          if (servicio.prioridadUi != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: _line(Icons.priority_high_rounded, 'Prioridad: ${servicio.prioridadUi}'),
+            ),
+        ],
         const SizedBox(height: 20),
         Text('Ubicación (última conocida)', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
@@ -113,7 +121,7 @@ class _DetalleBody extends StatelessWidget {
           ),
         const SizedBox(height: 8),
         Text(
-          'Actualizado: ${fmt.format(servicio.updatedAt.toLocal())}',
+          'Actualizado: ${BoliviaTime.formatWithZone(servicio.updatedAt)}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
         if (servicio.tiempoEstimadoMin != null) ...[

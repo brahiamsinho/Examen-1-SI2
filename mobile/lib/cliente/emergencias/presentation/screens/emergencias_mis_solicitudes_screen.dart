@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../application/emergencias_providers.dart';
 import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
@@ -59,8 +60,7 @@ class _SolicitudTile extends StatelessWidget {
   final SolicitudEmergenciaListItem solicitud;
 
   String _fecha(DateTime d) {
-    final x = d.toLocal();
-    return '${x.day}/${x.month}/${x.year}';
+    return BoliviaTime.format(d, pattern: 'dd/MM/yyyy');
   }
 
   @override

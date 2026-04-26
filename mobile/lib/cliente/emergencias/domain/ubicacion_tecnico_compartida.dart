@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/api_datetime.dart';
 
 double _asDouble(Object? v) {
   if (v is num) return v.toDouble();
@@ -12,8 +13,7 @@ double? _asDoubleNullable(Object? v) {
 }
 
 DateTime _asDateTime(Object? v) {
-  if (v is String) return DateTime.parse(v);
-  throw FormatException('No es fecha: $v');
+  return parseApiDateTime(v);
 }
 
 /// Respuesta de `GET .../ubicacion-tecnico` (cliente) y `POST .../ubicacion-tecnico` (técnico).

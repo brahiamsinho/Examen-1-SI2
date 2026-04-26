@@ -47,6 +47,25 @@ def test_classify_vision_choque_boost():
     assert "imagen" in out.fuentes
 
 
+def test_classify_compound_incident_multi_damage():
+    out = classify_incident(
+        IncidentClassifyIn(
+            texto_cliente="sufri un choque, se rompieron los vidrios y la llanta quedó pinchada",
+            transcripcion_audio="estoy en la autopista, choque fuerte y no puedo mover el auto",
+            transcripciones_audio=["también hay vidrio en el piso"],
+            hallazgos_vision_por_imagen=[
+                ["posible choque frontal", "vidrio roto en parabrisas"],
+                ["llanta pinchada delantera"],
+            ],
+        )
+    )
+    labels = {d.label for d in out.damages}
+    assert out.categoria == IncidentCategory.CHOQUE
+    assert "CHOQUE" in labels
+    assert "VIDRIOS_ROTOS" in labels
+    assert "LLANTA_PINCHADA" in labels
+
+
 def test_prioritize_road_and_crash():
     out = prioritize(
         IncidentPrioritizeIn(
@@ -58,6 +77,26 @@ def test_prioritize_road_and_crash():
         )
     )
     assert out.nivel_prioridad == PriorityLevel.ALTA
+    assert out.score is not None
+
+
+def test_prioritize_compound_damage_considered():
+    out = prioritize(
+        IncidentPrioritizeIn(
+            texto_cliente="choque con vidrios rotos y llanta pinchada",
+            transcripcion_audio="urgente, no puedo mover el auto",
+            hallazgos_vision_por_imagen=[
+                ["choque lateral"],
+                ["vidrio roto", "llanta pinchada"],
+            ],
+            categoria=IncidentCategory.CHOQUE,
+            direccion_referencia="autopista sur km 12",
+        )
+    )
+    assert out.nivel_prioridad == PriorityLevel.ALTA
+    assert "CHOQUE" in out.damages_considerados
+    assert "VIDRIOS_ROTOS" in out.damages_considerados
+    assert out.score and out.score >= 0.6
 
 
 def test_structured_summary_ficha():
@@ -77,6 +116,20 @@ def test_structured_summary_ficha():
     assert "BATERIA" in out.resumen or "batería" in out.resumen.lower()
     assert out.ficha.ubicacion_valida is True
     assert out.ficha.tipo_problema == IncidentCategory.BATERIA
+
+
+def test_structured_summary_includes_compound_damages():
+    out = build_structured_summary(
+        StructuredSummaryIn(
+            texto_cliente="choque con vidrio roto",
+            transcripciones_audio=["la llanta está pinchada también"],
+            hallazgos_vision_por_imagen=[["choque frontal"], ["vidrio roto", "llanta pinchada"]],
+            categoria=IncidentCategory.CHOQUE,
+            ubicacion=UbicacionResumenIn(latitud=Decimal("-16.5"), longitud=Decimal("-68.1")),
+        )
+    )
+    assert "Daños detectados" in out.resumen
+    assert "CHOQUE" in out.danos_detectados
 
 
 def test_assignment_rank_order():

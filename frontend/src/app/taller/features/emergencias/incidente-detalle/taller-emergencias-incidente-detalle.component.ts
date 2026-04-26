@@ -40,6 +40,8 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
   loadingAsignData = false;
   selectedTecnicoId: number | null = null;
   observacionAsignacion = '';
+  /** ETA en minutos (opcional) al asignar técnico. */
+  tiempoEstimadoMin: number | null = null;
 
   modalAceptar = false;
   modalRechazar = false;
@@ -66,6 +68,7 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
     this.asignaciones = [];
     this.selectedTecnicoId = null;
     this.observacionAsignacion = '';
+    this.tiempoEstimadoMin = null;
     this.api.getBandejaDetalle(this.bandejaId).subscribe({
       next: (d) => {
         this.detalle = d;
@@ -307,6 +310,7 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
       .asignarTecnico(d.solicitud_id, {
         tecnico_id: this.selectedTecnicoId,
         observacion: obs.length ? obs : null,
+        tiempo_estimado_min: this.tiempoEstimadoMin != null && this.tiempoEstimadoMin > 0 ? this.tiempoEstimadoMin : null,
       })
       .subscribe({
         next: () => {

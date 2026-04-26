@@ -22,6 +22,7 @@ from app.modules.comunicaciones.schemas import (
 from app.modules.emergencias.models import SolicitudEmergencia
 from app.modules.portal_cliente.service import get_cliente_row_for_usuario, require_cliente_rol
 from app.modules.portal_tecnico.service import get_tecnico_row_for_usuario, require_tecnico_rol
+from app.modules.talleres.models import Tecnico
 from app.modules.usuarios.models import Cliente, Usuario
 
 _log = logging.getLogger(__name__)
@@ -39,6 +40,11 @@ async def _notificar_push(
         return
     tokens = await repository.list_fcm_tokens_usuario(db, usuario_id=usuario_destino_id)
     if not tokens:
+        _log.info(
+            "FCM omitido: usuario_id=%s sin tokens registrados (titulo=%r)",
+            usuario_destino_id,
+            titulo,
+        )
         return
     try:
         await asyncio.to_thread(
@@ -102,8 +108,33 @@ async def notificar_cliente_solicitud_emergencia(
     )
 
 
+async def notificar_tecnico_solicitud_emergencia(
+    db: AsyncSession,
+    *,
+    solicitud: SolicitudEmergencia,
+    tipo: TipoNotificacionEnum,
+    titulo: str,
+    mensaje: str,
+) -> None:
+    if solicitud.tecnico_id is None:
+        return
+    res = await db.execute(select(Tecnico).where(Tecnico.id == solicitud.tecnico_id))
+    tec = res.scalar_one_or_none()
+    if tec is None:
+        return
+    await crear_notificacion_y_push(
+        db,
+        usuario_destino_id=tec.usuario_id,
+        solicitud_id=solicitud.id,
+        tipo=tipo,
+        titulo=titulo,
+        mensaje=mensaje,
+    )
+
+
 async def registrar_fcm_token(user: Usuario, body: FcmTokenRegisterIn, db: AsyncSession) -> dict[str, str]:
     now = utc_now_naive()
+    tokens_previos = await repository.list_fcm_tokens_usuario(db, usuario_id=user.id)
     await repository.upsert_fcm_token(
         db,
         usuario_id=user.id,
@@ -111,6 +142,45 @@ async def registrar_fcm_token(user: Usuario, body: FcmTokenRegisterIn, db: Async
         platform=body.platform.strip() if body.platform else None,
         now=now,
     )
+    # Si es el primer token del usuario, re-disparar notificaciones no leídas recientes.
+    # Esto cubre casos donde el evento ocurrió antes de registrar FCM (ej. técnico recién logueado).
+    if not tokens_previos:
+        pendientes = await repository.list_notificaciones_usuario(
+            db,
+            usuario_id=user.id,
+            solo_no_leidas=True,
+            limit=10,
+        )
+        for n in reversed(pendientes):
+            data = {
+                "tipo": n.tipo.value,
+                "notificacion_id": str(n.id),
+                **({"solicitud_id": str(n.solicitud_id)} if n.solicitud_id is not None else {}),
+            }
+            await _notificar_push(
+                db,
+                usuario_destino_id=user.id,
+                titulo=n.titulo,
+                cuerpo=n.mensaje,
+                data=data,
+            )
+    # Primer token del cliente: bienvenida push/in-app tras registro/login en dispositivo.
+    if not tokens_previos:
+        es_cliente = False
+        try:
+            await require_cliente_rol(user.id, db)
+            es_cliente = True
+        except HTTPException:
+            es_cliente = False
+        if es_cliente:
+            await crear_notificacion_y_push(
+                db,
+                usuario_destino_id=user.id,
+                solicitud_id=None,
+                tipo=TipoNotificacionEnum.SOLICITUD_CREADA,
+                titulo="Bienvenido a Emergencias Viales",
+                mensaje="Tu cuenta está activa y las notificaciones push quedaron habilitadas en este dispositivo.",
+            )
     await db.commit()
     return {"status": "ok"}
 

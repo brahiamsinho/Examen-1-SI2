@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../../pagos/presentation/widgets/solicitud_pago_cta_block.dart';
 import '../../application/emergencias_providers.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
@@ -12,7 +13,7 @@ import '../widgets/seguimiento/seguimiento_timeline.dart';
 import '../widgets/seguimiento/taller_asignado_card.dart';
 import '../widgets/seguimiento/tecnico_asignado_card.dart';
 
-/// CU16, CU17 y CU18 — pantalla única de seguimiento (estado, taller, técnico, ETA, historial).
+/// Seguimiento de solicitud: estado, taller, técnico, ETA, historial.
 class EmergenciaSeguimientoScreen extends ConsumerWidget {
   const EmergenciaSeguimientoScreen({super.key, required this.solicitudId});
 
@@ -58,7 +59,12 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               Text('Análisis asistido (IA)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
-              SolicitudAiResumenCard(payload: s.aiPayload),
+              SolicitudAiResumenCard(
+                payload: s.aiPayload,
+                tieneUbicacionServidor: s.tieneUbicacionCliente,
+                tieneFotoServidor: s.tieneEvidenciaFoto,
+                tieneAudioServidor: s.tieneEvidenciaAudio,
+              ),
               const SizedBox(height: 24),
               Text('Taller', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
@@ -92,6 +98,42 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
                       context.push('/cliente/app/emergencias/solicitudes/$solicitudId/ubicacion-tecnico'),
                   leading: const Icon(Icons.engineering_outlined, size: 20),
                   child: const Text('Ver ubicación del técnico'),
+                ),
+              ],
+              if (s.presupuestoBob != null) ...[
+                const SizedBox(height: 24),
+                Text('Presupuesto en sitio', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 10),
+                ShadCard(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bs. ${s.presupuestoBob!.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                        ),
+                        if (s.presupuestoRegistradoAt != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Registrado: ${BoliviaTime.formatWithZone(s.presupuestoRegistradoAt!, pattern: 'dd/MM/yyyy HH:mm')}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'Monto indicado por el técnico al iniciar la atención. El pago formal sigue en la sección de abajo.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
               const SizedBox(height: 24),

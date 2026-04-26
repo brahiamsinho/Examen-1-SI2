@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../domain/tecnico_servicio_models.dart';
 import 'tecnico_estado_servicio_badge.dart';
 
@@ -14,8 +14,6 @@ class TecnicoServicioCard extends StatelessWidget {
 
   final ServicioAsignadoTecnico servicio;
   final VoidCallback onTap;
-
-  static final _fecha = DateFormat('dd/MM/yy HH:mm');
 
   @override
   Widget build(BuildContext context) {
@@ -53,13 +51,34 @@ class TecnicoServicioCard extends StatelessWidget {
                         color: scheme.onSurface.withValues(alpha: 0.85),
                       ),
                 ),
+                if (servicio.categoriaUi != null || servicio.prioridadUi != null) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (servicio.categoriaUi != null) _chip(context, 'Tipo: ${servicio.categoriaUi}'),
+                      if (servicio.prioridadUi != null) _chip(context, 'Prioridad: ${servicio.prioridadUi}'),
+                    ],
+                  ),
+                ],
+                if (servicio.presupuestoBob != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Presupuesto: Bs. ${servicio.presupuestoBob!.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     Icon(Icons.schedule_rounded, size: 18, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 6),
                     Text(
-                      _fecha.format(servicio.updatedAt.toLocal()),
+                      BoliviaTime.formatWithZone(servicio.updatedAt, pattern: 'dd/MM/yy HH:mm'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
@@ -96,6 +115,24 @@ class TecnicoServicioCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(BuildContext context, String text) {
+    final scheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.25)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
     );

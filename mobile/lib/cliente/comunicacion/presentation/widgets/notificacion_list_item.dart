@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../domain/notificacion_models.dart';
 
 class NotificacionListItem extends StatelessWidget {
@@ -16,7 +17,7 @@ class NotificacionListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final fecha = DateFormat.yMMMd('es').add_Hm().format(notificacion.createdAt.toLocal());
+    final fecha = BoliviaTime.formatWithZone(notificacion.createdAt);
 
     return Material(
       color: Colors.transparent,

@@ -95,7 +95,7 @@ async def crear_solicitud(
         estado_anterior=None,
         estado_nuevo=sol.estado,
         usuario_id=user.id,
-        observacion="Alta solicitud (CU11)",
+        observacion="Alta de solicitud",
         created_at=now,
     )
 
@@ -160,6 +160,9 @@ def _to_seguimiento(s: SolicitudEmergencia) -> SolicitudSeguimientoRead:
             apellidos=u.apellidos,
             telefono=u.telefono,
         )
+    tiene_ubic = bool(s.ubicaciones)
+    tiene_foto = any(e.tipo == TipoEvidenciaSolicitudEnum.FOTO for e in s.evidencias)
+    tiene_audio = any(e.tipo == TipoEvidenciaSolicitudEnum.AUDIO for e in s.evidencias)
     return SolicitudSeguimientoRead(
         solicitud_id=s.id,
         estado=s.estado,
@@ -170,6 +173,11 @@ def _to_seguimiento(s: SolicitudEmergencia) -> SolicitudSeguimientoRead:
         taller=taller,
         tecnico=tecnico,
         historial_estados=[SolicitudHistorialEstadoRead.model_validate(h) for h in historial],
+        tiene_ubicacion_cliente=tiene_ubic,
+        tiene_evidencia_foto=tiene_foto,
+        tiene_evidencia_audio=tiene_audio,
+        presupuesto_bob=s.presupuesto_bob,
+        presupuesto_registrado_at=s.presupuesto_registrado_at,
     )
 
 
@@ -220,7 +228,7 @@ async def actualizar_texto(
         "emergencias",
         "solicitudes_emergencia",
         AccionBitacoraEnum.ACTUALIZAR,
-        descripcion="Actualización texto adicional (CU15)",
+        descripcion="Actualización de texto adicional",
         usuario_id=user.id,
         entidad_id=s.id,
     )
@@ -273,7 +281,7 @@ async def agregar_ubicacion(
         "emergencias",
         "solicitud_ubicaciones",
         AccionBitacoraEnum.CREAR,
-        descripcion="Ubicación enviada (CU12)",
+        descripcion="Ubicación enviada",
         usuario_id=user.id,
         entidad_id=solicitud_id,
     )
@@ -315,7 +323,7 @@ async def agregar_evidencia(
         "emergencias",
         "solicitud_evidencias",
         AccionBitacoraEnum.CREAR,
-        descripcion=f"Evidencia tipo={body.tipo.value} (CU13/CU14)",
+        descripcion=f"Evidencia tipo {body.tipo.value}",
         usuario_id=user.id,
         entidad_id=solicitud_id,
     )
@@ -430,7 +438,7 @@ async def agregar_evidencia_archivo(
         "emergencias",
         "solicitud_evidencias",
         AccionBitacoraEnum.CREAR,
-        descripcion=f"Evidencia archivo tipo={tipo.value} (CU13/CU14)",
+        descripcion=f"Evidencia archivo tipo {tipo.value}",
         usuario_id=user.id,
         entidad_id=solicitud_id,
     )

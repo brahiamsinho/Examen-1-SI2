@@ -1,5 +1,6 @@
 package com.example.mobile_emergencias
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+/// [FlutterFragmentActivity] es requisito de `flutter_stripe` (PaymentSheet).
+class MainActivity : FlutterFragmentActivity()

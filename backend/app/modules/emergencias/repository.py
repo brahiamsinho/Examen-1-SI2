@@ -101,6 +101,8 @@ async def get_solicitud_seguimiento_for_cliente(
         )
         .options(
             selectinload(SolicitudEmergencia.historial_estados),
+            selectinload(SolicitudEmergencia.ubicaciones),
+            selectinload(SolicitudEmergencia.evidencias),
             joinedload(SolicitudEmergencia.taller),
             joinedload(SolicitudEmergencia.tecnico).joinedload(Tecnico.usuario),
         )

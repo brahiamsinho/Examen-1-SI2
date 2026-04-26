@@ -67,6 +67,25 @@ El backend expone rutas bajo `/api/ai/...` y puede delegar audio e imagen a un c
 - **Tras cambiar código en `services/ai-inference/`:** reconstruir solo ese servicio, por ejemplo:  
   `docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build --force-recreate ai-inference`  
   (ajustá los `-f` si no usás el modelo custom).
+- **Incidentes compuestos (Fase 1):**
+  - `POST /api/ai/images/analyze-batch` acepta `files[]` y devuelve `hallazgos_consolidados`.
+  - `POST /api/ai/incidents/classify` soporta `transcripciones_audio[]` y `hallazgos_vision_por_imagen[]`.
+  - la clasificación ahora devuelve `damages[]` (multi-daño) + `requires_manual_review`.
+  - `POST /api/ai/incidents/prioritize` devuelve además `score` y `damages_considerados[]`.
+
+**Payload ejemplo (incidente compuesto):**
+
+```json
+{
+  "texto_cliente": "sufri un choque, tengo vidrios rotos y llanta pinchada",
+  "transcripcion_audio": "estoy en la autopista, no puedo mover el auto",
+  "transcripciones_audio": ["tambien hay vidrio por todo lado"],
+  "hallazgos_vision_por_imagen": [
+    ["choque frontal", "vidrio roto"],
+    ["llanta pinchada delantera"]
+  ]
+}
+```
 
 ---
 
@@ -321,3 +340,21 @@ docker compose exec backend alembic current
 docker compose exec backend alembic upgrade head
 5
 docker compose exec backend python -m app.seeds
+###########
+
+1Flujo recomendado (desde cero, limpio)
+Levantar y construir contenedores
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml --profile ai up -d --build
+
+2Esperar que DB esté healthy
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml ps
+(la DB debe verse healthy)
+
+3Marcar versión Alembic (NO upgrade)
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml exec backend alembic stamp 0006_ciclo2_fase4_pagos
+
+4Cargar seeders
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml exec backend python -m app.seeds
+
+5Verificar
+docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml exec backend alembic current

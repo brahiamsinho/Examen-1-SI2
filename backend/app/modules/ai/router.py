@@ -15,6 +15,8 @@ from app.modules.ai.schemas import (
     AssignmentRankOut,
     AudioTranscribeResponse,
     DeteccionObjeto,
+    ImageAnalyzeBatchResponse,
+    ImageAnalyzeItem,
     ImageAnalyzeResponse,
     ImageClarity,
     IncidentClassifyIn,
@@ -33,6 +35,43 @@ from app.modules.ai.services.structured_summary import build_structured_summary
 _log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["IA — inferencia y reglas"])
+
+
+async def _analyze_image_bytes(
+    *,
+    raw: bytes,
+    filename: str,
+    content_type: str,
+) -> ImageAnalyzeResponse:
+    if len(raw) > settings.AI_MAX_IMAGE_BYTES:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Imagen demasiado grande.")
+    try:
+        data = await inference_client.call_analyze_image(raw, filename, content_type)
+    except Exception as e:
+        _log.exception("analyze_image")
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=f"Fallo inferencia imagen: {e!s}") from e
+
+    clar = str(data.get("claridad_imagen") or data.get("claridad") or "MEDIA").upper()
+    if clar not in ("BAJA", "MEDIA", "ALTA"):
+        clar = "MEDIA"
+    raw_objs = data.get("objetos_detectados") or []
+    objetos: list[DeteccionObjeto] = []
+    for o in raw_objs:
+        if isinstance(o, dict) and o.get("etiqueta") is not None:
+            objetos.append(
+                DeteccionObjeto(
+                    etiqueta=str(o["etiqueta"]),
+                    confianza=max(0.0, min(1.0, float(o.get("confianza") or 0.0))),
+                )
+            )
+
+    return ImageAnalyzeResponse(
+        hallazgos=list(data.get("hallazgos") or []),
+        claridad_imagen=ImageClarity(clar),
+        confianza=max(0.0, min(1.0, float(data.get("confianza") or 0.0))),
+        objetos_detectados=objetos,
+        modelo_deteccion=data.get("modelo_deteccion"),
+    )
 
 
 def _require_inference_available() -> None:
@@ -92,38 +131,59 @@ async def analyze_image(
 ):
     _require_inference_available()
     raw = await file.read()
-    if len(raw) > settings.AI_MAX_IMAGE_BYTES:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Imagen demasiado grande.")
-    try:
-        data = await inference_client.call_analyze_image(
-            raw,
-            file.filename or "image.bin",
-            file.content_type or "application/octet-stream",
+    return await _analyze_image_bytes(
+        raw=raw,
+        filename=file.filename or "image.bin",
+        content_type=file.content_type or "application/octet-stream",
+    )
+
+
+@router.post(
+    "/images/analyze-batch",
+    response_model=ImageAnalyzeBatchResponse,
+    dependencies=[Depends(require_permission("ai:inferir"))],
+)
+async def analyze_images_batch(
+    files: list[UploadFile] = File(...),
+):
+    _require_inference_available()
+    if not files:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Debe enviar al menos una imagen.")
+
+    results: list[ImageAnalyzeItem] = []
+    merged_hallazgos: list[str] = []
+    confidence_total = 0.0
+    clarity_points_total = 0
+    clarity_points_map = {"BAJA": 1, "MEDIA": 2, "ALTA": 3}
+
+    for idx, file in enumerate(files, start=1):
+        raw = await file.read()
+        parsed = await _analyze_image_bytes(
+            raw=raw,
+            filename=file.filename or f"image-{idx}.bin",
+            content_type=file.content_type or "application/octet-stream",
         )
-    except Exception as e:
-        _log.exception("analyze_image")
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=f"Fallo inferencia imagen: {e!s}") from e
+        results.append(ImageAnalyzeItem(evidencia_id=f"img-{idx}", resultado=parsed))
+        merged_hallazgos.extend(parsed.hallazgos)
+        confidence_total += parsed.confianza
+        clarity_points_total += clarity_points_map.get(parsed.claridad_imagen.value, 2)
 
-    clar = str(data.get("claridad_imagen") or data.get("claridad") or "MEDIA").upper()
-    if clar not in ("BAJA", "MEDIA", "ALTA"):
-        clar = "MEDIA"
-    raw_objs = data.get("objetos_detectados") or []
-    objetos: list[DeteccionObjeto] = []
-    for o in raw_objs:
-        if isinstance(o, dict) and o.get("etiqueta") is not None:
-            objetos.append(
-                DeteccionObjeto(
-                    etiqueta=str(o["etiqueta"]),
-                    confianza=max(0.0, min(1.0, float(o.get("confianza") or 0.0))),
-                )
-            )
+    unique_hallazgos = list(dict.fromkeys(merged_hallazgos))
+    count = len(results)
+    avg_conf = confidence_total / count if count else 0.0
+    avg_clarity_points = clarity_points_total / count if count else 2
+    if avg_clarity_points < 1.5:
+        avg_clarity = ImageClarity.BAJA
+    elif avg_clarity_points < 2.5:
+        avg_clarity = ImageClarity.MEDIA
+    else:
+        avg_clarity = ImageClarity.ALTA
 
-    return ImageAnalyzeResponse(
-        hallazgos=list(data.get("hallazgos") or []),
-        claridad_imagen=ImageClarity(clar),
-        confianza=max(0.0, min(1.0, float(data.get("confianza") or 0.0))),
-        objetos_detectados=objetos,
-        modelo_deteccion=data.get("modelo_deteccion"),
+    return ImageAnalyzeBatchResponse(
+        imagenes=results,
+        hallazgos_consolidados=unique_hallazgos,
+        claridad_promedio=avg_clarity,
+        confianza_promedio=round(max(0.0, min(1.0, avg_conf)), 2),
     )
 
 

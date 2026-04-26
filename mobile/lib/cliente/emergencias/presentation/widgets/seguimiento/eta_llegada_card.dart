@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../../core/utils/bolivia_time.dart';
+
 /// CU18 — tiempo estimado de llegada (minutos).
 class EtaLlegadaCard extends StatelessWidget {
   const EtaLlegadaCard({super.key, required this.minutos, this.actualizadoEn});
@@ -57,7 +59,6 @@ class EtaLlegadaCard extends StatelessWidget {
   }
 
   String _fmt(DateTime d) {
-    final x = d.toLocal();
-    return '${x.day}/${x.month}/${x.year} ${x.hour}:${x.minute.toString().padLeft(2, '0')}';
+    return BoliviaTime.formatWithZone(d);
   }
 }

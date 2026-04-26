@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from app.modules.ai.schemas import FuenteInferencia, IncidentCategory, IncidentClassifyIn, IncidentClassifyOut
+from app.modules.ai.services.evidence_fusion import fuse_incident_evidence, pick_primary_category
 from app.modules.ai.text_normalize import normalize_for_match
 
 
@@ -59,6 +60,32 @@ def _vision_boost(hallazgos: list[str]) -> dict[IncidentCategory, float]:
 
 
 def classify_incident(body: IncidentClassifyIn) -> IncidentClassifyOut:
+    damages, requires_manual_review, conflict_notes = fuse_incident_evidence(
+        texto_cliente=body.texto_cliente,
+        transcripcion_audio=body.transcripcion_audio,
+        transcripciones_audio=body.transcripciones_audio,
+        hallazgos_vision=body.hallazgos_vision,
+        hallazgos_vision_por_imagen=body.hallazgos_vision_por_imagen,
+    )
+
+    if damages:
+        cat, conf = pick_primary_category(damages)
+        fuentes: list[str] = []
+        if body.texto_cliente and body.texto_cliente.strip():
+            fuentes.append(FuenteInferencia.TEXTO.value)
+        if (body.transcripcion_audio and body.transcripcion_audio.strip()) or body.transcripciones_audio:
+            fuentes.append(FuenteInferencia.AUDIO.value)
+        if body.hallazgos_vision or body.hallazgos_vision_por_imagen:
+            fuentes.append(FuenteInferencia.IMAGEN.value)
+        return IncidentClassifyOut(
+            categoria=cat,
+            confianza=conf,
+            fuentes=fuentes or [FuenteInferencia.TEXTO.value],
+            damages=damages,
+            requires_manual_review=requires_manual_review,
+            conflict_notes=conflict_notes,
+        )
+
     text = _norm(body.texto_cliente) + " " + _norm(body.transcripcion_audio)
     fuentes: list[str] = []
     if body.texto_cliente and body.texto_cliente.strip():

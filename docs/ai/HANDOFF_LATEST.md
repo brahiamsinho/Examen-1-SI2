@@ -1,7 +1,62 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-04-25
+# Fecha: 2026-04-26
+## Cambios recientes (2026-04-26) — Confirmación pago: reusa intent iniciado, PI id correcto
+
+- **Mobile** `pago_confirmacion_screen.dart`: si el paso método ya devolvió `PagoRead` coherente, no se vuelve a `POST /pagos`; `confirmarStripe` usa `stripePaymentIntentId` del modelo.
+
+## Cambios recientes (2026-04-26) — Pago resumen muestra presupuesto técnico real ✅
+
+- **Backend** `emergencias/schemas.py`: `SolicitudEmergenciaRead` ahora incluye `presupuesto_bob` y `presupuesto_registrado_at`; `SolicitudEmergenciaDetailRead` los hereda y `GET /portal/cliente/emergencias/{id}` los devuelve al mobile.
+- **Mobile** `pago_resumen_screen.dart`: se mantiene la regla “cliente no escribe monto”, y se agrega refresco explícito (botón en app bar + pull-to-refresh) para sincronizar de inmediato cuando el técnico registra presupuesto.
+- **Causa raíz del bug reportado:** la pantalla de pago leía `emergenciaDetailProvider` (endpoint detalle), pero `presupuesto_bob` solo estaba en seguimiento; por eso podía mostrar “no definido” aunque backend ya tuviera monto.
+
+## Cambios recientes (2026-04-26) — Daños IA en UI, pago = presupuesto, Stripe solo tarjeta, Android `FlutterFragmentActivity` ✅
+
+- **IA (mobile):** `damages` del `ai_payload` son objetos `DamagePrediction` → se parsean como `DanoIaV1` y se muestran en lista legible (no dump del Map).
+- **Pagos:** con `presupuesto_bob` el cliente no edita monto; backend valida igualdad. `crear_pago` solo crea PaymentIntent Stripe si `metodo == TARJETA`. `PagoRead.requiereStripePaymentSheet(metodo)` exige tarjeta.
+- **Android:** `MainActivity` → `FlutterFragmentActivity` para `flutter_stripe`.
+- **FCM / go_router:** `FcmMessageListener` ya no usa `GoRouter.of(context)` (el listener está **encima** del router). Es `ConsumerStatefulWidget` y usa `ref.read(goRouterProvider)` para `go` y ruta actual; evita `No GoRouter found in context` y excepciones al recibir notificación en primer plano.
+
+**Seguridad:** no pegar claves `sk_` en chats; rotar en Stripe si se expusieron.
+
+## Cambios recientes (2026-04-25) — Fase 1 IA incidentes compuestos ✅
+
+- **Objetivo cubierto:** soportar casos reales donde un incidente trae múltiples daños simultáneos (ej. choque + vidrios + llanta) y múltiples fotos.
+- **Schemas IA extendidos** (`backend/app/modules/ai/schemas.py`):
+  - Inputs multi-evidencia: `transcripciones_audio[]`, `hallazgos_vision_por_imagen[]`.
+  - Output multi-daño: `damages[]`, `requires_manual_review`, `conflict_notes`.
+- **Fusionador multimodal v1** (`backend/app/modules/ai/services/evidence_fusion.py`):
+  - pesos: imagen 0.45, texto 0.30, audio 0.25.
+  - agregación por evidencia y detección de conflictos.
+  - mapeo a categoría principal (`pick_primary_category`).
+- **Router IA**:
+  - endpoint nuevo `POST /api/ai/images/analyze-batch` para `files[]` (varias fotos).
+  - endpoint existente `POST /api/ai/images/analyze` se mantiene compatible.
+- **Prioridad y resumen**:
+  - `prioritize` ahora considera daños compuestos (`damages_considerados`, `score`).
+  - `structured-summary` ahora devuelve `danos_detectados` y agrega síntesis de daños en `resumen`.
+- **Tests backend actualizados** (`backend/tests/test_ai_engines.py`):
+  - caso compuesto multi-daño,
+  - prioridad con daños múltiples,
+  - resumen estructurado con daños compuestos.
+- **Mobile (cliente) alineado con payload compuesto**:
+  - `mobile/lib/cliente/emergencias/domain/solicitud_ai_payload.dart` parsea nuevos campos del backend IA compuesto.
+  - `mobile/lib/cliente/emergencias/presentation/widgets/ai/solicitud_ai_resumen_card.dart` renderiza daños detectados, score, conflictos y revisión manual.
+
+## Cambios recientes (2026-04-25) — Fixes críticos reportados por pruebas reales ✅
+
+- **Push técnico no recibido (aunque aparece en historial):** causa frecuente detectada en pruebas: el técnico registra token FCM *después* del evento (asignación/estado), por lo que no había token en el momento del envío.
+  - Fix: `backend/app/modules/comunicaciones/service.py` en `registrar_fcm_token` ahora reenvía notificaciones no leídas recientes (hasta 10) cuando es el primer token del usuario.
+- **Hora BOT incorrecta en mobile (01:38 vs 21:38):**
+  - Causa: timestamps API sin zona (`timestamp without time zone`) eran parseados como hora local en Dart.
+  - Fix: `mobile/lib/core/utils/api_datetime.dart` + adopción en modelos cliente/técnico/pagos/comunicación para tratar naive timestamps como UTC y luego convertir a BOT en UI.
+- **ETA “vacía” en seguimiento:**
+  - Fix de fallback en backend (`portal_tecnico_emergencias/service.py`): al pasar a `EN_CAMINO`, si `tiempo_estimado_min` es `NULL`, se setea `20` min.
+- **Pago “de adorno” respecto al presupuesto técnico:**
+  - Fix UX en mobile (`pago_resumen_screen.dart`): monto se prellena con `presupuesto_bob` y se informa explícitamente al cliente.
+
 # =========================================================
 
 ## Normativa
@@ -12,6 +67,25 @@
 
 Plataforma de **emergencias vehiculares**: clientes, talleres, técnicos, auditoría. Stack: **FastAPI + PostgreSQL + Angular 17 + Flutter + Docker**.
 
+## Cambios recientes (2026-04-25) — Push técnico + presupuesto BOB ✅
+
+- **Push al asignar técnico:** `comunicaciones/service.py` → `notificar_tecnico_solicitud_emergencia`; invocado desde `portal_taller_emergencias/service.py` en `asignar_tecnico_a_solicitud` después del aviso al cliente.
+- **FCM sin tokens:** `_notificar_push` escribe log `INFO` cuando el usuario destino no tiene filas en `usuario_fcm_tokens`.
+- **Presupuesto BOB:** migración `backend/migrations/0014_presupuesto_bob_solicitud.sql` + `docker-compose` init `14_...`; `ActualizarEstadoServicioIn` exige `presupuesto_bob` si `nuevo_estado == EN_ATENCION`; seguimiento cliente y PATCH técnico devuelven los campos; Flutter: diálogo de monto (técnico) y tarjeta en seguimiento (cliente).
+- **BD existente:** si el volumen de Postgres ya fue inicializado antes, aplicar `0014` a mano con `psql` (el init de Docker no se re-ejecuta).
+
+### Docker build “frontend grpc server closed” (2026-04-25) ✅
+
+- **Síntoma:** al hacer `docker compose ... up -d --build`, falla `target backend: failed to solve: frontend grpc server closed unexpectedly` (a veces con puntero a `Dockerfile:1` con `# syntax=docker/dockerfile:1`).
+- **Causa típica:** inestabilidad de BuildKit / Docker Desktop (comunicación gRPC con el “Dockerfile front” externo o con daemon), no un error lógico del código de la app.
+- **Ajuste en repo:** se quitaron `# syntax=docker/dockerfile:1` y `RUN --mount=type=cache` en `backend/Dockerfile` y `frontend/Dockerfile` (instalación pip/npm sin mount de caché; builds un poco más lentos, más estables en Windows). Si aún falla: reiniciar Docker Desktop, `docker buildx prune`, o `set DOCKER_BUILDKIT=0` + `set COMPOSE_DOCKER_CLI_BUILD=0` para forzar el builder clásico.
+
+### Backend startup “Unknown constraint max_digits” (2026-04-25) ✅
+
+- **Síntoma:** backend reiniciando con traceback en import de `portal_tecnico_emergencias/schemas.py`: `ValueError: Unknown constraint max_digits`.
+- **Causa:** en este runtime (Pydantic v2 del contenedor), la metadata `max_digits`/`decimal_places` en `Field(...)` para `Decimal` no fue aceptada al construir el schema.
+- **Ajuste en repo:** `ActualizarEstadoServicioIn.presupuesto_bob` mantiene `gt=0` y mueve el control de formato monetario (máx. 12 dígitos y 2 decimales) a `@model_validator`, evitando el crash de arranque.
+
 ## Cambios recientes (2026-04-23) — Validación completa módulo IA ✅
 
 ## Cambios recientes (2026-04-25) — Limpieza de textos UI ✅
@@ -19,6 +93,36 @@ Plataforma de **emergencias vehiculares**: clientes, talleres, técnicos, audito
 - **Frontend Angular:** se removieron referencias internas de planificación en textos visibles (`Ciclo`, `fase`, `CUxx`) en módulos admin/taller para una UX más profesional.
 - **Mobile Flutter:** se removieron etiquetas `CUxx` y `ciclo` en textos de pantallas cliente/técnico (wizard, seguimiento, detalle y selector de actor), más normalización de comentarios descriptivos.
 - **Verificación:** búsqueda global sin coincidencias de `Ciclo\\d`/`CU\\d` en `frontend/src` y `mobile/lib`.
+
+### Seguimiento móvil, ETA, chips IA, FCM (2026-04-25) ✅
+
+- **Chips "Ubicación / Audio / Imagen":** se alinean a datos reales: detalle móvil cuenta `ubicaciones`/`evidencias`; seguimiento usa flags del API (`tiene_ubicacion_cliente`, etc.). **ETA:** formulario en **portal taller** al asignar técnico (`tiempo_estimado_min` opcional) rellena `solicitud.tiempo_estimado_min` que ya consume el seguimiento móvil.
+- **Historial:** `SeguimientoTimeline` elimina `(CU##)` de observaciones heredadas.
+- **FCM:** `FirebaseMessaging.onMessage` con app abierta → `SnackBar` (`FcmMessageListener`). Token + backend sin cambio; credenciales Firebase siguen solo en máquina local.
+- **Docs:** `CURRENT_STATE` actualizado; sesión en `docs/ai/sessions/2026-04-25-mobile-seguimiento-eta-fcm.md`.
+
+### Técnico móvil: hora BOT + tipo accidente + push routing (2026-04-25) ✅
+
+- **Hora Bolivia (Santa Cruz):** util `mobile/lib/core/utils/bolivia_time.dart` (UTC-4) aplicada en `tecnico_servicio_card`, `tecnico_servicio_detalle_screen`, `tecnico_servicio_ubicacion_screen` y `chat_bubble`.
+- **Servicios asignados técnico:** backend `portal_tecnico_emergencias` incluye `categoria_incidente` y `nivel_prioridad` desde `ai_payload`; mobile técnico lo presenta como chips “Tipo” y “Prioridad” en lista y bloque “Incidente” en detalle.
+- **Push técnico/cliente:** `FcmMessageListener` añade manejo de tap (`onMessageOpenedApp` + `getInitialMessage`) con deep-link por `solicitud_id`; si `tipo=MENSAJE_NUEVO` abre chat, en otro caso abre detalle/seguimiento.
+- **Validación:** `flutter analyze` (mobile) ✅ y `python -m py_compile` para schemas/repository técnico ✅.
+
+### Hora Santa Cruz unificada en sistema (2026-04-25) ✅
+
+- **Angular web:** `app.config.ts` fija `LOCALE_ID='es-BO'` + `DATE_PIPE_DEFAULT_OPTIONS.timezone='-0400'`; `main.ts` registra locale `es-BO`. Resultado: los templates con `| date` muestran BOT.
+- **Mobile Flutter:** `BoliviaTime` se usa en timeline/ETA/ubicación técnico/notificaciones/comprobante/listado solicitudes (además de técnico ya implementado) y se elimina dependencia de `.toLocal()`.
+- **Convención:** backend mantiene persistencia en UTC/servidor; la capa de presentación fuerza BOT para experiencia consistente.
+- **Docker:** `docker-compose.yml` ahora inyecta `TZ=America/La_Paz` en `db/mailhog/backend/frontend/ai-inference` y `PGTZ=America/La_Paz` en `db`.
+- **Chequeo:** `docker compose config` válido ✅.
+
+### Push registro + pagos (2026-04-25) ✅
+
+- **Cliente (registro/token):** en `comunicaciones.service.registrar_fcm_token`, si es el primer token del cliente se envía push/notificación de bienvenida.
+- **Pago confirmado:** en `pagos.service` se dispara push/notificación cuando `estado -> PAGADO`:
+  - flujo simulado/autocomplete (`_aplicar_resultado_pasarela`)
+  - confirmación Stripe (`confirmar_pago_stripe`)
+- **Stripe env vars:** backend usa `STRIPE_SECRET_KEY` para PaymentIntent/retrieve y expone `STRIPE_PUBLISHABLE_KEY` al mobile en `PagoIniciadoRead`.
 
 Todos los endpoints del módulo `ai/` fueron probados en Swagger con respuestas **200** correctas:
 
@@ -99,3 +203,14 @@ Todos los endpoints del módulo `ai/` fueron probados en Swagger con respuestas 
 ## Docker / .env raíz
 
 Compose carga `.env` del repo; `DATABASE_URL`, `SECRET_KEY`, `SEED_*`, **`AI_*`**. Ver `.env.example` raíz. **No duplicar claves** de IA en el mismo archivo.
+
+## Handoff puntual (2026-04-25) — UX de push móvil
+
+- Problema reportado: “la notificación se ve como mensaje interno” (SnackBar en foreground).
+- Solución aplicada: en `mobile/lib/core/push/fcm_message_listener.dart` se reemplaza el aviso visual por notificación del sistema vía `flutter_local_notifications`.
+- Se mantiene deep-link: al tocar la notificación local, la app navega al chat/detalle según `tipo` y `solicitud_id`.
+- Backend con mejor observabilidad FCM: `backend/app/modules/comunicaciones/fcm_client.py` ahora loguea `FCM multicast enviado: success/failure/tokens` y detalle de fallos.
+- Verificación mínima completada:
+  - `FCM_ENABLED=True` en runtime.
+  - `POST /api/portal/cliente/dispositivos/fcm 204` en logs.
+  - Inserciones en `notificaciones` para eventos (`TALLER_ASIGNADO`, `TECNICO_ASIGNADO`, etc.).

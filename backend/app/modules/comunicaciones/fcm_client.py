@@ -54,6 +54,17 @@ def send_push_multicast_sync(
         tokens=registration_tokens,
     )
     try:
-        messaging.send_each_for_multicast(msg)
+        response = messaging.send_each_for_multicast(msg)
+        _log.info(
+            "FCM multicast enviado: success=%s failure=%s tokens=%s",
+            response.success_count,
+            response.failure_count,
+            len(registration_tokens),
+        )
+        if response.failure_count:
+            for idx, r in enumerate(response.responses):
+                if r.success:
+                    continue
+                _log.warning("FCM fallo token[%s]: %s", idx, r.exception)
     except Exception:
         _log.exception("Fallo al enviar FCM multicast")

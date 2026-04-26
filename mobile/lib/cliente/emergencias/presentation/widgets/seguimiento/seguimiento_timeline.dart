@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/utils/bolivia_time.dart';
 import '../../../domain/solicitud_seguimiento_models.dart';
 import 'estado_solicitud_badge.dart';
 
-/// Línea de tiempo del historial de estados (CU16).
+/// Línea de tiempo del historial de estados.
 class SeguimientoTimeline extends StatelessWidget {
   const SeguimientoTimeline({super.key, required this.items});
 
   final List<SolicitudHistorialEstadoRead> items;
 
+  /// Quita códigos de caso de uso antiguos guardados en BD, p. ej. "(CU11)".
+  static String _limpiarObservacion(String s) {
+    return s.replaceAll(RegExp(r'\s*\(CU\d+\)'), '');
+  }
+
   String _fmt(DateTime d) {
-    final x = d.toLocal();
-    final h = x.hour.toString().padLeft(2, '0');
-    final min = x.minute.toString().padLeft(2, '0');
-    return '${x.day}/${x.month}/${x.year} $h:$min';
+    return BoliviaTime.formatWithZone(d);
   }
 
   @override
@@ -84,7 +87,7 @@ class SeguimientoTimeline extends StatelessWidget {
                       if (items[i].observacion != null && items[i].observacion!.trim().isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
-                          items[i].observacion!,
+                          _limpiarObservacion(items[i].observacion!),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],

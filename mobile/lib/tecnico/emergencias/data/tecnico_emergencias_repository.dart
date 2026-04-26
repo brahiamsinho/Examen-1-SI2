@@ -66,6 +66,7 @@ final class TecnicoEmergenciasRepository {
     required int solicitudId,
     required EstadoSolicitudEmergencia nuevoEstado,
     String? observacion,
+    double? presupuestoBob,
   }) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
@@ -73,6 +74,7 @@ final class TecnicoEmergenciasRepository {
         data: {
           'nuevo_estado': nuevoEstado.apiValue,
           'observacion': observacion,
+          if (presupuestoBob != null) 'presupuesto_bob': presupuestoBob,
         },
       );
       final data = res.data;

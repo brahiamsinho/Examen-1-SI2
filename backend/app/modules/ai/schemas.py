@@ -34,6 +34,38 @@ class FuenteInferencia(str, Enum):
     IMAGEN = "imagen"
 
 
+class SeverityLevel(str, Enum):
+    BAJA = "BAJA"
+    MEDIA = "MEDIA"
+    ALTA = "ALTA"
+    CRITICA = "CRITICA"
+
+
+class DamageEvidenceItem(BaseModel):
+    evidencia_id: str
+    score: float = Field(..., ge=0.0, le=1.0)
+
+
+class DamageEvidenceSupport(BaseModel):
+    image: list[DamageEvidenceItem] = Field(default_factory=list)
+    audio: list[DamageEvidenceItem] = Field(default_factory=list)
+    text: list[DamageEvidenceItem] = Field(default_factory=list)
+
+
+class DamageConflict(BaseModel):
+    has_conflict: bool = False
+    details: list[str] = Field(default_factory=list)
+
+
+class DamagePrediction(BaseModel):
+    label: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    severity: SeverityLevel
+    evidence_support: DamageEvidenceSupport = Field(default_factory=DamageEvidenceSupport)
+    reasons: list[str] = Field(default_factory=list)
+    conflict: DamageConflict = Field(default_factory=DamageConflict)
+
+
 # --- IA1 audio ---
 class AudioTranscribeResponse(BaseModel):
     transcripcion: str
@@ -48,13 +80,18 @@ class AudioTranscribeResponse(BaseModel):
 class IncidentClassifyIn(BaseModel):
     texto_cliente: str | None = None
     transcripcion_audio: str | None = None
+    transcripciones_audio: list[str] = Field(default_factory=list)
     hallazgos_vision: list[str] = Field(default_factory=list)
+    hallazgos_vision_por_imagen: list[list[str]] = Field(default_factory=list)
 
 
 class IncidentClassifyOut(BaseModel):
     categoria: IncidentCategory
     confianza: float = Field(..., ge=0.0, le=1.0)
     fuentes: list[str] = Field(default_factory=list)
+    damages: list[DamagePrediction] = Field(default_factory=list)
+    requires_manual_review: bool = False
+    conflict_notes: list[str] = Field(default_factory=list)
 
 
 # --- IA3 image (API pública) ---
@@ -78,6 +115,18 @@ class ImageAnalyzeResponse(BaseModel):
     )
 
 
+class ImageAnalyzeItem(BaseModel):
+    evidencia_id: str
+    resultado: ImageAnalyzeResponse
+
+
+class ImageAnalyzeBatchResponse(BaseModel):
+    imagenes: list[ImageAnalyzeItem] = Field(default_factory=list)
+    hallazgos_consolidados: list[str] = Field(default_factory=list)
+    claridad_promedio: ImageClarity
+    confianza_promedio: float = Field(..., ge=0.0, le=1.0)
+
+
 # --- IA4 structured summary ---
 class UbicacionResumenIn(BaseModel):
     latitud: Decimal | None = None
@@ -88,7 +137,9 @@ class UbicacionResumenIn(BaseModel):
 class StructuredSummaryIn(BaseModel):
     texto_cliente: str | None = None
     transcripcion_audio: str | None = None
+    transcripciones_audio: list[str] = Field(default_factory=list)
     hallazgos_vision: list[str] = Field(default_factory=list)
+    hallazgos_vision_por_imagen: list[list[str]] = Field(default_factory=list)
     categoria: IncidentCategory | None = None
     ubicacion: UbicacionResumenIn | None = None
 
@@ -104,13 +155,16 @@ class FichaIncidente(BaseModel):
 class StructuredSummaryOut(BaseModel):
     resumen: str
     ficha: FichaIncidente
+    danos_detectados: list[str] = Field(default_factory=list)
 
 
 # --- IA5 priority ---
 class IncidentPrioritizeIn(BaseModel):
     texto_cliente: str | None = None
     transcripcion_audio: str | None = None
+    transcripciones_audio: list[str] = Field(default_factory=list)
     hallazgos_vision: list[str] = Field(default_factory=list)
+    hallazgos_vision_por_imagen: list[list[str]] = Field(default_factory=list)
     categoria: IncidentCategory | None = None
     direccion_referencia: str | None = None
 
@@ -118,6 +172,8 @@ class IncidentPrioritizeIn(BaseModel):
 class IncidentPrioritizeOut(BaseModel):
     nivel_prioridad: PriorityLevel
     motivo: list[str] = Field(default_factory=list)
+    score: float | None = Field(default=None, ge=0.0, le=1.0)
+    damages_considerados: list[str] = Field(default_factory=list)
 
 
 # --- IA6 assignment ---

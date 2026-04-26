@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/api_datetime.dart';
 
 DateTime _asDateTime(Object? v) {
-  if (v is String) return DateTime.parse(v);
-  throw FormatException('No es fecha: $v');
+  return parseApiDateTime(v);
 }
 
 @immutable

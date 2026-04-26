@@ -2,6 +2,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../cliente/emergencias/domain/solicitud_emergencia_models.dart';
+import '../../../core/utils/api_datetime.dart';
 
 double? _asDoubleNullable(Object? v) {
   if (v == null) return null;
@@ -17,8 +18,7 @@ double _asDouble(Object? v) {
 }
 
 DateTime _asDateTime(Object? v) {
-  if (v is String) return DateTime.parse(v);
-  throw FormatException('No es fecha: $v');
+  return parseApiDateTime(v);
 }
 
 /// Respuesta de `GET .../servicios-asignados` y `PATCH .../estado`.
@@ -43,6 +43,10 @@ final class ServicioAsignadoTecnico {
     this.latitud,
     this.longitud,
     this.direccionReferencia,
+    this.categoriaIncidente,
+    this.nivelPrioridad,
+    this.presupuestoBob,
+    this.presupuestoRegistradoAt,
   });
 
   final int solicitudId;
@@ -63,6 +67,10 @@ final class ServicioAsignadoTecnico {
   final double? latitud;
   final double? longitud;
   final String? direccionReferencia;
+  final String? categoriaIncidente;
+  final String? nivelPrioridad;
+  final double? presupuestoBob;
+  final DateTime? presupuestoRegistradoAt;
 
   String get clienteNombreCompleto => ('$nombres $apellidos').trim();
 
@@ -77,6 +85,24 @@ final class ServicioAsignadoTecnico {
 
   bool get esTerminal =>
       estado == EstadoSolicitudEmergencia.finalizada || estado == EstadoSolicitudEmergencia.cancelada;
+
+  String? get categoriaUi {
+    final c = categoriaIncidente?.trim();
+    if (c == null || c.isEmpty) return null;
+    return c.replaceAll('_', ' ');
+  }
+
+  String? get prioridadUi {
+    final p = nivelPrioridad?.trim();
+    if (p == null || p.isEmpty) return null;
+    return switch (p.toUpperCase()) {
+      'CRITICA' => 'Crítica (grave)',
+      'ALTA' => 'Alta (grave)',
+      'MEDIA' => 'Media',
+      'BAJA' => 'Baja',
+      _ => p,
+    };
+  }
 
   factory ServicioAsignadoTecnico.fromJson(Map<String, dynamic> j) {
     return ServicioAsignadoTecnico(
@@ -98,6 +124,12 @@ final class ServicioAsignadoTecnico {
       latitud: _asDoubleNullable(j['latitud']),
       longitud: _asDoubleNullable(j['longitud']),
       direccionReferencia: j['direccion_referencia'] as String?,
+      categoriaIncidente: j['categoria_incidente'] as String?,
+      nivelPrioridad: j['nivel_prioridad'] as String?,
+      presupuestoBob: _asDoubleNullable(j['presupuesto_bob']),
+      presupuestoRegistradoAt: j['presupuesto_registrado_at'] != null
+          ? _asDateTime(j['presupuesto_registrado_at'])
+          : null,
     );
   }
 }

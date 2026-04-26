@@ -22,6 +22,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final onboardingDone = prefs.getBool('cliente_onboarding_v1_done') ?? false;
 
     if (auth.isAuthenticated) {

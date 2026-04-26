@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../application/emergencias_providers.dart';
 import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/emergencia_ubicacion_osm_map.dart';
@@ -13,8 +13,6 @@ class EmergenciaUbicacionTecnicoScreen extends ConsumerWidget {
   const EmergenciaUbicacionTecnicoScreen({super.key, required this.solicitudId});
 
   final int solicitudId;
-
-  static final _fmt = DateFormat('dd/MM/yyyy HH:mm');
 
   Future<void> _abrirNavegacionExterna(double lat, double lng) async {
     final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
@@ -91,7 +89,7 @@ class EmergenciaUbicacionTecnicoScreen extends ConsumerWidget {
               ],
               const SizedBox(height: 8),
               Text(
-                'Actualizado: ${u.actualizadoAt.isUtc ? _fmt.format(u.actualizadoAt.toLocal()) : _fmt.format(u.actualizadoAt)}',
+                'Actualizado: ${BoliviaTime.formatWithZone(u.actualizadoAt)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),

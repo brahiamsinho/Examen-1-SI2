@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/api_datetime.dart';
 
 /// Estados alineados con API `estado_pago`.
 enum EstadoPago {
@@ -46,8 +47,7 @@ enum MetodoPago {
 }
 
 DateTime _asDateTime(Object? v) {
-  if (v is String) return DateTime.parse(v);
-  throw FormatException('No es fecha: $v');
+  return parseApiDateTime(v);
 }
 
 double _asDouble(Object? v) {
@@ -93,10 +93,26 @@ final class PagoRead {
   final String? stripeClientSecret;
   final String? stripePublishableKey;
 
-  bool get requiereStripePaymentSheet =>
+  /// PaymentSheet de Stripe aplica **solo a tarjeta**; el backend no debe devolver `client_secret` para otros métodos.
+  bool requiereStripePaymentSheet(MetodoPago metodo) =>
+      metodo == MetodoPago.tarjeta &&
       stripeClientSecret != null &&
       stripeClientSecret!.isNotEmpty &&
       estado == EstadoPago.pendiente;
+
+  /// Id de PaymentIntent para `POST .../confirmar-stripe` (referencia, metadata o prefijo del client_secret).
+  String? get stripePaymentIntentId {
+    final ref = referenciaExterna?.trim();
+    if (ref != null && ref.isNotEmpty) return ref;
+    final mid = metadataJson?['payment_intent_id'];
+    if (mid is String && mid.trim().isNotEmpty) return mid.trim();
+    final cs = stripeClientSecret?.trim();
+    if (cs != null && cs.startsWith('pi_')) {
+      final i = cs.indexOf('_secret_');
+      if (i > 0) return cs.substring(0, i);
+    }
+    return null;
+  }
 
   factory PagoRead.fromJson(Map<String, dynamic> j) {
     return PagoRead(
@@ -128,17 +144,24 @@ final class PagoDraft {
     required this.solicitudId,
     required this.montoTexto,
     this.metodo,
+    this.pagoIniciado,
   });
 
   final int solicitudId;
   final String montoTexto;
   final MetodoPago? metodo;
+  /// Resultado de `POST .../pagos` al salir de método de pago; evita duplicar intentos y falta de PI en confirm.
+  final PagoRead? pagoIniciado;
 
-  PagoDraft copyWith({MetodoPago? metodo}) {
+  PagoDraft copyWith({
+    MetodoPago? metodo,
+    PagoRead? pagoIniciado,
+  }) {
     return PagoDraft(
       solicitudId: solicitudId,
       montoTexto: montoTexto,
       metodo: metodo ?? this.metodo,
+      pagoIniciado: pagoIniciado ?? this.pagoIniciado,
     );
   }
 

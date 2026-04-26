@@ -316,13 +316,15 @@ async def asignar_tecnico_a_solicitud(
     se.tecnico_id = body.tecnico_id
     se.tecnico_asignado_at = now
     se.updated_at = now
+    if body.tiempo_estimado_min is not None:
+        se.tiempo_estimado_min = body.tiempo_estimado_min
 
     if estado_antes == EstadoSolicitudSeguimientoEnum.TALLER_ASIGNADO:
         se.estado = EstadoSolicitudSeguimientoEnum.TECNICO_ASIGNADO
         msg_hist = (
-            "Asignación técnico (CU28)"
+            "Asignación de técnico"
             if tecnico_previo is None
-            else "Cambio de técnico (CU28) — solicitud en TALLER_ASIGNADO"
+            else "Cambio de técnico"
         )
         await emergencias_repository.insert_historial_estado(
             db,
@@ -340,7 +342,7 @@ async def asignar_tecnico_a_solicitud(
             estado_anterior=estado_antes,
             estado_nuevo=EstadoSolicitudSeguimientoEnum.TECNICO_ASIGNADO,
             usuario_id=user.id,
-            observacion="Reasignación técnico (CU28)",
+            observacion="Reasignación de técnico",
             created_at=now,
         )
 
@@ -371,6 +373,13 @@ async def asignar_tecnico_a_solicitud(
         tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
         titulo="Técnico asignado",
         mensaje="Se asignó un técnico a tu emergencia. Sigue el avance en la app.",
+    )
+    await comunicaciones_service.notificar_tecnico_solicitud_emergencia(
+        db,
+        solicitud=se,
+        tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
+        titulo="Nueva asignación",
+        mensaje=f"Te asignaron la emergencia #{solicitud_id}. Abre la app para ver detalles.",
     )
 
     return _to_asignar_out(se, asignacion)
@@ -459,7 +468,7 @@ async def aceptar_solicitud(
             estado_anterior=estado_anterior,
             estado_nuevo=EstadoSolicitudSeguimientoEnum.TALLER_ASIGNADO,
             usuario_id=user.id,
-            observacion="Taller acepta asistencia (CU26)",
+            observacion="Taller acepta asistencia",
             created_at=now,
         )
     se.updated_at = now

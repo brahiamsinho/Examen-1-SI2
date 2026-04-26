@@ -111,6 +111,14 @@ class SolicitudEmergenciaRead(BaseModel):
     tecnico_ult_longitud: Decimal | None = None
     tecnico_ult_precision_metros: Decimal | None = None
     tecnico_ult_ubicacion_at: datetime | None = None
+    presupuesto_bob: Decimal | None = Field(
+        default=None,
+        description="Monto en bolivianos (BOB) informado por el técnico al iniciar atención en sitio.",
+    )
+    presupuesto_registrado_at: datetime | None = Field(
+        default=None,
+        description="Momento en que el técnico registró el presupuesto.",
+    )
 
 
 class UbicacionTecnicoCompartidaRead(BaseModel):
@@ -178,3 +186,23 @@ class SolicitudSeguimientoRead(BaseModel):
     taller: TallerSeguimientoRead | None = None
     tecnico: TecnicoSeguimientoRead | None = None
     historial_estados: list[SolicitudHistorialEstadoRead]
+    tiene_ubicacion_cliente: bool = Field(
+        default=False,
+        description="Indica si ya hay al menos un punto de ubicación registrado en la solicitud.",
+    )
+    tiene_evidencia_foto: bool = Field(
+        default=False,
+        description="Indica si hay al menos una evidencia de tipo FOTO almacenada.",
+    )
+    tiene_evidencia_audio: bool = Field(
+        default=False,
+        description="Indica si hay al menos una evidencia de tipo AUDIO almacenada.",
+    )
+    presupuesto_bob: Decimal | None = Field(
+        default=None,
+        description="Monto en bolivianos (BOB) informado por el técnico al iniciar atención en sitio.",
+    )
+    presupuesto_registrado_at: datetime | None = Field(
+        default=None,
+        description="Momento en que el técnico registró el presupuesto.",
+    )

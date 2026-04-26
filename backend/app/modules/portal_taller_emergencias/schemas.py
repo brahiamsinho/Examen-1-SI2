@@ -92,6 +92,12 @@ class RechazarBandejaIn(BaseModel):
 class AsignarTecnicoIn(BaseModel):
     tecnico_id: int = Field(ge=1)
     observacion: str | None = Field(default=None, max_length=2000)
+    tiempo_estimado_min: int | None = Field(
+        default=None,
+        ge=1,
+        le=10080,
+        description="Minutos estimados hasta la llegada del técnico (ETA). Opcional.",
+    )
 
 
 class AsignacionTecnicoRead(BaseModel):

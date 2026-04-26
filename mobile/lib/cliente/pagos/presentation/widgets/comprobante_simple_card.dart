@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
 import '../../domain/pago_models.dart';
 
 /// Comprobante mínimo (referencia, monto, fechas). Listo para ampliar con PDF/QR de pasarela.
@@ -11,9 +12,7 @@ class ComprobanteSimpleCard extends StatelessWidget {
 
   String _fmtFecha(DateTime? d) {
     if (d == null) return '—';
-    final local = d.toLocal();
-    return '${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}/${local.year} '
-        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    return BoliviaTime.formatWithZone(d);
   }
 
   @override

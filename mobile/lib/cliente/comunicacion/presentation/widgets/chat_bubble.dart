@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/utils/bolivia_time.dart';
+
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
@@ -16,7 +18,7 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final horaStr = DateFormat.Hm('es').format(hora.toLocal());
+    final horaStr = BoliviaTime.formatWithZone(hora, pattern: 'HH:mm');
 
     return Align(
       alignment: esMio ? Alignment.centerRight : Alignment.centerLeft,

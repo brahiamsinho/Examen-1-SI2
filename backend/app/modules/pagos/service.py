@@ -13,6 +13,8 @@ from app.core.config import settings
 from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
+from app.modules.comunicaciones import service as comunicaciones_service
+from app.modules.comunicaciones.models import TipoNotificacionEnum
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.pagos import repository
 from app.modules.pagos.gateway import PasarelaSimulada
@@ -57,6 +59,7 @@ async def _aplicar_resultado_pasarela(
     db: AsyncSession,
     *,
     user: Usuario,
+    solicitud,
     pago,
     resultado,
 ) -> None:
@@ -74,6 +77,13 @@ async def _aplicar_resultado_pasarela(
             descripcion=f"Pago confirmado solicitud_id={pago.solicitud_id} ref={resultado.referencia_externa}",
             usuario_id=user.id,
             entidad_id=pago.id,
+        )
+        await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+            db,
+            solicitud=solicitud,
+            tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+            titulo="Pago confirmado",
+            mensaje="Tu pago fue confirmado correctamente. Gracias por usar la plataforma.",
         )
     else:
         pago.estado = EstadoPagoEnum.FALLIDO
@@ -143,8 +153,21 @@ async def crear_pago_solicitud(
     if monto > _MAX_MONTO:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Monto fuera de rango permitido.")
 
+    if sol.presupuesto_bob is not None and sol.presupuesto_bob > 0:
+        esperado = _quantize_monto(sol.presupuesto_bob)
+        if monto != esperado:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"El monto debe ser el presupuesto acordado: {esperado} BOB.",
+            )
+
     now = utc_now_naive()
-    proveedor = "STRIPE" if settings.stripe_enabled else settings.PAGO_PROVEEDOR_DEFAULT
+    # Stripe (PaymentIntent + PaymentSheet) solo aplica a tarjeta. Otros métodos usan flujo simulado / comprobación manual.
+    usar_stripe_tarjeta = (
+        bool(settings.stripe_enabled and settings.STRIPE_SECRET_KEY)
+        and body.metodo == MetodoPagoEnum.TARJETA
+    )
+    proveedor = "STRIPE" if usar_stripe_tarjeta else settings.PAGO_PROVEEDOR_DEFAULT
 
     try:
         pago = await repository.insert_pago(
@@ -168,7 +191,7 @@ async def crear_pago_solicitud(
             entidad_id=pago.id,
         )
 
-        if settings.stripe_enabled and settings.STRIPE_SECRET_KEY:
+        if usar_stripe_tarjeta:
             amount_minor = _monto_a_unidad_menor(monto)
             if amount_minor < 1:
                 raise HTTPException(
@@ -220,7 +243,13 @@ async def crear_pago_solicitud(
                 moneda=pago.moneda,
                 metodo=body.metodo.value,
             )
-            await _aplicar_resultado_pasarela(db, user=user, pago=pago, resultado=res)
+            await _aplicar_resultado_pasarela(
+                db,
+                user=user,
+                solicitud=sol,
+                pago=pago,
+                resultado=res,
+            )
         await repository.refresh_pago(db, pago)
         return _pago_iniciado_desde_row(pago)
     except IntegrityError:
@@ -273,7 +302,13 @@ async def completar_pago_simulado(
             moneda=pago.moneda,
             metodo=pago.metodo.value,
         )
-        await _aplicar_resultado_pasarela(db, user=user, pago=pago, resultado=res)
+        await _aplicar_resultado_pasarela(
+            db,
+            user=user,
+            solicitud=sol,
+            pago=pago,
+            resultado=res,
+        )
         await repository.refresh_pago(db, pago)
         return PagoRead.model_validate(pago)
     except IntegrityError:
@@ -365,6 +400,13 @@ async def confirmar_pago_stripe(
         descripcion=f"Pago Stripe confirmado solicitud_id={solicitud_id} pi={pi_id}",
         usuario_id=user.id,
         entidad_id=pago.id,
+    )
+    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+        db,
+        solicitud=sol,
+        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+        titulo="Pago confirmado",
+        mensaje="Tu pago en Stripe fue confirmado correctamente.",
     )
     await repository.refresh_pago(db, pago)
     return PagoRead.model_validate(pago)

@@ -19,23 +19,21 @@ class PagoResumenScreen extends ConsumerStatefulWidget {
 }
 
 class _PagoResumenScreenState extends ConsumerState<PagoResumenScreen> {
-  final _montoCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _montoCtrl.dispose();
-    super.dispose();
-  }
-
   void _continuar() {
-    final t = _montoCtrl.text.trim().replaceAll(',', '.');
-    if (double.tryParse(t) == null || double.parse(t) <= 0) {
+    final detalle = ref.read(emergenciaDetailProvider(widget.solicitudId)).asData?.value;
+    final presupuesto = detalle?.presupuestoBob;
+    final montoFijadoPorTecnico = presupuesto != null && presupuesto > 0;
+    if (!montoFijadoPorTecnico) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresá un monto válido mayor a cero.')),
+        const SnackBar(
+          content: Text('Aún no hay monto definido por el técnico/mecánico.'),
+        ),
       );
       return;
     }
-    final draft = PagoDraft(solicitudId: widget.solicitudId, montoTexto: t);
+
+    final montoT = presupuesto.toStringAsFixed(2);
+    final draft = PagoDraft(solicitudId: widget.solicitudId, montoTexto: montoT);
     context.push('/cliente/app/emergencias/solicitudes/${widget.solicitudId}/pago/metodo', extra: draft);
   }
 
@@ -47,6 +45,13 @@ class _PagoResumenScreenState extends ConsumerState<PagoResumenScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pagar servicio'),
+        actions: [
+          IconButton(
+            tooltip: 'Actualizar monto',
+            onPressed: () => ref.invalidate(emergenciaDetailProvider(widget.solicitudId)),
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.canPop() ? context.pop() : context.go('/cliente/app/emergencias/solicitudes/${widget.solicitudId}'),
@@ -56,6 +61,7 @@ class _PagoResumenScreenState extends ConsumerState<PagoResumenScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(e.toString()))),
         data: (d) {
+          final montoFijadoPorTecnico = d.presupuestoBob != null && d.presupuestoBob! > 0;
           if (!solicitudPermitePago(d.estado)) {
             return Center(
               child: Padding(
@@ -79,34 +85,70 @@ class _PagoResumenScreenState extends ConsumerState<PagoResumenScreen> {
             );
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              ResumenCobroCard(
-                solicitudId: widget.solicitudId,
-                estado: d.estado,
-              ),
-              const SizedBox(height: 20),
-              Text('Monto a pagar', style: theme.textTheme.large),
-              const SizedBox(height: 8),
-              ShadInput(
-                controller: _montoCtrl,
-                placeholder: const Text('Ej. 150.00'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-              const SizedBox(height: 8),
-              Text('Moneda por defecto: BOB (según backend).', style: theme.textTheme.muted),
-              const SizedBox(height: 28),
-              ShadButton(
-                onPressed: _continuar,
-                child: const Text('Continuar'),
-              ),
-              const SizedBox(height: 12),
-              ShadButton.outline(
-                onPressed: () => context.push('/cliente/app/emergencias/solicitudes/${widget.solicitudId}/pagos'),
-                child: const Text('Ver historial de pagos'),
-              ),
-            ],
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(emergenciaDetailProvider(widget.solicitudId).future),
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                ResumenCobroCard(
+                  solicitudId: widget.solicitudId,
+                  estado: d.estado,
+                ),
+                const SizedBox(height: 20),
+                if (montoFijadoPorTecnico) ...[
+                  ShadCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        'Monto acordado por el técnico/mecánico: Bs. ${d.presupuestoBob!.toStringAsFixed(2)}.',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Monto a pagar', style: theme.textTheme.large),
+                  const SizedBox(height: 8),
+                  ShadCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lock_outline, size: 22, color: theme.colorScheme.primary),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Bs. ${d.presupuestoBob!.toStringAsFixed(2)} (fijado por técnico)',
+                              style: theme.textTheme.p,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  ShadCard(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        'El técnico/mecánico aún no definió el monto. Cuando lo registre, podrás continuar con el pago.',
+                        style: theme.textTheme.muted,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Text('Moneda por defecto: BOB (según backend).', style: theme.textTheme.muted),
+                const SizedBox(height: 28),
+                ShadButton(
+                  onPressed: montoFijadoPorTecnico ? _continuar : null,
+                  child: const Text('Continuar'),
+                ),
+                const SizedBox(height: 12),
+                ShadButton.outline(
+                  onPressed: () => context.push('/cliente/app/emergencias/solicitudes/${widget.solicitudId}/pagos'),
+                  child: const Text('Ver historial de pagos'),
+                ),
+              ],
+            ),
           );
         },
       ),

@@ -12,6 +12,8 @@ from app.modules.comunicaciones import service as comunicaciones_service
 from app.modules.comunicaciones.models import TipoNotificacionEnum
 from app.modules.comunicaciones.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
 from app.modules.emergencias import repository as emergencias_repository
+from decimal import Decimal
+
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.emergencias.schemas import UbicacionCreateIn, UbicacionTecnicoCompartidaRead
 from app.modules.portal_tecnico.service import get_tecnico_row_for_usuario
@@ -153,6 +155,12 @@ async def actualizar_estado_servicio(
     estado_anterior = se.estado
     se.estado = body.nuevo_estado
     se.updated_at = now
+    if body.nuevo_estado == EstadoSolicitudSeguimientoEnum.EN_CAMINO and se.tiempo_estimado_min is None:
+        # Fallback operativo: si no hay ETA definida por taller, mostrar ETA base al cliente.
+        se.tiempo_estimado_min = 20
+    if body.nuevo_estado == EstadoSolicitudSeguimientoEnum.EN_ATENCION:
+        se.presupuesto_bob = body.presupuesto_bob
+        se.presupuesto_registrado_at = now
     if body.nuevo_estado == EstadoSolicitudSeguimientoEnum.FINALIZADA:
         se.finalizada_at = now
 
@@ -162,7 +170,7 @@ async def actualizar_estado_servicio(
         estado_anterior=estado_anterior,
         estado_nuevo=body.nuevo_estado,
         usuario_id=user.id,
-        observacion=obs or f"Actualización estado técnico (CU34): {body.nuevo_estado.value}",
+        observacion=obs or f"Actualización de estado: {body.nuevo_estado.value}",
         created_at=now,
     )
 
@@ -177,12 +185,20 @@ async def actualizar_estado_servicio(
     )
 
     etiqueta = _etiqueta_estado_cliente(body.nuevo_estado)
+    monto_txt: str | None = None
+    if body.nuevo_estado == EstadoSolicitudSeguimientoEnum.EN_ATENCION and body.presupuesto_bob is not None:
+        monto_txt = f"{body.presupuesto_bob.quantize(Decimal('0.01'))} Bs."
+    mensaje_cliente = (
+        f"Te informamos: {etiqueta}. Presupuesto indicado: {monto_txt}."
+        if monto_txt
+        else f"Te informamos: {etiqueta}."
+    )
     await comunicaciones_service.notificar_cliente_solicitud_emergencia(
         db,
         solicitud=se,
         tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
         titulo="Estado de tu servicio",
-        mensaje=f"Te informamos: {etiqueta}.",
+        mensaje=mensaje_cliente,
     )
 
     row = await repository.get_servicio_asignado_detalle(db, solicitud_id=solicitud_id, tecnico_id=t.id)

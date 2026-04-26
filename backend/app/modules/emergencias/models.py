@@ -77,6 +77,9 @@ class SolicitudEmergencia(Base):
     tecnico_ult_precision_metros: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
     tecnico_ult_ubicacion_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
+    presupuesto_bob: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    presupuesto_registrado_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     ubicaciones: Mapped[list["SolicitudUbicacion"]] = relationship(
         back_populates="solicitud",
         cascade="all, delete-orphan",

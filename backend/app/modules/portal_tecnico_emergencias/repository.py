@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -34,6 +34,14 @@ def _servicios_select():
             su.latitud,
             su.longitud,
             su.direccion_referencia,
+            func.jsonb_extract_path_text(
+                SolicitudEmergencia.ai_payload, "clasificacion", "categoria_incidente"
+            ).label("categoria_incidente"),
+            func.jsonb_extract_path_text(
+                SolicitudEmergencia.ai_payload, "prioridad", "nivel_prioridad"
+            ).label("nivel_prioridad"),
+            SolicitudEmergencia.presupuesto_bob,
+            SolicitudEmergencia.presupuesto_registrado_at,
         )
         .select_from(SolicitudEmergencia)
         .join(Cliente, Cliente.id == SolicitudEmergencia.cliente_id)

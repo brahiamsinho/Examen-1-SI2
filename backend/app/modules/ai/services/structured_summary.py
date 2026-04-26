@@ -7,13 +7,28 @@ from app.modules.ai.schemas import (
     StructuredSummaryIn,
     StructuredSummaryOut,
 )
+from app.modules.ai.services.evidence_fusion import fuse_incident_evidence, pick_primary_category
 
 
 def build_structured_summary(body: StructuredSummaryIn) -> StructuredSummaryOut:
-    cat = body.categoria or IncidentCategory.OTROS
+    joined_audio = " ".join(
+        a for a in [body.transcripcion_audio or "", *body.transcripciones_audio] if a and a.strip()
+    )
+    all_hallazgos = list(body.hallazgos_vision)
+    for group in body.hallazgos_vision_por_imagen:
+        all_hallazgos.extend(group)
+    damages, requires_manual_review, conflict_notes = fuse_incident_evidence(
+        texto_cliente=body.texto_cliente,
+        transcripcion_audio=body.transcripcion_audio,
+        transcripciones_audio=body.transcripciones_audio,
+        hallazgos_vision=body.hallazgos_vision,
+        hallazgos_vision_por_imagen=body.hallazgos_vision_por_imagen,
+    )
+    inferred_cat, _ = pick_primary_category(damages)
+    cat = body.categoria or inferred_cat or IncidentCategory.OTROS
     textos = " ".join(
         x
-        for x in (body.texto_cliente or "", body.transcripcion_audio or "")
+        for x in (body.texto_cliente or "", joined_audio)
         if x
     ).strip()
 
@@ -21,8 +36,8 @@ def build_structured_summary(body: StructuredSummaryIn) -> StructuredSummaryOut:
     ubicacion_valida = bool(
         ubi and ubi.latitud is not None and ubi.longitud is not None
     )
-    evid_audio = bool(body.transcripcion_audio and body.transcripcion_audio.strip())
-    evid_img = bool(body.hallazgos_vision)
+    evid_audio = bool(joined_audio.strip())
+    evid_img = bool(all_hallazgos)
 
     incert = "BAJA"
     if cat == IncidentCategory.OTROS:
@@ -50,8 +65,15 @@ def build_structured_summary(body: StructuredSummaryIn) -> StructuredSummaryOut:
 
     partes.append(f"Clasificación automática del problema: {cat.value}.")
 
-    if body.hallazgos_vision:
-        partes.append("Evidencia fotográfica: " + "; ".join(body.hallazgos_vision[:5]) + ".")
+    if all_hallazgos:
+        partes.append("Evidencia fotográfica: " + "; ".join(all_hallazgos[:5]) + ".")
+
+    if damages:
+        partes.append(
+            "Daños detectados: "
+            + ", ".join(f"{d.label} ({d.severity.value})" for d in damages[:4])
+            + "."
+        )
 
     if ubi and ubi.direccion_referencia:
         partes.append(f"Referencia de ubicación: {ubi.direccion_referencia[:200]}.")
@@ -64,6 +86,14 @@ def build_structured_summary(body: StructuredSummaryIn) -> StructuredSummaryOut:
         partes.append("Prioridad sugerida: revisión humana por alta incertidumbre.")
     elif incert == "MEDIA":
         partes.append("Prioridad sugerida: validar detalles con el cliente si es posible.")
+    if requires_manual_review:
+        partes.append("Conflicto multimodal detectado: validar manualmente antes de asignar.")
+    if conflict_notes:
+        partes.append("Conflictos: " + "; ".join(conflict_notes[:2]) + ".")
 
     resumen = " ".join(partes)
-    return StructuredSummaryOut(resumen=resumen, ficha=ficha)
+    return StructuredSummaryOut(
+        resumen=resumen,
+        ficha=ficha,
+        danos_detectados=[d.label for d in damages],
+    )

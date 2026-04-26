@@ -1,12 +1,19 @@
 // Modelos — GET `/portal/cliente/emergencias/{id}/seguimiento` (CU16–CU18).
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/api_datetime.dart';
 import 'solicitud_ai_payload.dart';
 import 'solicitud_emergencia_models.dart';
 
 DateTime _asDateTime(Object? v) {
-  if (v is String) return DateTime.parse(v);
-  throw FormatException('No es fecha: $v');
+  return parseApiDateTime(v);
+}
+
+double? _asDoubleNullable(Object? v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.parse(v);
+  throw FormatException('No es número: $v');
 }
 
 @immutable
@@ -106,6 +113,11 @@ class SolicitudSeguimiento {
     this.tecnico,
     required this.historialEstados,
     this.aiPayload,
+    this.tieneUbicacionCliente = false,
+    this.tieneEvidenciaFoto = false,
+    this.tieneEvidenciaAudio = false,
+    this.presupuestoBob,
+    this.presupuestoRegistradoAt,
   });
 
   final int solicitudId;
@@ -117,6 +129,13 @@ class SolicitudSeguimiento {
   final TecnicoSeguimientoRead? tecnico;
   final List<SolicitudHistorialEstadoRead> historialEstados;
   final SolicitudAiPayloadV1? aiPayload;
+  /// Alineado al backend: datos reales de la solicitud (puede contradecir el snapshot de IA al crear).
+  final bool tieneUbicacionCliente;
+  final bool tieneEvidenciaFoto;
+  final bool tieneEvidenciaAudio;
+  /// Monto en bolivianos (BOB) indicado por el técnico al iniciar atención en sitio.
+  final double? presupuestoBob;
+  final DateTime? presupuestoRegistradoAt;
 
   factory SolicitudSeguimiento.fromJson(Map<String, dynamic> j) {
     return SolicitudSeguimiento(
@@ -136,6 +155,13 @@ class SolicitudSeguimiento {
         for (final e in j['historial_estados'] as List<dynamic>? ?? [])
           if (e is Map<String, dynamic>) SolicitudHistorialEstadoRead.fromJson(e),
       ],
+      tieneUbicacionCliente: j['tiene_ubicacion_cliente'] as bool? ?? false,
+      tieneEvidenciaFoto: j['tiene_evidencia_foto'] as bool? ?? false,
+      tieneEvidenciaAudio: j['tiene_evidencia_audio'] as bool? ?? false,
+      presupuestoBob: _asDoubleNullable(j['presupuesto_bob']),
+      presupuestoRegistradoAt: j['presupuesto_registrado_at'] != null
+          ? _asDateTime(j['presupuesto_registrado_at'])
+          : null,
     );
   }
 }

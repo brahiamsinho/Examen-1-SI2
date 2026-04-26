@@ -1,6 +1,7 @@
 // Modelos de dominio — API `/portal/cliente/emergencias` (snake_case JSON).
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/api_datetime.dart';
 import 'solicitud_ai_payload.dart';
 
 double _asDouble(Object? v) {
@@ -9,9 +10,15 @@ double _asDouble(Object? v) {
   throw FormatException('No es número: $v');
 }
 
+double? _asDoubleNullable(Object? v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.parse(v);
+  throw FormatException('No es número: $v');
+}
+
 DateTime _asDateTime(Object? v) {
-  if (v is String) return DateTime.parse(v);
-  throw FormatException('No es fecha: $v');
+  return parseApiDateTime(v);
 }
 
 enum EstadoSolicitudEmergencia {
@@ -147,6 +154,8 @@ class SolicitudEmergenciaDetail {
     this.tecnicoId,
     this.tiempoEstimadoMin,
     this.finalizadaAt,
+    this.presupuestoBob,
+    this.presupuestoRegistradoAt,
     this.aiPayload,
   });
 
@@ -163,6 +172,9 @@ class SolicitudEmergenciaDetail {
   final int? tecnicoId;
   final int? tiempoEstimadoMin;
   final DateTime? finalizadaAt;
+  /// Presupuesto en BOB que puede registrar el técnico al pasar a atención.
+  final double? presupuestoBob;
+  final DateTime? presupuestoRegistradoAt;
   final SolicitudAiPayloadV1? aiPayload;
 
   factory SolicitudEmergenciaDetail.fromJson(Map<String, dynamic> j) {
@@ -186,6 +198,10 @@ class SolicitudEmergenciaDetail {
       tecnicoId: j['tecnico_id'] as int?,
       tiempoEstimadoMin: j['tiempo_estimado_min'] as int?,
       finalizadaAt: j['finalizada_at'] != null ? _asDateTime(j['finalizada_at']) : null,
+      presupuestoBob: _asDoubleNullable(j['presupuesto_bob']),
+      presupuestoRegistradoAt: j['presupuesto_registrado_at'] != null
+          ? _asDateTime(j['presupuesto_registrado_at'])
+          : null,
       aiPayload: SolicitudAiPayloadV1.tryParse(j['ai_payload']),
     );
   }

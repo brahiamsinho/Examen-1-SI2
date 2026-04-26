@@ -1,17 +1,15 @@
-# syntax=docker/dockerfile:1
-# Frontend Angular — build cache mount, nginx alpine runtime
+# Frontend Angular — nginx alpine runtime
+# Sin # syntax= ni --mount=cache: más estable en Docker Desktop/Windows
 
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps
 
 COPY . .
-RUN --mount=type=cache,target=/root/.npm \
-    npm run build -- --configuration production
+RUN npm run build -- --configuration production
 
 # ── Stage 2: Servidor nginx ───────────────────────────────
 FROM nginx:alpine AS runtime

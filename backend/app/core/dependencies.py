@@ -13,7 +13,8 @@ from jose import JWTError
 from app.core.database import get_db
 from app.core.security import decode_token
 from app.modules.usuarios.models import Usuario
-from app.modules.acceso.models import UsuarioRol, Rol, RolPermiso, Permiso
+from app.modules.permisos.models import Permiso
+from app.modules.roles.models import Rol, RolPermiso, UsuarioRol
 
 # Bearer token extractor — lee el header "Authorization: Bearer <token>"
 bearer_scheme = HTTPBearer()

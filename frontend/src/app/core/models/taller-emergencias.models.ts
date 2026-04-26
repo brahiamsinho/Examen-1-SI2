@@ -104,3 +104,32 @@ export interface AsignarTecnicoResultDto {
   tecnico_asignado_at: string | null;
   asignacion: AsignacionTecnicoDto;
 }
+
+/** GET `/portal/taller/emergencias/reportes/dashboard` */
+export interface ResumenComisionesDto {
+  taller_id: number;
+  total_registros: number;
+  total_servicios: string;
+  total_comision: string;
+  total_neto: string;
+}
+
+export interface ReporteTecnicoGananciasDto {
+  tecnico_id: number;
+  nombres: string;
+  apellidos: string;
+  comisiones_registradas: number;
+  total_monto_servicio: string;
+  total_monto_comision: string;
+  total_monto_taller_neto: string;
+}
+
+export interface ReporteTallerDashboardDto {
+  taller_id: number;
+  periodo_desde: string | null;
+  periodo_hasta: string | null;
+  resumen_comisiones: ResumenComisionesDto;
+  bandeja_pendientes: number;
+  solicitudes_por_estado: Record<string, number>;
+  ganancias_por_tecnico: ReporteTecnicoGananciasDto[];
+}

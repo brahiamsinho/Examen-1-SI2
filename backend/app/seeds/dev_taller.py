@@ -1,6 +1,5 @@
 # Seed idempotente: usuario responsable + rol TALLER_RESPONSABLE + taller (pruebas portal / web).
 import logging
-from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -9,12 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.core.timeutil import utc_now_naive
-from app.modules.acceso.models import Rol
-from app.modules.acceso.service import asignar_roles_usuario
+from app.modules.roles.models import Rol
+from app.modules.roles.service import asignar_roles_usuario
 from app.modules.talleres import service as talleres_service
 from app.modules.talleres.models import EstadoTallerEnum, Taller
 from app.modules.usuarios import service as usuarios_service
 from app.modules.usuarios.models import EstadoUsuarioEnum, Usuario
+from app.seeds.identidades_demo_sc import TALLER_PRINCIPAL_LAT, TALLER_PRINCIPAL_LNG
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,8 @@ def _taller_payload(user_id: int, email: str, telefono: str) -> dict:
         "email_contacto": email,
         "direccion": settings.SEED_TALLER_DIRECCION,
         "ciudad": settings.SEED_TALLER_CIUDAD,
-        "latitud": Decimal("-16.4897"),
-        "longitud": Decimal("-68.1193"),
+        "latitud": TALLER_PRINCIPAL_LAT,
+        "longitud": TALLER_PRINCIPAL_LNG,
         "descripcion": settings.SEED_TALLER_DESCRIPCION,
         "estado": EstadoTallerEnum.ACTIVO,
     }
@@ -49,8 +49,8 @@ async def _apply_taller_demo_fields(taller: Taller, email: str, telefono: str) -
     taller.email_contacto = email
     taller.direccion = settings.SEED_TALLER_DIRECCION
     taller.ciudad = settings.SEED_TALLER_CIUDAD
-    taller.latitud = Decimal("-16.4897")
-    taller.longitud = Decimal("-68.1193")
+    taller.latitud = TALLER_PRINCIPAL_LAT
+    taller.longitud = TALLER_PRINCIPAL_LNG
     taller.descripcion = settings.SEED_TALLER_DESCRIPCION
     taller.estado = EstadoTallerEnum.ACTIVO
     taller.updated_at = utc_now_naive()

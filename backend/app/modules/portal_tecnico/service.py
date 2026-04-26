@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.acceso.models import Rol, UsuarioRol
+from app.modules.roles.models import Rol, UsuarioRol
 from app.modules.talleres.models import Tecnico
 
 

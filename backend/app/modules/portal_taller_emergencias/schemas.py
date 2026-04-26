@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -170,3 +170,33 @@ class ResumenComisionesRead(BaseModel):
     total_servicios: Decimal
     total_comision: Decimal
     total_neto: Decimal
+
+
+class ReporteTecnicoGananciasRead(BaseModel):
+    """Montos agregados por técnico (vía comisión vinculada a solicitud con `tecnico_id`)."""
+
+    tecnico_id: int
+    nombres: str
+    apellidos: str
+    comisiones_registradas: int
+    total_monto_servicio: Decimal
+    total_monto_comision: Decimal
+    total_monto_taller_neto: Decimal
+
+
+class ReporteTallerDashboardRead(BaseModel):
+    """KPIs operativos y financieros del taller (periodo de comisiones por `calculado_at`)."""
+
+    taller_id: int
+    periodo_desde: date | None = Field(None, description="Fecha inicio inclusive (solicitud / comisiones).")
+    periodo_hasta: date | None = Field(None, description="Fecha fin inclusive.")
+    resumen_comisiones: ResumenComisionesRead
+    bandeja_pendientes: int = Field(
+        ...,
+        description="Filas PENDIENTE en la bandeja de este taller (no filtrado por fechas).",
+    )
+    solicitudes_por_estado: dict[str, int] = Field(
+        default_factory=dict,
+        description="Conteo de solicitudes creadas en el periodo (por `created_at`) agrupado por estado.",
+    )
+    ganancias_por_tecnico: list[ReporteTecnicoGananciasRead] = Field(default_factory=list)

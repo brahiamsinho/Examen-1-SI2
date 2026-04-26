@@ -17,7 +17,7 @@
    **Docker — además modelo de clasificación propio** (archivo local `backend/incidentes_emergencias_v1.pt`):  
    `docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build`  
    **Si aún falla el build** con `frontend grpc server closed unexpectedly`: el repo ya usa Dockerfiles sin `# syntax=`; en el equipo: reiniciar Docker Desktop, `docker buildx prune`, o variables de sesión `DOCKER_BUILDKIT=0` y `COMPOSE_DOCKER_CLI_BUILD=0` (builder clásico).
-5. Luego **`docker compose exec backend python -m app.seeds`** (mismo proyecto; el perfil `ai` no afecta `exec`).
+5. Luego **`docker compose exec backend python -m app.seeds`** (mismo proyecto; el perfil `ai` no afecta `exec`). Al final: **demo Santa Cruz**, **demo media prioridad** y **stress visual** (catálogo extra + clientes `*.lista.sc-demo.test`; credenciales base en `identidades_demo_sc.py`). Opcional en arranque: `SEED_DEMO_MEDIA_PRIORIDAD_ON_START`, `SEED_STRESS_VISUAL_ON_START`, etc.
 6. Probar API: `http://localhost:8000/docs` y health `/health`. Probar IA: `POST /api/ai/images/analyze` con Bearer de un usuario con permiso `ai:inferir` (p. ej. admin tras seeds).
 7. **BD ya existente (actualización 2026-04-22):** si aparece `tecnico_asignado_at` inexistente, aplicar el SQL de `backend/migrations/0006_tecnico_asignado_at.sql` (p. ej. con `psql` en el contenedor `db`). Init de Postgres no vuelve a correr en un volumen ya poblado.
 8. **BD ya existente (presupuesto BOB, 2026-04-25):** aplicar `backend/migrations/0014_presupuesto_bob_solicitud.sql` con `psql` si la base se creó antes de añadir el archivo al `docker-compose` (nuevos `docker compose up` con volumen virgen montan `14_` automáticamente).

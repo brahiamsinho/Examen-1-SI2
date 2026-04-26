@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import require_permission
-from app.modules.comunicaciones.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
+from app.modules.mensajes_solicitud.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
 from app.modules.comunicaciones.router import _ensure_tecnico
 from app.modules.emergencias.schemas import UbicacionCreateIn, UbicacionTecnicoCompartidaRead
 from app.modules.usuarios.models import Usuario

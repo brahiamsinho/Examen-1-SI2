@@ -13,8 +13,8 @@ from app.core.config import settings
 from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
-from app.modules.comunicaciones import service as comunicaciones_service
-from app.modules.comunicaciones.models import TipoNotificacionEnum
+from app.modules.notificaciones.models import TipoNotificacionEnum
+from app.modules.notificaciones import service as notificaciones_service
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.pagos import repository
 from app.modules.pagos.gateway import PasarelaSimulada
@@ -78,7 +78,7 @@ async def _aplicar_resultado_pasarela(
             usuario_id=user.id,
             entidad_id=pago.id,
         )
-        await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+        await notificaciones_service.notificar_cliente_solicitud_emergencia(
             db,
             solicitud=solicitud,
             tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
@@ -401,7 +401,7 @@ async def confirmar_pago_stripe(
         usuario_id=user.id,
         entidad_id=pago.id,
     )
-    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+    await notificaciones_service.notificar_cliente_solicitud_emergencia(
         db,
         solicitud=sol,
         tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,

@@ -52,4 +52,87 @@
       >
     </div>
   </section>
+
+  <section class="dash__section dash__section--report" *ngIf="!loading && data && puedeVerReportesFinancieros()">
+    <h3 class="dash__section-title">Reportes e inteligencia operativa</h3>
+    <p class="dash__section-lead">
+      Comisiones y rendimiento neto se calculan con base en comisiones registradas en el rango. Las solicitudes por estado
+      cuentan servicios creados en el mismo rango. Moneda: BOB.
+    </p>
+
+    <div class="dash__filters">
+      <label class="dash__field">
+        <span>Desde</span>
+        <input type="date" class="dash__input" name="repDesde" [(ngModel)]="desdeStr" />
+      </label>
+      <label class="dash__field">
+        <span>Hasta</span>
+        <input type="date" class="dash__input" name="repHasta" [(ngModel)]="hastaStr" />
+      </label>
+      <button type="button" class="dash__btn" (click)="cargarReporte()" [disabled]="reporteLoading">Actualizar</button>
+    </div>
+
+    <p class="dash__muted" *ngIf="reporteLoading">Cargando reporte…</p>
+    <div class="dash__alert" *ngIf="reporteError" role="alert">{{ reporteError }}</div>
+
+    <ng-container *ngIf="reporte as rpt">
+      <div class="dash__kpi-row">
+        <article class="dash__card dash__card--kpi">
+          <h4 class="dash__card-title">Ingreso neto taller (rango)</h4>
+          <p class="dash__metric">Bs. {{ formatoMoneda(rpt.resumen_comisiones.total_neto) }}</p>
+        </article>
+        <article class="dash__card dash__card--kpi">
+          <h4 class="dash__card-title">Comisión plataforma (rango)</h4>
+          <p class="dash__metric">Bs. {{ formatoMoneda(rpt.resumen_comisiones.total_comision) }}</p>
+        </article>
+        <article class="dash__card dash__card--kpi">
+          <h4 class="dash__card-title">Volumen servicios (rango)</h4>
+          <p class="dash__metric">Bs. {{ formatoMoneda(rpt.resumen_comisiones.total_servicios) }}</p>
+        </article>
+        <article class="dash__card dash__card--kpi">
+          <h4 class="dash__card-title">Ofertas pendientes (bandeja)</h4>
+          <p class="dash__metric">{{ rpt.bandeja_pendientes }}</p>
+        </article>
+      </div>
+
+      <div class="dash__subgrid">
+        <div class="dash__subcard">
+          <h4 class="dash__subcard-title">Solicitudes por estado (creadas en rango)</h4>
+          <p class="dash__empty" *ngIf="estadosReporte.length === 0">Sin movimiento en el periodo.</p>
+          <ul class="dash__barlist" *ngIf="estadosReporte.length > 0">
+            <li *ngFor="let it of estadosReporte" class="dash__baritem">
+              <span class="dash__barlabel">{{ it.label }}</span>
+              <span class="dash__barval">{{ it.n }}</span>
+            </li>
+          </ul>
+        </div>
+        <div class="dash__subcard">
+          <h4 class="dash__subcard-title">Ganancias y volumen por técnico (neto al taller en BOB)</h4>
+          <p class="dash__empty" *ngIf="rpt.ganancias_por_tecnico.length === 0">Sin comisiones asociadas a técnico en el rango.</p>
+          <div class="dash__tablewrap" *ngIf="rpt.ganancias_por_tecnico.length > 0">
+            <table class="dash__table">
+              <thead>
+                <tr>
+                  <th>Técnico / mecánico</th>
+                  <th>Comisiones (reg.)</th>
+                  <th>Facturado</th>
+                  <th>Comisión plataf.</th>
+                  <th>Neto taller</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let t of rpt.ganancias_por_tecnico">
+                  <td>{{ t.nombres }} {{ t.apellidos }}</td>
+                  <td>{{ t.comisiones_registradas }}</td>
+                  <td>Bs. {{ formatoMoneda(t.total_monto_servicio) }}</td>
+                  <td>Bs. {{ formatoMoneda(t.total_monto_comision) }}</td>
+                  <td><strong>Bs. {{ formatoMoneda(t.total_monto_taller_neto) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </section>
 </div>

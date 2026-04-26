@@ -1,10 +1,27 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-04-26 — Pago confirmación: reutiliza PagoIniciado + `stripePaymentIntentId` en confirmar-stripe ✅
+# Última actualización: 2026-04-26 — Backend: módulos `auth` / `roles` / `permisos` + notificaciones/push/mensajes ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA completo ✅
+
+### Arquitectura backend modular (2026-04-26) ✅
+- [x] Sustituido el monolito `acceso/` por módulos independientes: **`auth`** (sesiones, tokens email), **`roles`**, **`permisos`**. Mismas tablas y URLs (`/api/auth/...`, `/api/roles/...`, `/api/permisos/...`). Bitácora: asignación de roles al usuario ahora se registra con `modulo="roles"`.
+- [x] Sustituida la pila mezclada bajo `comunicaciones` (modelos+repo+FCM+servicio) por: **`notificaciones`**, **`dispositivos_push`**, **`mensajes_solicitud`**. `comunicaciones/` conserva **solo** `router.py` que delega a esos servicios. Seeds y `pagos` / portales usan `notificaciones.service` o repositorios nuevos; `db_metadata` importa los tres módulos de modelos.
+- [x] **Push bienvenida:** sigue en `dispositivos_push.service.registrar_fcm_token` (llama a `notificaciones.service.crear_notificacion_y_push`).
+
+### Identidades seed local (2026-04-26) ✅
+- [x] **`identidades_demo_sc.py`:** nombres, emails `*.sc-demo.test`, teléfonos +591 77010010–014, contraseña corta `scdemo1`, talleres **Mecánica Express Rivero** y **Auxilio Vial 4to Anillo SC** (ambos Santa Cruz). `app/core/config.py` usa estos valores como defaults de `SEED_*`; `docker-compose.yml` alineado (sin +57 ni La Paz en fallbacks).
+
+### Seed demo Santa Cruz (2026-04-26) ✅
+- [x] **`dev_demo_santa_cruz`:** 4 vehículos + 10 emergencias `[DEMO-SC]` (zonas y copy Santa Cruz), bandeja variada, asignaciones, 2 pagos BOB + comisiones para probar reportes del portal taller. `python -m app.seeds` lo ejecuta al final; `SEED_DEMO_SANTA_CRUZ_ON_START` opcional en arranque. Ciudad por defecto seed cliente/taller: Santa Cruz de la Sierra.
+
+### Seed demo media prioridad (2026-04-26) ✅
+- [x] **`dev_demo_media_prioridad`:** Tras Santa Cruz, idempotente (notificación gate `[DEMO-MEDIA] seed v1`): notificaciones in-app (tipos permitidos por enum SQL), hilo de chat cliente↔técnico en la primera solicitud `[DEMO-SC]` con `tecnico_id`, `UPDATE` de `ai_payload` con `_seed_media` + estructura alineada a mobile/backend IA, fila `taller_disponibilidad` del taller principal, usuario+taller **competidor segunda sede en Santa Cruz** (`SEED_TALLER2_*`) y **backfill** de filas `solicitud_taller_bandeja` PENDIENTE para ese taller en todas las solicitudes `[DEMO-SC]`. `SEED_DEMO_MEDIA_PRIORIDAD_ON_START` opcional en `lifespan` (requiere usuarios demo ya creados por otros flags o por `python -m app.seeds`).
+
+### Seed stress visual — catálogos y cuentas extra (2026-04-26) ✅
+- [x] **`dev_stress_visual` + `ensure_catalogos_vehiculo_stress_extra`:** más tipos/marcas/modelos de vehículo (Nissan, VW, Renault, etc.) y **8 usuarios cliente** con nombres bolivianos y emails `*.lista.sc-demo.test` (tel. +591 77021xxx); contraseña `SEED_STRESS_CLIENT_PASSWORD` (default `scdemo1` vía `identidades_demo_sc`). Idempotente por email. `python -m app.seeds` al final; `SEED_STRESS_VISUAL_ON_START` solo arranque.
 
 ### Push técnico + presupuesto BOB (2026-04-25) ✅
 - [x] **Asignación técnico:** tras notificar al cliente, el backend notifica al **usuario técnico** (`notificar_tecnico_solicitud_emergencia`) con push/in-app. Si no hay tokens FCM para ese usuario, se registra log `FCM omitido: ... sin tokens`.
@@ -29,7 +46,7 @@
 - [x] **Servicios asignados técnico:** backend `portal_tecnico_emergencias` ahora expone `categoria_incidente` y `nivel_prioridad` (derivados de `ai_payload`) y el mobile los muestra en la lista/detalle con copy de severidad (p. ej. prioridad alta/crítica = grave).
 - [x] **Push deep-link:** `FcmMessageListener` agrega `onMessageOpenedApp` + `getInitialMessage`; al tocar push navega directo a chat o detalle (cliente/técnico) usando `solicitud_id` y `tipo`.
 - [x] **Push por pago confirmado:** backend `pagos/service.py` envía notificación in-app + push al cliente cuando el pago queda `PAGADO` (pasarela simulada y confirmación Stripe).
-- [x] **Push de bienvenida cliente (primer token):** al registrar el primer FCM token del cliente (`comunicaciones/registrar_fcm_token`) se crea notificación/push de cuenta activa.
+- [x] **Push de bienvenida cliente (primer token):** al registrar el primer FCM token del cliente (`dispositivos_push` vía ruta `portal/.../dispositivos/fcm`) se crea notificación/push de cuenta activa.
 - [x] **Hora Santa Cruz (BOT) unificada:** mobile reemplaza `.toLocal()` por util común `BoliviaTime` en vistas de cliente/técnico y chat/comunicaciones/pagos; Angular fija `LOCALE_ID='es-BO'` y `DATE_PIPE_DEFAULT_OPTIONS.timezone='-0400'` para que todos los `| date` muestren hora Bolivia por defecto.
 - [x] **Docker timezone BOT:** `docker-compose.yml` define `TZ=America/La_Paz` en `db`, `mailhog`, `backend`, `frontend` y `ai-inference`, y `PGTZ=America/La_Paz` en `db` para logs/fechas de contenedor alineadas a Santa Cruz.
 
@@ -42,16 +59,17 @@
 
 ### Backend FastAPI ✅
 - [x] `core/` — config, database, security, dependencies
-- [x] `modules/acceso`, `usuarios`, `vehiculos`, `talleres`, `bitacora`
+- [x] `modules/auth`, `modules/roles`, `modules/permisos` (sustituyen a `acceso`), `usuarios`, `vehiculos`, `talleres`, `bitacora`
 - [x] `modules/portal_cliente/` — registro + mi-perfil + mis-vehículos (móvil cliente)
 - [x] `modules/portal_taller/` — registro taller, mi-taller, técnicos (responsable)
 - [x] `modules/portal_taller_emergencias/` — bandeja PENDIENTE, detalle incidente (CU25), aceptar/rechazar (CU26–27), disponibilidad (CU29), **asignar técnico (CU28)** e historial `solicitud_asignaciones_tecnico`; **CU30–CU31** historial de atenciones y comisiones (`comisiones_taller` + join `pagos`); permisos `solicitudes_taller:*`, `disponibilidad:gestionar`, `tecnicos:asignar`, `historial_atenciones:leer`, `comisiones:leer`; prefijo `/api/portal/taller/emergencias`
-- [x] `modules/portal_tecnico_emergencias/` — CU32–CU35 (script 008): servicios asignados, ubicación cliente, actualizar estado (`solicitud_historial_estado`), mensajes vía `comunicaciones.service` + `mensajes_tecnico:*`; prefijo `/api/portal/tecnico/emergencias`
+- [x] `modules/portal_tecnico_emergencias/` — CU32–CU35 (script 008): servicios asignados, ubicación cliente, actualizar estado (`solicitud_historial_estado`), mensajes vía `mensajes_solicitud.service` / `notificaciones.service` + `mensajes_tecnico:*`; prefijo `/api/portal/tecnico/emergencias`
 - [x] `modules/ai/` — módulo completo con **6 endpoints validados** (ver tabla abajo); inferencia audio/imagen vía cliente HTTP a **`ai-inference`**, reglas híbridas, prioridad, asignación de taller; permiso `ai:inferir`; límites `AI_MAX_*` en settings
 - [x] **Fase 1 incidentes compuestos (multi-foto + multi-daño)**: schemas extendidos con `transcripciones_audio[]` y `hallazgos_vision_por_imagen[]`; salida multi-label `damages[]`; nuevo endpoint `POST /api/ai/images/analyze-batch`; fusionador multimodal v1 (`evidence_fusion.py`) con pesos `imagen=0.45`, `texto=0.30`, `audio=0.25`; bandera `requires_manual_review` para conflictos
+- [x] **AVIF + analyze-batch (2026-04-26):** el worker `ai-inference` añade `pillow-heif` + `libheif1` para que `PIL.Image.open` decodifique AVIF/HEIF (antes solo JPEG/PNG vía OpenCV/Pillow estándar → 400 y 502 en lote). `POST /api/ai/images/analyze-batch` ya no aborta todo el lote: cada archivo fallido devuelve un `resultado` con `hallazgos` explicando el error y `confianza=0`; las demás imágenes siguen con análisis normal. Rebuild: `docker compose ... --build ai-inference backend`.
 - [x] **Mobile IA compuesto (lectura UI):** `SolicitudAiPayloadV1` ahora parsea campos nuevos (`damages`, `requires_manual_review`, `conflict_notes`, `score`, `damages_considerados`, `danos_detectados`, `hallazgos_vision_por_imagen`) y `SolicitudAiResumenCard` los muestra en detalle/seguimiento para reflejar análisis multi-daño en la app.
 - [x] `main.py` — routers bajo `API_PREFIX` (p. ej. `/api`)
-- [x] `migrations/init.sql` + seeds: `app/seeds/` — admin, cliente, taller, **técnico** (`python -m app.seeds`); vars `SEED_*` en `.env` raíz; credenciales cortas por defecto en `config.py` / `.env.example` (ej. `cli@test.com`, `taller@test.com`, `tec@test.com`)
+- [x] `migrations/init.sql` + seeds: `app/seeds/` — admin, cliente, taller, **técnico**, **demo Santa Cruz**, **demo media prioridad** (`python -m app.seeds`); vars `SEED_*` en `.env` raíz; **defaults centralizados** en `identidades_demo_sc.py` (Santa Cruz, `*.sc-demo.test`, `scdemo1`, tel. +591 77010010–014) + `docker-compose.yml` alineado.
 - [x] Alembic baseline + `alembic stamp` tras init
 
 ### Frontend Angular ✅
@@ -155,5 +173,5 @@ Todos los endpoints del módulo `ai/` probados en Swagger (`http://localhost:800
 - [x] `mobile/lib/core/push/fcm_message_listener.dart` cambió de `SnackBar` a notificación local del sistema en foreground usando `flutter_local_notifications`.
 - [x] Tap en notificación local ahora navega por deep-link (payload JSON con `target`).
 - [x] Canal Android de alta prioridad: `emergencias_high_importance`.
-- [x] Backend ahora deja trazas de entrega FCM (`success_count`/`failure_count`) en `backend/app/modules/comunicaciones/fcm_client.py`.
+- [x] Backend ahora deja trazas de entrega FCM (`success_count`/`failure_count`) en `backend/app/modules/dispositivos_push/fcm_client.py`.
 - [x] Dependencia agregada en mobile: `flutter_local_notifications`.

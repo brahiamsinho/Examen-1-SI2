@@ -1,1 +1,2 @@
-# Ciclo 2 fase 3 — notificaciones (CU19), mensajes por solicitud (CU21), tokens FCM.
+# Paquete: rutas HTTP que agrupan notificaciones, FCM y mensajes por solicitud.
+# Lógica en: notificaciones, dispositivos_push, mensajes_solicitud.

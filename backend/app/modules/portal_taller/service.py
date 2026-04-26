@@ -6,11 +6,11 @@ from sqlalchemy import select
 from fastapi import HTTPException, status
 
 from app.core.timeutil import utc_now_naive
-from app.modules.acceso.email_tokens import crear_y_enviar_verificacion_email
+from app.modules.auth.email_tokens import crear_y_enviar_verificacion_email
 from app.modules.usuarios.models import Usuario, EstadoUsuarioEnum
 from app.modules.usuarios import service as usuarios_service
-from app.modules.acceso.models import Rol
-from app.modules.acceso.service import asignar_roles_usuario
+from app.modules.roles.models import Rol
+from app.modules.roles.service import asignar_roles_usuario
 from app.modules.talleres.models import (
     Taller,
     Tecnico,

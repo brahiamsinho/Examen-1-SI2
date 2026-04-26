@@ -1,7 +1,7 @@
 """Extensión futura con `emergencias` y tiempo real (CU19).
 
 - **Push al cambiar estado:** desde `emergencias/service` (tras guardar historial),
-  llamar a `comunicaciones.service.crear_notificacion_y_push(...)` con el
+  llamar a `notificaciones.service.crear_notificacion_y_push(...)` con el
   `usuario_id` del cliente y `TipoNotificacionEnum.ESTADO_ACTUALIZADO` (o el que corresponda).
 
 - **WebSocket / SSE:** exponer un `asyncio.Queue` o bus de eventos por `solicitud_id`

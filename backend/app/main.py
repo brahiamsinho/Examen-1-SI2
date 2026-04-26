@@ -26,6 +26,9 @@ async def lifespan(app: FastAPI):
         or settings.SEED_CLIENTE_ON_START
         or settings.SEED_TALLER_ON_START
         or settings.SEED_TECNICO_ON_START
+        or settings.SEED_DEMO_SANTA_CRUZ_ON_START
+        or settings.SEED_DEMO_MEDIA_PRIORIDAD_ON_START
+        or settings.SEED_STRESS_VISUAL_ON_START
     ):
         from app.core.database import AsyncSessionLocal
         from app.seeds.dev_admin import ensure_baseline_rol_permisos, ensure_dev_admin
@@ -33,6 +36,9 @@ async def lifespan(app: FastAPI):
         from app.seeds.dev_cliente import ensure_dev_cliente
         from app.seeds.dev_tecnico import ensure_dev_tecnico
         from app.seeds.dev_taller import ensure_dev_taller
+        from app.seeds.dev_demo_media_prioridad import ensure_demo_media_prioridad
+        from app.seeds.dev_demo_santa_cruz import ensure_demo_santa_cruz_datos
+        from app.seeds.dev_stress_visual import ensure_stress_visual_seed
 
         async with _startup_seed_lock:
             # Tras `docker compose up`, Postgres puede reiniciarse al terminar init.sql;
@@ -51,6 +57,12 @@ async def lifespan(app: FastAPI):
                             await ensure_dev_taller(session, require_enabled_flag=False)
                         if settings.SEED_TECNICO_ON_START:
                             await ensure_dev_tecnico(session, require_enabled_flag=False)
+                        if settings.SEED_DEMO_SANTA_CRUZ_ON_START:
+                            await ensure_demo_santa_cruz_datos(session, require_enabled_flag=False)
+                        if settings.SEED_DEMO_MEDIA_PRIORIDAD_ON_START:
+                            await ensure_demo_media_prioridad(session, require_enabled_flag=False)
+                        if settings.SEED_STRESS_VISUAL_ON_START:
+                            await ensure_stress_visual_seed(session, require_enabled_flag=False)
                         await session.commit()
                     break
                 except Exception as e:
@@ -70,7 +82,9 @@ async def lifespan(app: FastAPI):
     yield
 
 # ── Importar todos los routers ────────────────────────────────
-from app.modules.acceso.router import auth_router, roles_router, permisos_router
+from app.modules.auth.router import auth_router
+from app.modules.permisos.router import permisos_router
+from app.modules.roles.router import roles_router
 from app.modules.usuarios.router import router as usuarios_router, clientes_router
 from app.modules.vehiculos.router import router as vehiculos_router
 from app.modules.talleres.router import router, especialidades_router, tecnicos_router

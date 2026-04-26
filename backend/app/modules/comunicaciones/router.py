@@ -1,4 +1,5 @@
-# REST — comunicación cliente/técnico (FCM, notificaciones, mensajes por solicitud).
+# REST — orquesta APIs de notificaciones, FCM y mensajes por solicitud (CU19, CU21).
+# La lógica vive en módulos: notificaciones, dispositivos_push, mensajes_solicitud.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, status
@@ -6,8 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission
-from app.modules.comunicaciones.schemas import FcmTokenRegisterIn, MensajeSolicitudCreateIn, MensajeSolicitudRead, NotificacionRead
-from app.modules.comunicaciones import service
+from app.modules.dispositivos_push import service as fcm_service
+from app.modules.dispositivos_push.schemas import FcmTokenRegisterIn
+from app.modules.mensajes_solicitud import service as msg_service
+from app.modules.mensajes_solicitud.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
+from app.modules.notificaciones import service as notif_service
+from app.modules.notificaciones.schemas import NotificacionRead
 from app.modules.portal_cliente.service import require_cliente_rol
 from app.modules.portal_tecnico.service import require_tecnico_rol
 from app.modules.usuarios.models import Usuario
@@ -28,7 +33,7 @@ async def _ensure_tecnico(
     await require_tecnico_rol(current_user.id, db)
     return current_user
 
-# ── Cliente ───────────────────────────────────────────────────────────────
+
 cliente_router = APIRouter(prefix="/portal/cliente", tags=["Comunicaciones (cliente)"])
 
 emergencias_mensajes_cliente_router = APIRouter(
@@ -36,8 +41,8 @@ emergencias_mensajes_cliente_router = APIRouter(
     tags=["Mensajes solicitud (cliente)"],
 )
 
-# ── Técnico ────────────────────────────────────────────────────────────────
 tecnico_router = APIRouter(prefix="/portal/tecnico", tags=["Comunicaciones (técnico)"])
+
 
 @cliente_router.post(
     "/dispositivos/fcm",
@@ -49,7 +54,7 @@ async def cliente_registrar_fcm(
     current_user: Usuario = Depends(_ensure_cliente),
     db: AsyncSession = Depends(get_db),
 ):
-    await service.registrar_fcm_token(current_user, body, db)
+    await fcm_service.registrar_fcm_token(current_user, body, db)
 
 
 @cliente_router.delete(
@@ -62,7 +67,7 @@ async def cliente_eliminar_fcm(
     current_user: Usuario = Depends(_ensure_cliente),
     db: AsyncSession = Depends(get_db),
 ):
-    await service.eliminar_fcm_token(current_user, body, db)
+    await fcm_service.eliminar_fcm_token(current_user, body, db)
 
 
 @cliente_router.get(
@@ -76,7 +81,9 @@ async def cliente_listar_notificaciones(
     no_leidas: bool = Query(False),
     limit: int = Query(100, ge=1, le=200),
 ):
-    return await service.listar_notificaciones(current_user, db, solo_no_leidas=no_leidas, limit=limit)
+    return await notif_service.listar_notificaciones(
+        current_user, db, solo_no_leidas=no_leidas, limit=limit
+    )
 
 
 @cliente_router.patch(
@@ -89,7 +96,7 @@ async def cliente_marcar_leida(
     current_user: Usuario = Depends(_ensure_cliente),
     db: AsyncSession = Depends(get_db),
 ):
-    return await service.marcar_notificacion_leida(current_user, notificacion_id, db)
+    return await notif_service.marcar_notificacion_leida(current_user, notificacion_id, db)
 
 
 @emergencias_mensajes_cliente_router.get(
@@ -102,7 +109,7 @@ async def cliente_listar_mensajes(
     current_user: Usuario = Depends(_ensure_cliente),
     db: AsyncSession = Depends(get_db),
 ):
-    return await service.listar_mensajes(current_user, solicitud_id, db, actor="cliente")
+    return await msg_service.listar_mensajes(current_user, solicitud_id, db, actor="cliente")
 
 
 @emergencias_mensajes_cliente_router.post(
@@ -117,10 +124,7 @@ async def cliente_enviar_mensaje(
     current_user: Usuario = Depends(_ensure_cliente),
     db: AsyncSession = Depends(get_db),
 ):
-    return await service.enviar_mensaje(current_user, solicitud_id, body, db, actor="cliente")
-
-
-# ── Técnico (mismas capacidades sobre solicitudes asignadas) ───────────────
+    return await msg_service.enviar_mensaje(current_user, solicitud_id, body, db, actor="cliente")
 
 
 @tecnico_router.post(
@@ -133,7 +137,7 @@ async def tecnico_registrar_fcm(
     current_user: Usuario = Depends(_ensure_tecnico),
     db: AsyncSession = Depends(get_db),
 ):
-    await service.registrar_fcm_token(current_user, body, db)
+    await fcm_service.registrar_fcm_token(current_user, body, db)
 
 
 @tecnico_router.delete(
@@ -146,7 +150,7 @@ async def tecnico_eliminar_fcm(
     current_user: Usuario = Depends(_ensure_tecnico),
     db: AsyncSession = Depends(get_db),
 ):
-    await service.eliminar_fcm_token(current_user, body, db)
+    await fcm_service.eliminar_fcm_token(current_user, body, db)
 
 
 @tecnico_router.get(
@@ -160,7 +164,9 @@ async def tecnico_listar_notificaciones(
     no_leidas: bool = Query(False),
     limit: int = Query(100, ge=1, le=200),
 ):
-    return await service.listar_notificaciones(current_user, db, solo_no_leidas=no_leidas, limit=limit)
+    return await notif_service.listar_notificaciones(
+        current_user, db, solo_no_leidas=no_leidas, limit=limit
+    )
 
 
 @tecnico_router.patch(
@@ -173,4 +179,4 @@ async def tecnico_marcar_leida(
     current_user: Usuario = Depends(_ensure_tecnico),
     db: AsyncSession = Depends(get_db),
 ):
-    return await service.marcar_notificacion_leida(current_user, notificacion_id, db)
+    return await notif_service.marcar_notificacion_leida(current_user, notificacion_id, db)

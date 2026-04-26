@@ -48,7 +48,7 @@ mobile/ios/Pods/
 # .vscode/: preferencias locales; si el equipo comparte launch/tasks, usa !.vscode/launch.json
 .vscode/
 .idea/
-.agents/
+agents/
 skills-lock.json
 *.swp
 *.swo

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type {
@@ -11,6 +11,7 @@ import type {
   SolicitudBandejaDetalleDto,
   TallerDisponibilidadDto,
   TallerDisponibilidadUpdatePayload,
+  ReporteTallerDashboardDto,
 } from '../models/taller-emergencias.models';
 
 @Injectable({ providedIn: 'root' })
@@ -52,5 +53,12 @@ export class TallerEmergenciasApiService {
 
   listarAsignacionesTecnico(solicitudId: number): Observable<AsignacionTecnicoDto[]> {
     return this.http.get<AsignacionTecnicoDto[]>(`${this.base}/solicitudes/${solicitudId}/asignaciones`);
+  }
+
+  getReporteDashboard(params?: { desde?: string; hasta?: string }): Observable<ReporteTallerDashboardDto> {
+    let p = new HttpParams();
+    if (params?.desde) p = p.set('desde', params.desde);
+    if (params?.hasta) p = p.set('hasta', params.hasta);
+    return this.http.get<ReporteTallerDashboardDto>(`${this.base}/reportes/dashboard`, { params: p });
   }
 }

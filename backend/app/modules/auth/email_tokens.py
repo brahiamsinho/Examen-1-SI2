@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.mail import send_plain_email
 from app.core.timeutil import utc_now_naive
-from app.modules.acceso.models import UsuarioTokenSeguridad
+from app.modules.auth.models import UsuarioTokenSeguridad
 from app.modules.usuarios.models import EstadoUsuarioEnum, Usuario
 
 TIPO_VERIFICAR_EMAIL = "VERIFICAR_EMAIL"

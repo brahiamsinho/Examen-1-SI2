@@ -120,7 +120,7 @@ A partir de ahí, cuando **realmente cambies** modelos SQLAlchemy: `revision --a
 
 **Importante:** no ejecutes `--autogenerate` “de prueba” sin cambios en código: suele generar un diff enorme contra la BD creada por `init.sql` y `upgrade head` puede fallar (p. ej. `ALTER COLUMN id` en columnas IDENTITY). Si ya generaste un archivo malo en `alembic/versions/`, bórralo; si `upgrade` falló, la versión en BD suele seguir en `0001_baseline` (transacción revertida).
 
-- **Poblar datos demo (seeds):** `docker compose exec backend python -m app.seeds` — admin, cliente, taller, técnico según variables `SEED_*` en el `.env` raíz (valores cortos en `.env.example`). También carga **catálogos de vehículo** (tipos, marcas, modelos) si faltan.
+- **Poblar datos demo (seeds):** `docker compose exec backend python -m app.seeds` — admin, cliente, taller, técnico según `SEED_*` (defaults en `backend/app/seeds/identidades_demo_sc.py`: nombres bolivianos, Santa Cruz, teléfonos +591 7701 00xx, dominio `*.sc-demo.test`, contraseña corta `scdemo1`). Catálogos de vehículo si faltan. Luego **demo Santa Cruz** (`[DEMO-SC]`), **demo media prioridad** (notificaciones, chat, `ai_payload`, disponibilidad, **segundo taller en Santa Cruz** con bandeja retroactiva) y **stress visual** (más marcas/modelos y 8 clientes `*.lista.sc-demo.test`). Variables opcionales: `SEED_*` en `.env` raíz y `backend/.env.example`.
 
 **Nota:** Alembic usa el driver síncrono **psycopg** (`postgresql+psycopg://…`); la API sigue usando **asyncpg** (`postgresql+asyncpg://…`). La conversión la hace `backend/alembic/env.py`.
 
@@ -168,7 +168,7 @@ _(Directorio del proyecto: `mobile/`)_
 | Limpiar build local                | `flutter clean`     |
 | APK Android                        | `flutter build apk` |
 
-Usuarios demo del backend (tras `docker compose exec backend python -m app.seeds`): por ejemplo `cli@test.com` / `cli123`, `taller@test.com` / `taller123`, `tec@test.com` / `tec123` (ver `.env.example` raíz y `SEED_*`).
+Usuarios demo del backend (tras seeds): ver `identidades_demo_sc.py` — por ejemplo **cliente** `carlos.vega@sc-demo.test` / `scdemo1`, **taller** `luis.rivera@sc-demo.test` / `scdemo1`, **técnico** `marco.salas@sc-demo.test` / `scdemo1`, **admin** `patricio.mendez@sc-demo.test` / `scdemo1` (todo sobreescribible con `SEED_*` en `.env`).
 
 ---
 
@@ -265,12 +265,12 @@ docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --pro
 
 Usuarios creados por los seeds (configurables en `.env` con `SEED_*`):
 
-| Rol     | Email             | Contraseña  |
-| ------- | ----------------- | ----------- |
-| Admin   | `admin@test.com`  | `admin123`  |
-| Cliente | `cli@test.com`    | `cli123`    |
-| Taller  | `taller@test.com` | `taller123` |
-| Técnico | `tec@test.com`    | `tec123`    |
+| Rol     | Email                         | Contraseña |
+| ------- | ----------------------------- | ---------- |
+| Admin   | `patricio.mendez@sc-demo.test` | `scdemo1`  |
+| Cliente | `carlos.vega@sc-demo.test`    | `scdemo1`  |
+| Taller  | `luis.rivera@sc-demo.test`    | `scdemo1`  |
+| Técnico | `marco.salas@sc-demo.test`    | `scdemo1`  |
 
 ### Base de datos — Acceso directo
 

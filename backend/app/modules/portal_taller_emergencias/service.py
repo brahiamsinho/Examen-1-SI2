@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
-from app.modules.comunicaciones import service as comunicaciones_service
-from app.modules.comunicaciones.models import TipoNotificacionEnum
+from app.modules.notificaciones.models import TipoNotificacionEnum
+from app.modules.notificaciones import service as notificaciones_service
 from app.modules.emergencias import repository as emergencias_repository
 from app.modules.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.portal_taller_emergencias import repository
@@ -29,6 +29,8 @@ from app.modules.portal_taller_emergencias.schemas import (
     ComisionTallerRead,
     HistorialAtencionRead,
     RechazarBandejaIn,
+    ReporteTallerDashboardRead,
+    ReporteTecnicoGananciasRead,
     ResumenComisionesRead,
     SolicitudBandejaDetalleRead,
     SolicitudEvidenciaTallerRead,
@@ -180,7 +182,7 @@ async def rechazar_solicitud(
             select(SolicitudEmergencia).where(SolicitudEmergencia.id == b_row.solicitud_id)
         )
         if (se_n := se_r.scalar_one_or_none()) is not None:
-            await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+            await notificaciones_service.notificar_cliente_solicitud_emergencia(
                 db,
                 solicitud=se_n,
                 tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
@@ -367,14 +369,14 @@ async def asignar_tecnico_a_solicitud(
         entidad_id=asignacion.id,
     )
 
-    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+    await notificaciones_service.notificar_cliente_solicitud_emergencia(
         db,
         solicitud=se,
         tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
         titulo="Técnico asignado",
         mensaje="Se asignó un técnico a tu emergencia. Sigue el avance en la app.",
     )
-    await comunicaciones_service.notificar_tecnico_solicitud_emergencia(
+    await notificaciones_service.notificar_tecnico_solicitud_emergencia(
         db,
         solicitud=se,
         tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
@@ -487,7 +489,7 @@ async def aceptar_solicitud(
         entidad_id=bandeja_id,
     )
 
-    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+    await notificaciones_service.notificar_cliente_solicitud_emergencia(
         db,
         solicitud=se,
         tipo=TipoNotificacionEnum.TALLER_ASIGNADO,
@@ -532,3 +534,45 @@ async def obtener_resumen_comisiones(taller_id: int, db: AsyncSession) -> Resume
     """CU31 — totales por taller."""
     row = await repository.resumen_comisiones_taller(db, taller_id=taller_id)
     return ResumenComisionesRead.model_validate(row)
+
+
+async def obtener_reporte_dashboard_taller(
+    taller_id: int,
+    db: AsyncSession,
+    *,
+    desde: date | None = None,
+    hasta: date | None = None,
+) -> ReporteTallerDashboardRead:
+    """
+    KPIs: comisiones en rango, reparto neto por técnico, conteo de solicitudes por estado,
+    bandeja pendiente.
+    """
+    desde_dt = datetime.combine(desde, time.min) if desde is not None else None
+    hasta_dt = datetime.combine(hasta, time(23, 59, 59)) if hasta is not None else None
+
+    res_row = await repository.resumen_comisiones_taller_rango(
+        db, taller_id=taller_id, desde=desde_dt, hasta=hasta_dt
+    )
+    resumen = ResumenComisionesRead.model_validate(res_row)
+
+    tec_rows = await repository.agregado_montos_por_tecnico(
+        db, taller_id=taller_id, desde=desde_dt, hasta=hasta_dt
+    )
+    por_tecnico = [ReporteTecnicoGananciasRead.model_validate(r) for r in tec_rows]
+
+    estado_rows = await repository.contar_solicitudes_por_estado_taller(
+        db, taller_id=taller_id, desde=desde_dt, hasta=hasta_dt
+    )
+    solicitudes_por_estado = {e.value: n for e, n in estado_rows}
+
+    bandeja_pend = await repository.contar_bandeja_pendientes_taller(db, taller_id=taller_id)
+
+    return ReporteTallerDashboardRead(
+        taller_id=taller_id,
+        periodo_desde=desde,
+        periodo_hasta=hasta,
+        resumen_comisiones=resumen,
+        bandeja_pendientes=bandeja_pend,
+        solicitudes_por_estado=solicitudes_por_estado,
+        ganancias_por_tecnico=por_tecnico,
+    )

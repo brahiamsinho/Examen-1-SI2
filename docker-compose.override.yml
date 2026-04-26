@@ -21,3 +21,4 @@ services:
       SEED_ADMIN_ON_START: "true"
       SEED_CLIENTE_ON_START: "true"
       SEED_TALLER_ON_START: "true"
+      SEED_TECNICO_ON_START: "true"

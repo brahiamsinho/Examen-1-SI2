@@ -15,6 +15,13 @@ import torch
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from PIL import Image
 
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+except ImportError:
+    pass
+
 _log = logging.getLogger(__name__)
 
 app = FastAPI(title="AI Inference — Emergencias", version="0.1.0")

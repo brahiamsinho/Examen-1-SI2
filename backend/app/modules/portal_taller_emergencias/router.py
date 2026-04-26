@@ -22,6 +22,7 @@ from .schemas import (
     ComisionTallerRead,
     HistorialAtencionRead,
     RechazarBandejaIn,
+    ReporteTallerDashboardRead,
     ResumenComisionesRead,
     SolicitudBandejaDetalleRead,
     TallerDisponibilidadRead,
@@ -198,3 +199,30 @@ async def listar_comisiones(
     """CU31 — listado de comisiones con datos del pago asociado si existe."""
     _, taller = ctx
     return await service.listar_comisiones_taller(taller.id, db)
+
+
+@router.get(
+    "/reportes/dashboard",
+    response_model=ReporteTallerDashboardRead,
+    dependencies=[Depends(require_permission("comisiones:leer"))],
+)
+async def reporte_dashboard_taller(
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+    desde: date | None = Query(
+        None,
+        description="Inicio de periodo (inclusive). Comisiones: filtra por `calculado_at`. Solicitudes: por `created_at`.",
+    ),
+    hasta: date | None = Query(
+        None,
+        description="Fin de periodo (inclusive).",
+    ),
+):
+    """
+    Resumen operativo e inteligencia financiera: totales de comisiones, neto agregado por técnico,
+    conteo de solicitudes por estado y ofertas pendientes en bandeja.
+    """
+    _, taller = ctx
+    return await service.obtener_reporte_dashboard_taller(
+        taller.id, db, desde=desde, hasta=hasta
+    )

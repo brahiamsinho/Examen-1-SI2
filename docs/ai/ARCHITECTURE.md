@@ -23,7 +23,13 @@ app/
 │   ├── security.py    ← bcrypt + JWT
 │   └── dependencies.py ← get_current_user, require_permission
 ├── modules/
-│   ├── acceso/        ← Auth, roles, permisos, sesiones
+│   ├── auth/          ← Login, logout, sesiones JWT, tokens email (verificación / reset)
+│   ├── roles/         ← Rol, usuario_rol, asignación permisos a rol
+│   ├── permisos/      ← Catálogo de permisos
+│   ├── notificaciones/← In-app + orquestación push hacia FCM
+│   ├── dispositivos_push/ ← Tokens FCM, firebase-admin
+│   ├── mensajes_solicitud/← Chat por solicitud (cliente ↔ técnico)
+│   ├── comunicaciones/← Routers HTTP que agrupan FCM + notif + mensajes (sin lógica monolítica)
 │   ├── usuarios/      ← CRUD usuarios + clientes
 │   ├── vehiculos/     ← Catálogos + vehículos
 │   ├── talleres/      ← Talleres, técnicos, especialidades

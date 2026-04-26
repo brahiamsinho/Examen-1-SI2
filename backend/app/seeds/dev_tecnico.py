@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.core.timeutil import utc_now_naive
-from app.modules.acceso.models import Rol
-from app.modules.acceso.service import asignar_roles_usuario
+from app.modules.roles.models import Rol
+from app.modules.roles.service import asignar_roles_usuario
 from app.modules.talleres import service as talleres_service
 from app.modules.talleres.models import EstadoTecnicoEnum, Taller, Tecnico
 from app.modules.usuarios import service as usuarios_service

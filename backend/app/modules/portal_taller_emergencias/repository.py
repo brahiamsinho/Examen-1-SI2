@@ -411,3 +411,101 @@ async def resumen_comisiones_taller(db: AsyncSession, *, taller_id: int) -> dict
         "total_comision": row["total_comision"],
         "total_neto": row["total_neto"],
     }
+
+
+async def resumen_comisiones_taller_rango(
+    db: AsyncSession,
+    *,
+    taller_id: int,
+    desde: datetime | None = None,
+    hasta: datetime | None = None,
+) -> dict[str, Any]:
+    """Totales de comisiones en un rango (por `calculado_at`)."""
+    stmt = select(
+        func.count(ComisionTaller.id).label("total_registros"),
+        func.coalesce(func.sum(ComisionTaller.monto_servicio), 0).label("total_servicios"),
+        func.coalesce(func.sum(ComisionTaller.monto_comision), 0).label("total_comision"),
+        func.coalesce(func.sum(ComisionTaller.monto_taller_neto), 0).label("total_neto"),
+    ).where(ComisionTaller.taller_id == taller_id)
+    if desde is not None:
+        stmt = stmt.where(ComisionTaller.calculado_at >= desde)
+    if hasta is not None:
+        stmt = stmt.where(ComisionTaller.calculado_at <= hasta)
+    r = await db.execute(stmt)
+    row = r.mappings().one()
+    return {
+        "taller_id": taller_id,
+        "total_registros": int(row["total_registros"] or 0),
+        "total_servicios": row["total_servicios"],
+        "total_comision": row["total_comision"],
+        "total_neto": row["total_neto"],
+    }
+
+
+async def agregado_montos_por_tecnico(
+    db: AsyncSession,
+    *,
+    taller_id: int,
+    desde: datetime | None = None,
+    hasta: datetime | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Suma monto de servicio / comisión / neto del taller por técnico asignado a la solicitud
+    (según comisiones emitidas; una fila de comisión por solicitud paga).
+    """
+    stmt = (
+        select(
+            Tecnico.id.label("tecnico_id"),
+            Usuario.nombres,
+            Usuario.apellidos,
+            func.count(ComisionTaller.id).label("comisiones_registradas"),
+            func.coalesce(func.sum(ComisionTaller.monto_servicio), 0).label("total_monto_servicio"),
+            func.coalesce(func.sum(ComisionTaller.monto_comision), 0).label("total_monto_comision"),
+            func.coalesce(func.sum(ComisionTaller.monto_taller_neto), 0).label("total_monto_taller_neto"),
+        )
+        .select_from(ComisionTaller)
+        .join(SolicitudEmergencia, SolicitudEmergencia.id == ComisionTaller.solicitud_id)
+        .join(Tecnico, Tecnico.id == SolicitudEmergencia.tecnico_id)
+        .join(Usuario, Usuario.id == Tecnico.usuario_id)
+        .where(ComisionTaller.taller_id == taller_id)
+        .where(SolicitudEmergencia.tecnico_id.isnot(None))
+    )
+    if desde is not None:
+        stmt = stmt.where(ComisionTaller.calculado_at >= desde)
+    if hasta is not None:
+        stmt = stmt.where(ComisionTaller.calculado_at <= hasta)
+    stmt = (
+        stmt.group_by(Tecnico.id, Usuario.nombres, Usuario.apellidos)
+        .order_by(func.sum(ComisionTaller.monto_taller_neto).desc().nulls_last())
+    )
+    r = await db.execute(stmt)
+    return [dict(x) for x in r.mappings().all()]
+
+
+async def contar_solicitudes_por_estado_taller(
+    db: AsyncSession,
+    *,
+    taller_id: int,
+    desde: datetime | None = None,
+    hasta: datetime | None = None,
+) -> list[tuple[EstadoSolicitudSeguimientoEnum, int]]:
+    """Conteo de solicitudes del taller en el periodo (por `created_at` de la solicitud)."""
+    stmt = select(SolicitudEmergencia.estado, func.count().label("n")).where(
+        SolicitudEmergencia.taller_id == taller_id
+    )
+    if desde is not None:
+        stmt = stmt.where(SolicitudEmergencia.created_at >= desde)
+    if hasta is not None:
+        stmt = stmt.where(SolicitudEmergencia.created_at <= hasta)
+    stmt = stmt.group_by(SolicitudEmergencia.estado)
+    r = await db.execute(stmt)
+    return [(row[0], int(row[1] or 0)) for row in r.all()]
+
+
+async def contar_bandeja_pendientes_taller(db: AsyncSession, *, taller_id: int) -> int:
+    stmt = select(func.count()).select_from(SolicitudTallerBandeja).where(
+        SolicitudTallerBandeja.taller_id == taller_id,
+        SolicitudTallerBandeja.estado == EstadoBandejaTallerEnum.PENDIENTE,
+    )
+    n = (await db.execute(stmt)).scalar_one()
+    return int(n or 0)

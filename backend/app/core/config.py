@@ -8,6 +8,8 @@ from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.seeds import identidades_demo_sc as _seed_sc
+
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
 _REPO_ROOT = _BACKEND_DIR.parent
 
@@ -53,43 +55,66 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # ── Seed admin (desarrollo; nunca activar en prod sin control explícito) ──
+    # Valores por defecto: `app/seeds/identidades_demo_sc.py` (Santa Cruz, BO; dominio *.sc-demo.test).
     SEED_ADMIN_ON_START: bool = False
-    SEED_ADMIN_EMAIL: str | None = None
-    SEED_ADMIN_PASSWORD: str | None = None
-    SEED_ADMIN_TELEFONO: str | None = None
-    SEED_ADMIN_NOMBRES: str = "Administrador"
-    SEED_ADMIN_APELLIDOS: str = "Sistema"
-    SEED_ADMIN_USERNAME: str | None = "admin"
+    SEED_ADMIN_EMAIL: str | None = _seed_sc.ADMIN_EMAIL
+    SEED_ADMIN_PASSWORD: str | None = _seed_sc.ADMIN_PASSWORD
+    SEED_ADMIN_TELEFONO: str | None = _seed_sc.ADMIN_TELEFONO
+    SEED_ADMIN_NOMBRES: str = _seed_sc.ADMIN_NOMBRES
+    SEED_ADMIN_APELLIDOS: str = _seed_sc.ADMIN_APELLIDOS
+    SEED_ADMIN_USERNAME: str | None = _seed_sc.ADMIN_USERNAME
 
     # ── Seed cliente demo (app móvil / portal cliente) ─────────
     SEED_CLIENTE_ON_START: bool = False
-    SEED_CLIENTE_EMAIL: str | None = "cli@test.com"
-    SEED_CLIENTE_PASSWORD: str | None = "cli123"
-    SEED_CLIENTE_TELEFONO: str | None = "+5917000002"
-    SEED_CLIENTE_NOMBRES: str = "Cliente"
-    SEED_CLIENTE_APELLIDOS: str = "Demo"
-    SEED_CLIENTE_CIUDAD: str | None = None
-    SEED_CLIENTE_DIRECCION: str | None = None
+    SEED_CLIENTE_EMAIL: str | None = _seed_sc.CLIENTE_EMAIL
+    SEED_CLIENTE_PASSWORD: str | None = _seed_sc.CLIENTE_PASSWORD
+    SEED_CLIENTE_TELEFONO: str | None = _seed_sc.CLIENTE_TELEFONO
+    SEED_CLIENTE_NOMBRES: str = _seed_sc.CLIENTE_NOMBRES
+    SEED_CLIENTE_APELLIDOS: str = _seed_sc.CLIENTE_APELLIDOS
+    SEED_CLIENTE_CIUDAD: str | None = _seed_sc.CLIENTE_CIUDAD
+    SEED_CLIENTE_DIRECCION: str | None = _seed_sc.CLIENTE_DIRECCION
 
     # ── Seed taller demo (portal taller / responsable) ───────
     SEED_TALLER_ON_START: bool = False
-    SEED_TALLER_EMAIL: str | None = "taller@test.com"
-    SEED_TALLER_PASSWORD: str | None = "taller123"
-    SEED_TALLER_TELEFONO: str | None = "+5917000003"
-    SEED_TALLER_RESPONSABLE_NOMBRES: str = "Responsable"
-    SEED_TALLER_RESPONSABLE_APELLIDOS: str = "Taller Demo"
-    SEED_TALLER_NOMBRE_COMERCIAL: str = "Taller Demo Emergencias"
-    SEED_TALLER_CIUDAD: str = "La Paz"
-    SEED_TALLER_DIRECCION: str = "Av. Seed 100"
-    SEED_TALLER_DESCRIPCION: str | None = "Taller de demostración (seed desarrollo)."
+    SEED_TALLER_EMAIL: str | None = _seed_sc.TALLER_EMAIL
+    SEED_TALLER_PASSWORD: str | None = _seed_sc.TALLER_PASSWORD
+    SEED_TALLER_TELEFONO: str | None = _seed_sc.TALLER_TELEFONO
+    SEED_TALLER_RESPONSABLE_NOMBRES: str = _seed_sc.TALLER_RESPONSABLE_NOMBRES
+    SEED_TALLER_RESPONSABLE_APELLIDOS: str = _seed_sc.TALLER_RESPONSABLE_APELLIDOS
+    SEED_TALLER_NOMBRE_COMERCIAL: str = _seed_sc.TALLER_NOMBRE_COMERCIAL
+    SEED_TALLER_CIUDAD: str = _seed_sc.TALLER_CIUDAD
+    SEED_TALLER_DIRECCION: str = _seed_sc.TALLER_DIRECCION
+    SEED_TALLER_DESCRIPCION: str | None = _seed_sc.TALLER_DESCRIPCION
 
     # ── Seed técnico demo (app móvil técnico; requiere un taller) ─
     SEED_TECNICO_ON_START: bool = False
-    SEED_TECNICO_EMAIL: str | None = "tec@test.com"
-    SEED_TECNICO_PASSWORD: str | None = "tec123"
-    SEED_TECNICO_TELEFONO: str | None = "+5917000004"
-    SEED_TECNICO_NOMBRES: str = "Técnico"
-    SEED_TECNICO_APELLIDOS: str = "Seed"
+    SEED_TECNICO_EMAIL: str | None = _seed_sc.TECNICO_EMAIL
+    SEED_TECNICO_PASSWORD: str | None = _seed_sc.TECNICO_PASSWORD
+    SEED_TECNICO_TELEFONO: str | None = _seed_sc.TECNICO_TELEFONO
+    SEED_TECNICO_NOMBRES: str = _seed_sc.TECNICO_NOMBRES
+    SEED_TECNICO_APELLIDOS: str = _seed_sc.TECNICO_APELLIDOS
+
+    # ── Seed datos demo Santa Cruz (emergencias, bandeja, pagos/comisiones) ──
+    # En `python -m app.seeds` siempre se ejecuta con require_enabled_flag=False.
+    # En arranque del backend solo si está en True (evitar sorpresas en prod).
+    SEED_DEMO_SANTA_CRUZ_ON_START: bool = False
+
+    # ── Seed demo “media prioridad”: notificaciones, chat, ai_payload, disponibilidad, 2º taller ──
+    # Misma convención que Santa Cruz: CLI con require_enabled_flag=False; arranque solo si True.
+    SEED_DEMO_MEDIA_PRIORIDAD_ON_START: bool = False
+    SEED_TALLER2_EMAIL: str | None = _seed_sc.TALLER2_EMAIL
+    SEED_TALLER2_PASSWORD: str | None = _seed_sc.TALLER2_PASSWORD
+    SEED_TALLER2_TELEFONO: str | None = _seed_sc.TALLER2_TELEFONO
+    SEED_TALLER2_RESPONSABLE_NOMBRES: str = _seed_sc.TALLER2_RESPONSABLE_NOMBRES
+    SEED_TALLER2_RESPONSABLE_APELLIDOS: str = _seed_sc.TALLER2_RESPONSABLE_APELLIDOS
+    SEED_TALLER2_NOMBRE_COMERCIAL: str = _seed_sc.TALLER2_NOMBRE_COMERCIAL
+    SEED_TALLER2_CIUDAD: str = _seed_sc.TALLER2_CIUDAD
+    SEED_TALLER2_DIRECCION: str = _seed_sc.TALLER2_DIRECCION
+    SEED_TALLER2_DESCRIPCION: str | None = _seed_sc.TALLER2_DESCRIPCION
+
+    # ── Seed stress visual (catálogos extra + clientes listados; no crítico para flujos demo) ──
+    SEED_STRESS_VISUAL_ON_START: bool = False
+    SEED_STRESS_CLIENT_PASSWORD: str | None = _seed_sc.STRESS_PASSWORD
 
     # ── Pagos CU20 — simulación local; desactivar autocmpletar para flujo tipo pasarela (2 pasos) ──
     PAGO_SIMULADO_AUTOCOMPLETE: bool = True

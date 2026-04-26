@@ -8,9 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.timeutil import utc_now_naive
 from app.modules.bitacora.models import AccionBitacoraEnum
 from app.modules.bitacora.service import registrar_accion
-from app.modules.comunicaciones import service as comunicaciones_service
-from app.modules.comunicaciones.models import TipoNotificacionEnum
-from app.modules.comunicaciones.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
+from app.modules.mensajes_solicitud.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
+from app.modules.mensajes_solicitud import service as mensajes_service
+from app.modules.notificaciones.models import TipoNotificacionEnum
+from app.modules.notificaciones import service as notificaciones_service
 from app.modules.emergencias import repository as emergencias_repository
 from decimal import Decimal
 
@@ -193,7 +194,7 @@ async def actualizar_estado_servicio(
         if monto_txt
         else f"Te informamos: {etiqueta}."
     )
-    await comunicaciones_service.notificar_cliente_solicitud_emergencia(
+    await notificaciones_service.notificar_cliente_solicitud_emergencia(
         db,
         solicitud=se,
         tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
@@ -210,10 +211,10 @@ async def actualizar_estado_servicio(
 async def listar_mensajes_solicitud(
     user: Usuario, solicitud_id: int, db: AsyncSession
 ) -> list[MensajeSolicitudRead]:
-    return await comunicaciones_service.listar_mensajes(user, solicitud_id, db, actor="tecnico")
+    return await mensajes_service.listar_mensajes(user, solicitud_id, db, actor="tecnico")
 
 
 async def enviar_mensaje_solicitud(
     user: Usuario, solicitud_id: int, body: MensajeSolicitudCreateIn, db: AsyncSession
 ) -> MensajeSolicitudRead:
-    return await comunicaciones_service.enviar_mensaje(user, solicitud_id, body, db, actor="tecnico")
+    return await mensajes_service.enviar_mensaje(user, solicitud_id, body, db, actor="tecnico")

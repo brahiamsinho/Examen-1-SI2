@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_permisos
 from app.modules.usuarios.models import Usuario
-from app.modules.acceso.models import Rol, UsuarioRol
+from app.modules.roles.models import Rol, UsuarioRol
 from app.modules.talleres.models import Taller
 
 from . import service

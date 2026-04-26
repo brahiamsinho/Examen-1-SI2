@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.modules.usuarios import service
-from app.modules.acceso.schemas import AsignarRolesAUsuario
+from app.modules.roles.schemas import AsignarRolesAUsuario
 from app.modules.usuarios.schemas import (
     UsuarioCreate,
     UsuarioRead,

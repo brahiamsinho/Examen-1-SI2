@@ -37,6 +37,17 @@ _log = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["IA — inferencia y reglas"])
 
 
+def _image_analyze_failure_response(mensaje: str) -> ImageAnalyzeResponse:
+    """Respuesta estable cuando una imagen del lote no pudo analizarse (formato, inferencia, etc.)."""
+    return ImageAnalyzeResponse(
+        hallazgos=[mensaje],
+        claridad_imagen=ImageClarity.BAJA,
+        confianza=0.0,
+        objetos_detectados=[],
+        modelo_deteccion=None,
+    )
+
+
 async def _analyze_image_bytes(
     *,
     raw: bytes,
@@ -45,11 +56,7 @@ async def _analyze_image_bytes(
 ) -> ImageAnalyzeResponse:
     if len(raw) > settings.AI_MAX_IMAGE_BYTES:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Imagen demasiado grande.")
-    try:
-        data = await inference_client.call_analyze_image(raw, filename, content_type)
-    except Exception as e:
-        _log.exception("analyze_image")
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=f"Fallo inferencia imagen: {e!s}") from e
+    data = await inference_client.call_analyze_image(raw, filename, content_type)
 
     clar = str(data.get("claridad_imagen") or data.get("claridad") or "MEDIA").upper()
     if clar not in ("BAJA", "MEDIA", "ALTA"):
@@ -131,11 +138,17 @@ async def analyze_image(
 ):
     _require_inference_available()
     raw = await file.read()
-    return await _analyze_image_bytes(
-        raw=raw,
-        filename=file.filename or "image.bin",
-        content_type=file.content_type or "application/octet-stream",
-    )
+    try:
+        return await _analyze_image_bytes(
+            raw=raw,
+            filename=file.filename or "image.bin",
+            content_type=file.content_type or "application/octet-stream",
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        _log.exception("analyze_image")
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, detail=f"Fallo inferencia imagen: {e!s}") from e
 
 
 @router.post(
@@ -158,11 +171,19 @@ async def analyze_images_batch(
 
     for idx, file in enumerate(files, start=1):
         raw = await file.read()
-        parsed = await _analyze_image_bytes(
-            raw=raw,
-            filename=file.filename or f"image-{idx}.bin",
-            content_type=file.content_type or "application/octet-stream",
-        )
+        fname = file.filename or f"image-{idx}.bin"
+        ct = file.content_type or "application/octet-stream"
+        try:
+            parsed = await _analyze_image_bytes(raw=raw, filename=fname, content_type=ct)
+        except HTTPException as e:
+            if e.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE:
+                _log.warning("analyze_images_batch evidencia_id=img-%s: %s", idx, e.detail)
+                parsed = _image_analyze_failure_response(str(e.detail))
+            else:
+                raise
+        except Exception as e:
+            _log.warning("analyze_images_batch evidencia_id=img-%s falló: %s", idx, e, exc_info=True)
+            parsed = _image_analyze_failure_response(f"No se pudo analizar la imagen: {e!s}")
         results.append(ImageAnalyzeItem(evidencia_id=f"img-{idx}", resultado=parsed))
         merged_hallazgos.extend(parsed.hallazgos)
         confidence_total += parsed.confianza

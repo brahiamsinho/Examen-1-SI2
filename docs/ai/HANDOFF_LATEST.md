@@ -2,6 +2,36 @@
 # =========================================================
 # Handoff para el próximo agente/sesión
 # Fecha: 2026-04-26
+
+## Cambios recientes (2026-04-26) — Módulos backend: auth / roles / permisos + notificaciones / push / mensajes ✅
+
+- El monolito `backend/app/modules/acceso/` se reemplazó por **`auth`**, **`roles`**, **`permisos`** (mismas tablas y prefijos API).
+- `comunicaciones` ya no concentra modelos ni un solo `service.py` grande: **`notificaciones`**, **`dispositivos_push`**, **`mensajes_solicitud`**; `comunicaciones/router.py` solo ensambla rutas.
+- Imports afectados: seeds, `dependencies.py`, `pagos`, `portal_*`, `db_metadata`. Ver `docs/ai/sessions/2026-04-26-backend-modulos-acceso-comunicaciones.md` y `ARCHITECTURE.md`.
+
+## Cambios recientes (2026-04-26) — Identidades seed (Santa Cruz, cuentas naturales) ✅
+
+- **`identidades_demo_sc.py`:** emails `*.sc-demo.test`, pass `scdemo1`, tel. +591 77010010–014, nombres y talleres con razón social SC; `config.py` importa estos defaults; `docker-compose.yml` deja de usar +57/La Paz en fallbacks.
+- Sesión: `docs/ai/sessions/2026-04-26-seed-identidades-santa-cruz.md`.
+
+## Cambios recientes (2026-04-26) — Seed stress visual (catálogo + clientes extra) ✅
+
+- **`dev_stress_visual`:** clientes extra `*.lista.sc-demo.test` + nombres SC; **`identidades_demo_sc.py`** centraliza emails/tel/pass de admin/cliente/taller/técnico/taller2; **`ensure_catalogos_vehiculo_stress_extra`** sin cambios de lógica. `docker-compose.yml` defaults Bolivia (+591, Santa Cruz).
+
+## Cambios recientes (2026-04-26) — AVIF + analyze-batch resiliente ✅
+
+- **`ai-inference`:** `pillow-heif` + `libheif1` en Docker; `register_heif_opener()` en `main.py` para decodificar AVIF/HEIF.
+- **`backend` `router.py`:** `POST /api/ai/images/analyze-batch` no hace 502 si una foto falla: esa entrada lleva `resultado` con `hallazgos` de error y `confianza=0`; el resto sigue normal. `POST /api/ai/images/analyze` (una imagen) mantiene 502 ante fallo de inferencia.
+- **Docs:** `DECISIONS_LOG` DEC-016; sesión `docs/ai/sessions/2026-04-26-agent-avif-analyze-batch-resilience.md`.
+
+## Cambios recientes (2026-04-26) — Seed demo media prioridad (comunicaciones, IA, multi-taller) ✅
+
+- **`backend/app/seeds/dev_demo_media_prioridad.py`:** notificaciones, chat, `ai_payload` demo, disponibilidad taller SC, segundo taller La Paz + bandeja retroactiva en `[DEMO-SC]`. Se encadena después de `ensure_demo_santa_cruz_datos` en `python -m app.seeds` y en `lifespan` si `SEED_DEMO_MEDIA_PRIORIDAD_ON_START=true`. Variables `SEED_TALLER2_*` documentadas en `backend/.env.example`.
+
+## Cambios recientes (2026-04-26) — Seed demo Santa Cruz (emergencias + pagos) ✅
+
+- **`backend/app/seeds/dev_demo_santa_cruz.py`:** vehículos y 10 solicitudes demo con contexto Santa Cruz de la Sierra; `python -m app.seeds` las ejecuta al final. Variable opcional `SEED_DEMO_SANTA_CRUZ_ON_START` para lifespan. Defaults `SEED_*_CIUDAD` Santa Cruz en `config` / `.env.example`.
+
 ## Cambios recientes (2026-04-26) — Confirmación pago: reusa intent iniciado, PI id correcto
 
 - **Mobile** `pago_confirmacion_screen.dart`: si el paso método ya devolvió `PagoRead` coherente, no se vuelve a `POST /pagos`; `confirmarStripe` usa `stripePaymentIntentId` del modelo.
@@ -174,7 +204,7 @@ Todos los endpoints del módulo `ai/` fueron probados en Swagger con respuestas 
 ## Cambios recientes (2026-04-19)
 
 - **Mobile:** módulos renombrados a `lib/cliente/` y `lib/tecnico/` (sin `_ciclo1`). Config por **`mobile/.env`** (`flutter_dotenv`). Flujo técnico: login con validación de roles `TECNICO` / `TALLER_RESPONSABLE`, perfil vía `/auth/me` + portal taller o listado técnicos según rol; sesión técnica con tokens **independientes** del cliente.
-- **Backend seeds:** usuario demo **técnico** (`dev_tecnico.py`); credenciales de ejemplo **cortas** en `config.py` y `.env.example` (`cli@test.com`, `taller@test.com`, `tec@test.com`, etc.). `main.py` lifespan incluye `SEED_TECNICO_ON_START`.
+- **Backend seeds:** defaults en `identidades_demo_sc.py` + `config.py` (p. ej. `carlos.vega@sc-demo.test` / `scdemo1`); `docker-compose.override.yml` activa `SEED_TECNICO_ON_START` en dev.
 - **Docs / README:** `mobile/README.md` y sección móvil del `README.md` raíz actualizados.
 
 ## Rutas y archivos clave

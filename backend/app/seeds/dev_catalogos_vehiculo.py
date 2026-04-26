@@ -72,3 +72,33 @@ async def ensure_catalogos_vehiculo_demo(db: AsyncSession) -> None:
         len(_TIPOS),
         len(_MARCAS_Y_MODELOS),
     )
+
+
+# Catálogo extra (stress visual en pickers: marcas/modelos/tipos adicionales). Idempotente.
+_TIPOS_STRESS = ("Van", "Minibús", "Rural")
+
+_MARCAS_STRESS: dict[str, tuple[str, ...]] = {
+    "Nissan": ("Sentra", "Frontier", "Kicks"),
+    "Volkswagen": ("Gol", "Amarok", "Tiguan"),
+    "Renault": ("Duster", "Logan", "Sandero"),
+    "Mitsubishi": ("L200", "ASX", "Outlander"),
+    "Kia": ("Rio", "Sportage", "Seltos"),
+    "Mazda": ("Mazda 3", "CX-5", "BT-50"),
+    "Peugeot": ("208", "3008", "Partner"),
+    "Fiat": ("Uno", "Toro", "Strada"),
+}
+
+
+async def ensure_catalogos_vehiculo_stress_extra(db: AsyncSession) -> None:
+    """Marcas/modelos y tipos extra para listas largas en UI (no crítico para flujo demo)."""
+    for nombre in _TIPOS_STRESS:
+        await _get_or_create_tipo(db, nombre)
+    for marca_nombre, modelos in _MARCAS_STRESS.items():
+        m = await _get_or_create_marca(db, marca_nombre)
+        for mod in modelos:
+            await _get_or_create_modelo(db, m.id, mod)
+    logger.info(
+        "Seed catálogos stress: +%s tipos, +%s marcas.",
+        len(_TIPOS_STRESS),
+        len(_MARCAS_STRESS),
+    )

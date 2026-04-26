@@ -89,3 +89,13 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-04-25  
 **Decisión:** Para Fase 1, mantener el worker actual por evidencia (`audio/image`) y resolver incidentes compuestos en backend con un **fusionador multimodal por reglas ponderadas** (`backend/app/modules/ai/services/evidence_fusion.py`), soportando múltiples fotos y múltiples transcripciones sin romper endpoints existentes.  
 **Por qué:** Permite entregar valor inmediato (multi-daño explicable, prioridad más robusta, conflicto detectable) sin introducir complejidad de entrenamiento/serving adicional en esta iteración. Deja base limpia para fase multi-label entrenada en siguiente ciclo.
+
+## DEC-016 — AVIF/HEIF en inferencia y lote resiliente (2026-04-26)
+**Fecha:** 2026-04-26  
+**Decisión:** En `ai-inference`, añadir `pillow-heif` + dependencia de sistema `libheif1` y `register_heif_opener()` para decodificar AVIF/HEIF antes del pipeline OpenCV/YOLO. En `POST /api/ai/images/analyze-batch`, ante fallo de una imagen devolver un `ImageAnalyzeResponse` sintético (hallazgo con mensaje, confianza 0) en lugar de 502 para todo el lote.  
+**Por qué:** Los móviles y navegadores envían cada vez más AVIF; Pillow estándar no lo garantiza. Un archivo malo no debe invalidar el análisis del resto del incidente compuesto.
+
+## DEC-017 — Paquetes `auth` / `roles` / `permisos` y dominio notificaciones/push/mensajes (2026-04-26)
+**Fecha:** 2026-04-26  
+**Decisión:** Separar el antiguo módulo `acceso` en tres paquetes (`auth`, `roles`, `permisos`) y el antiguo `comunicaciones` (modelo+repo+FCM+servicio) en `notificaciones`, `dispositivos_push`, `mensajes_solicitud`, dejando `comunicaciones` solo como capa de **routers** que delega.  
+**Por qué:** Límites de importación claros, coherencia con arquitectura modular por dominio y mantenimiento (cambiar FCM no arrastra el modelo de chat). Las tablas y URLs HTTP se mantienen; el registro de bitácora de asignación de roles pasa a `modulo="roles"`.

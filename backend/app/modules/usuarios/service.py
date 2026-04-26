@@ -11,7 +11,7 @@ from app.modules.usuarios.models import Usuario, Cliente, EstadoUsuarioEnum
 from app.modules.usuarios.schemas import UsuarioListRead, UsuarioRead
 from app.modules.bitacora.service import registrar_accion
 from app.modules.bitacora.models import AccionBitacoraEnum
-from app.modules.acceso.models import Rol, UsuarioRol
+from app.modules.roles.models import Rol, UsuarioRol
 
 
 async def get_usuarios(db: AsyncSession) -> list[Usuario]:
@@ -118,13 +118,13 @@ async def asignar_roles_usuario(
     ejecutor_id: int,
 ) -> None:
     await get_usuario_by_id(usuario_id, db)
-    from app.modules.acceso import service as acceso_service
+    from app.modules.roles import service as roles_service
 
-    await acceso_service.asignar_roles_usuario(usuario_id, rol_ids, db)
+    await roles_service.asignar_roles_usuario(usuario_id, rol_ids, db)
     await registrar_accion(
         db=db,
         usuario_id=ejecutor_id,
-        modulo="acceso",
+        modulo="roles",
         entidad="usuario_rol",
         entidad_id=usuario_id,
         accion=AccionBitacoraEnum.ACTUALIZAR,

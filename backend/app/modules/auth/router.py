@@ -1,43 +1,30 @@
-# app/modules/acceso/router.py
-# =========================================================
-# Router FastAPI para el módulo de Acceso
-# Prefijo: /api/v1/auth  y  /api/v1/roles  y  /api/v1/permisos
-# =========================================================
+# app/modules/auth/router.py
 import html as html_module
 
-from fastapi import APIRouter, Depends, Request, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
-from starlette.responses import Response
-from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import Response
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_permisos
 from app.core.security import decode_token
-from app.modules.acceso import service
-from sqlalchemy import select
-
-from app.modules.acceso.schemas import (
+from app.modules.auth import service
+from app.modules.auth.schemas import (
     LoginRequest,
-    SolicitarRecuperacionIn,
-    RestablecerPasswordIn,
-    TokenResponse,
-    RolCreate,
-    RolRead,
-    RolUpdate,
-    RolPermisosRead,
-    PermisoCreate,
-    PermisoRead,
-    AsignarPermisosARol,
-    AsignarRolesAUsuario,
     MeResponse,
+    RestablecerPasswordIn,
+    SolicitarRecuperacionIn,
+    TokenResponse,
 )
-from app.modules.acceso.models import Rol
+from app.modules.roles.models import Rol, UsuarioRol
 from app.modules.usuarios.models import Usuario
 
-# ── Router de autenticación ─────────────────────────────────
 auth_router = APIRouter(prefix="/auth", tags=["Autenticación"])
+
 
 @auth_router.post("/login", response_model=TokenResponse)
 async def login(
@@ -49,7 +36,9 @@ async def login(
     return await service.login(body.email, body.password, db, request)
 
 
-@auth_router.post("/solicitar-recuperacion-contrasena", status_code=status.HTTP_204_NO_CONTENT)
+@auth_router.post(
+    "/solicitar-recuperacion-contrasena", status_code=status.HTTP_204_NO_CONTENT
+)
 async def solicitar_recuperacion_contrasena(
     body: SolicitarRecuperacionIn,
     db: AsyncSession = Depends(get_db),
@@ -75,7 +64,7 @@ async def verificar_email(
     db: AsyncSession = Depends(get_db),
 ):
     """Activa cuenta (PENDIENTE → ACTIVO). Enlace enviado al registrarse."""
-    from app.modules.acceso.email_tokens import consumir_token_verificar_email
+    from app.modules.auth.email_tokens import consumir_token_verificar_email
 
     user = await consumir_token_verificar_email(db, token)
     if user is None:
@@ -101,10 +90,10 @@ async def verificar_email(
             f"<p>Hola <strong>{nombre}</strong>, tu correo quedó confirmado.</p>"
             "<p><strong>App móvil (cliente):</strong> vuelve a la aplicación e inicia sesión con tu correo y contraseña.</p>"
             f"<p><strong>Portal web taller:</strong> "
-            f"<a href=\"{login_taller}\">iniciar sesión</a> "
+            f'<a href="{login_taller}">iniciar sesión</a> '
             f"(si registraste un taller; acceso en <code>{login_taller}</code>).</p>"
-            f"<p style='font-size:0.9rem;color:#444'>¿Aún no completaste el alta del taller? "
-            f"<a href=\"{login_taller_registro}\">Registro taller</a>.</p>"
+            f'<p style="font-size:0.9rem;color:#444">¿Aún no completaste el alta del taller? '
+            f'<a href="{login_taller_registro}">Registro taller</a>.</p>'
             "</body></html>"
         ),
         status_code=200,
@@ -118,8 +107,6 @@ async def logout(
     db: AsyncSession = Depends(get_db),
 ):
     """Cierra la sesión actual invalidando el token en BD."""
-    from fastapi.security import HTTPBearer
-    # Extraer JTI del token actual para marcarlo como CERRADO
     auth_header = request.headers.get("authorization", "")
     token = auth_header.replace("Bearer ", "")
     try:
@@ -137,8 +124,6 @@ async def me(
 ):
     """Devuelve el usuario autenticado con sus roles y permisos."""
     user, permisos = user_and_perms
-    # Obtener nombres de roles
-    from app.modules.acceso.models import Rol, UsuarioRol
     roles_result = await db.execute(
         select(Rol.nombre)
         .join(UsuarioRol, UsuarioRol.rol_id == Rol.id)
@@ -154,57 +139,3 @@ async def me(
         roles=roles,
         permisos=permisos,
     )
-
-
-# ── Router de Roles ─────────────────────────────────────────
-roles_router = APIRouter(prefix="/roles", tags=["Roles"])
-
-@roles_router.get("/", response_model=list[RolRead])
-async def listar_roles(
-    db: AsyncSession = Depends(get_db),
-    _=Depends(get_current_user),
-):
-    return await service.get_roles(db)
-
-
-@roles_router.post("/", response_model=RolRead, status_code=status.HTTP_201_CREATED)
-async def crear_rol(
-    body: RolCreate,
-    db: AsyncSession = Depends(get_db),
-    _=Depends(get_current_user),
-):
-    return await service.create_rol(body.nombre, body.descripcion, db)
-
-
-@roles_router.put("/{rol_id}/permisos", status_code=status.HTTP_204_NO_CONTENT)
-async def asignar_permisos(
-    rol_id: int,
-    body: AsignarPermisosARol,
-    db: AsyncSession = Depends(get_db),
-    _=Depends(get_current_user),
-):
-    await service.asignar_permisos_rol(rol_id, body.permiso_ids, db)
-
-
-@roles_router.get("/{rol_id}/permisos", response_model=RolPermisosRead)
-async def listar_permiso_ids_de_rol(
-    rol_id: int,
-    db: AsyncSession = Depends(get_db),
-    _=Depends(get_current_user),
-):
-    r = await db.execute(select(Rol).where(Rol.id == rol_id))
-    if r.scalar_one_or_none() is None:
-        raise HTTPException(status_code=404, detail="Rol no encontrado")
-    ids = await service.get_permiso_ids_for_rol(rol_id, db)
-    return RolPermisosRead(rol_id=rol_id, permiso_ids=ids)
-
-
-# ── Router de Permisos ──────────────────────────────────────
-permisos_router = APIRouter(prefix="/permisos", tags=["Permisos"])
-
-@permisos_router.get("/", response_model=list[PermisoRead])
-async def listar_permisos(
-    db: AsyncSession = Depends(get_db),
-    _=Depends(get_current_user),
-):
-    return await service.get_permisos(db)

@@ -82,24 +82,27 @@ async def lifespan(app: FastAPI):
     yield
 
 # ── Importar todos los routers ────────────────────────────────
-from app.modules.auth.router import auth_router
-from app.modules.permisos.router import permisos_router
-from app.modules.roles.router import roles_router
-from app.modules.usuarios.router import router as usuarios_router, clientes_router
-from app.modules.vehiculos.router import router as vehiculos_router
-from app.modules.talleres.router import router, especialidades_router, tecnicos_router
-from app.modules.bitacora.router import router as bitacora_router
-from app.modules.portal_taller.router import router as portal_taller_router
-from app.modules.portal_taller_emergencias.router import router as portal_taller_emergencias_router
-from app.modules.portal_cliente.router import router as portal_cliente_router
-from app.modules.emergencias.router import router as emergencias_router
-from app.modules.comunicaciones.router import (
+from app.modules.acceso_y_administracion.auth.router import auth_router
+from app.modules.acceso_y_administracion.permisos.router import permisos_router
+from app.modules.acceso_y_administracion.roles.router import roles_router
+from app.modules.acceso_y_administracion.usuarios.router import router as usuarios_router, clientes_router
+from app.modules.clientes_y_vehiculos.vehiculos.router import router as vehiculos_router
+from app.modules.talleres_y_tecnicos.talleres.router import router, especialidades_router, tecnicos_router
+from app.modules.acceso_y_administracion.bitacora.router import router as bitacora_router
+from app.modules.acceso_y_administracion.admin_finanzas.router import (
+    router as admin_finanzas_router,
+)
+from app.modules.talleres_y_tecnicos.taller_responsable.router import router as taller_responsable_router
+from app.modules.atencion.taller_emergencias.router import router as taller_emergencias_router
+from app.modules.clientes_y_vehiculos.clientes.router import router as clientes_app_router
+from app.modules.incidentes.emergencias.router import router as emergencias_router
+from app.modules.comunicacion_y_notificaciones.comunicaciones.router import (
     cliente_router as comunicaciones_cliente_router,
     emergencias_mensajes_cliente_router,
     tecnico_router as comunicaciones_tecnico_router,
 )
-from app.modules.portal_tecnico_emergencias.router import router as portal_tecnico_emergencias_router
-from app.modules.pagos.router import emergencias_pagos_cliente_router
+from app.modules.talleres_y_tecnicos.tecnico.router import router as tecnico_router
+from app.modules.pagos_y_comisiones.pagos.router import emergencias_pagos_cliente_router
 from app.modules.ai.router import router as ai_router
 
 # ── Crear aplicación ─────────────────────────────────────────
@@ -137,14 +140,15 @@ app.include_router(router, prefix=PREFIX)           # talleres
 app.include_router(especialidades_router, prefix=PREFIX)
 app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
-app.include_router(portal_taller_router, prefix=PREFIX)
-app.include_router(portal_taller_emergencias_router, prefix=PREFIX)
-app.include_router(portal_cliente_router, prefix=PREFIX)
+app.include_router(admin_finanzas_router, prefix=PREFIX)
+app.include_router(taller_responsable_router, prefix=PREFIX)
+app.include_router(taller_emergencias_router, prefix=PREFIX)
+app.include_router(clientes_app_router, prefix=PREFIX)
 app.include_router(emergencias_router, prefix=PREFIX)
 app.include_router(comunicaciones_cliente_router, prefix=PREFIX)
 app.include_router(emergencias_mensajes_cliente_router, prefix=PREFIX)
 app.include_router(comunicaciones_tecnico_router, prefix=PREFIX)
-app.include_router(portal_tecnico_emergencias_router, prefix=PREFIX)
+app.include_router(tecnico_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 app.include_router(ai_router, prefix=PREFIX)
 

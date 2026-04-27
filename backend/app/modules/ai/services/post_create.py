@@ -6,8 +6,6 @@ from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import httpx
-
 from app.core.config import settings
 from app.core.timeutil import utc_now_naive
 from app.modules.ai import repository as ai_repository
@@ -24,8 +22,8 @@ from app.modules.ai.services.assignment_scorer import rank_talleres
 from app.modules.ai.services.incident_classifier import classify_incident
 from app.modules.ai.services.priority_engine import prioritize
 from app.modules.ai.services.structured_summary import build_structured_summary
-from app.modules.emergencias import repository as emergencias_repository
-from app.modules.emergencias.models import TipoEvidenciaSolicitudEnum
+from app.modules.incidentes.emergencias import repository as emergencias_repository
+from app.modules.incidentes.emergencias.models import TipoEvidenciaSolicitudEnum
 
 _log = logging.getLogger(__name__)
 
@@ -65,6 +63,7 @@ async def _enrich_solicitud_ai_after_create_impl(
         ubic = actuales[0] if actuales else max(s.ubicaciones, key=lambda x: x.registrado_at)
 
     transcripcion: str | None = None
+    hallazgos_por_imagen: list[list[str]] = []
     hallazgos: list[str] = []
 
     if settings.AI_ENABLED or settings.AI_INFERENCE_STUB:
@@ -74,29 +73,30 @@ async def _enrich_solicitud_ai_after_create_impl(
                 if raw and raw.get("text"):
                     transcripcion = str(raw["text"]).strip() or None
                     break
-            if ev.tipo == TipoEvidenciaSolicitudEnum.FOTO and ev.archivo_url:
-                try:
-                    async with httpx.AsyncClient(
-                        timeout=httpx.Timeout(settings.AI_INFERENCE_TIMEOUT_S),
-                        follow_redirects=True,
-                    ) as hc:
-                        img = await hc.get(ev.archivo_url)
-                        img.raise_for_status()
-                    ct = (img.headers.get("content-type") or "image/jpeg").split(";")[0].strip()
-                    vis = await inference_client.call_analyze_image(
-                        img.content,
-                        ev.nombre_archivo or "foto.jpg",
-                        ct,
-                    )
-                    hallazgos = list(vis.get("hallazgos") or [])
-                except Exception:
-                    _log.debug("Análisis de imagen omitido para evidencia", exc_info=True)
-                break
+        for ev in sorted(s.evidencias, key=lambda x: x.created_at):
+            if ev.tipo != TipoEvidenciaSolicitudEnum.FOTO or not ev.archivo_url:
+                continue
+            try:
+                loaded = await inference_client.load_evidencia_bytes(ev.archivo_url)
+                if not loaded:
+                    continue
+                content, ct = loaded
+                vis = await inference_client.call_analyze_image(
+                    content,
+                    ev.nombre_archivo or "foto.jpg",
+                    ct if ct.startswith("image/") else "image/jpeg",
+                )
+                hlist = list(vis.get("hallazgos") or [])
+                hallazgos_por_imagen.append(hlist)
+            except Exception:
+                _log.debug("Análisis de imagen omitido para evidencia", exc_info=True)
+        hallazgos = [h for sub in hallazgos_por_imagen for h in sub]
 
     cls_in = IncidentClassifyIn(
         texto_cliente=descripcion or None,
         transcripcion_audio=transcripcion,
         hallazgos_vision=hallazgos,
+        hallazgos_vision_por_imagen=hallazgos_por_imagen,
     )
     cls_out = classify_incident(cls_in)
 
@@ -104,6 +104,7 @@ async def _enrich_solicitud_ai_after_create_impl(
         texto_cliente=descripcion or None,
         transcripcion_audio=transcripcion,
         hallazgos_vision=hallazgos,
+        hallazgos_vision_por_imagen=hallazgos_por_imagen,
         categoria=cls_out.categoria,
         direccion_referencia=ubic.direccion_referencia if ubic else None,
     )
@@ -121,6 +122,7 @@ async def _enrich_solicitud_ai_after_create_impl(
         texto_cliente=descripcion or None,
         transcripcion_audio=transcripcion,
         hallazgos_vision=hallazgos,
+        hallazgos_vision_por_imagen=hallazgos_por_imagen,
         categoria=cls_out.categoria,
         ubicacion=ubi_in,
     )
@@ -151,6 +153,8 @@ async def _enrich_solicitud_ai_after_create_impl(
         payload["transcripcion_audio"] = transcripcion
     if hallazgos:
         payload["hallazgos_vision"] = hallazgos
+    if hallazgos_por_imagen:
+        payload["hallazgos_vision_por_imagen"] = hallazgos_por_imagen
     if asignacion is not None:
         payload["sugerencia_asignacion"] = asignacion.model_dump()
 

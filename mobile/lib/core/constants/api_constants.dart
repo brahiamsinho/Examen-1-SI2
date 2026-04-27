@@ -1,6 +1,7 @@
 // lib/core/constants/api_constants.dart
 // =========================================================
 // Rutas de la API — la base y timeouts vienen de mobile/.env (ver AppEnv).
+// Prefijo de app móvil / web responsable: `/app/...` (antes `/portal/...`).
 // =========================================================
 
 import '../config/app_env.dart';
@@ -15,78 +16,78 @@ class ApiConstants {
   static String get authSolicitarRecuperacionContrasena =>
       '${AppEnv.apiBaseUrl}/auth/solicitar-recuperacion-contrasena';
 
-  /// Portal taller (responsable): taller y datos del responsable.
-  static String get portalTallerMiTaller => '${AppEnv.apiBaseUrl}/portal/taller/mi-taller';
+  /// App taller (responsable): taller y datos del responsable.
+  static String get appTallerMiTaller => '${AppEnv.apiBaseUrl}/app/taller/mi-taller';
 
-  /// Portal técnico — emergencias.
-  static String get portalTecnicoEmergenciasServiciosAsignados =>
-      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/servicios-asignados';
+  /// App técnico — emergencias.
+  static String get appTecnicoEmergenciasServiciosAsignados =>
+      '${AppEnv.apiBaseUrl}/app/tecnico/emergencias/servicios-asignados';
 
-  static String portalTecnicoEmergenciaUbicacion(int solicitudId) =>
-      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/ubicacion';
+  static String appTecnicoEmergenciaUbicacion(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/tecnico/emergencias/solicitudes/$solicitudId/ubicacion';
 
-  static String portalTecnicoEmergenciaUbicacionTecnico(int solicitudId) =>
-      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/ubicacion-tecnico';
+  static String appTecnicoEmergenciaUbicacionTecnico(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/tecnico/emergencias/solicitudes/$solicitudId/ubicacion-tecnico';
 
-  static String portalTecnicoEmergenciaEstado(int solicitudId) =>
-      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/solicitudes/$solicitudId/estado';
+  static String appTecnicoEmergenciaEstado(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/tecnico/emergencias/solicitudes/$solicitudId/estado';
 
-  static String portalTecnicoEmergenciaMensajes(int solicitudId) =>
-      '${AppEnv.apiBaseUrl}/portal/tecnico/emergencias/$solicitudId/mensajes';
+  static String appTecnicoEmergenciaMensajes(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/tecnico/emergencias/$solicitudId/mensajes';
 
-  // Portal móvil cliente
-  static String get portalClienteRegistro => '${AppEnv.apiBaseUrl}/portal/cliente/registro';
-  static String get portalClienteMiPerfil => '${AppEnv.apiBaseUrl}/portal/cliente/mi-perfil';
-  static String get portalClienteMisVehiculos => '${AppEnv.apiBaseUrl}/portal/cliente/mis-vehiculos';
+  // App móvil cliente
+  static String get appClienteRegistro => '${AppEnv.apiBaseUrl}/app/cliente/registro';
+  static String get appClienteMiPerfil => '${AppEnv.apiBaseUrl}/app/cliente/mi-perfil';
+  static String get appClienteMisVehiculos => '${AppEnv.apiBaseUrl}/app/cliente/mis-vehiculos';
 
-  static String portalClienteMisVehiculo(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/mis-vehiculos/$id';
+  static String appClienteMisVehiculo(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/mis-vehiculos/$id';
 
   /// Solicitudes de emergencia (cliente autenticado).
-  static String get portalClienteEmergencias => '${AppEnv.apiBaseUrl}/portal/cliente/emergencias';
+  static String get appClienteEmergencias => '${AppEnv.apiBaseUrl}/app/cliente/emergencias';
 
-  static String portalClienteEmergencia(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id';
+  static String appClienteEmergencia(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id';
 
   /// Seguimiento, taller, técnico y ETA.
-  static String portalClienteEmergenciaSeguimiento(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/seguimiento';
+  static String appClienteEmergenciaSeguimiento(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/seguimiento';
 
-  static String portalClienteEmergenciaUbicacionTecnico(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/ubicacion-tecnico';
+  static String appClienteEmergenciaUbicacionTecnico(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/ubicacion-tecnico';
 
-  static String portalClienteEmergenciaUbicaciones(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/ubicaciones';
+  static String appClienteEmergenciaUbicaciones(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/ubicaciones';
 
-  static String portalClienteEmergenciaEvidencias(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/evidencias';
+  static String appClienteEmergenciaEvidencias(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/evidencias';
 
-  static String portalClienteEmergenciaEvidenciasArchivo(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$id/evidencias/archivo';
+  static String appClienteEmergenciaEvidenciasArchivo(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/evidencias/archivo';
 
   /// Notificaciones, mensajes y FCM.
-  static String get portalClienteNotificaciones =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/notificaciones';
+  static String get appClienteNotificaciones =>
+      '${AppEnv.apiBaseUrl}/app/cliente/notificaciones';
 
-  static String portalClienteNotificacionLeida(int id) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/notificaciones/$id/leida';
+  static String appClienteNotificacionLeida(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/notificaciones/$id/leida';
 
-  static String portalClienteEmergenciaMensajes(int solicitudId) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/mensajes';
+  static String appClienteEmergenciaMensajes(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$solicitudId/mensajes';
 
   /// Pagos por solicitud.
-  static String portalClienteEmergenciaPagos(int solicitudId) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos';
+  static String appClienteEmergenciaPagos(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$solicitudId/pagos';
 
-  static String portalClienteEmergenciaPagoCompletarSimulado(int solicitudId, int pagoId) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos/$pagoId/completar-simulado';
+  static String appClienteEmergenciaPagoCompletarSimulado(int solicitudId, int pagoId) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$solicitudId/pagos/$pagoId/completar-simulado';
 
-  static String portalClienteEmergenciaPagoConfirmarStripe(int solicitudId, int pagoId) =>
-      '${AppEnv.apiBaseUrl}/portal/cliente/emergencias/$solicitudId/pagos/$pagoId/confirmar-stripe';
+  static String appClienteEmergenciaPagoConfirmarStripe(int solicitudId, int pagoId) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$solicitudId/pagos/$pagoId/confirmar-stripe';
 
-  static String get portalClienteFcm => '${AppEnv.apiBaseUrl}/portal/cliente/dispositivos/fcm';
+  static String get appClienteFcm => '${AppEnv.apiBaseUrl}/app/cliente/dispositivos/fcm';
 
-  static String get portalTecnicoFcm => '${AppEnv.apiBaseUrl}/portal/tecnico/dispositivos/fcm';
+  static String get appTecnicoFcm => '${AppEnv.apiBaseUrl}/app/tecnico/dispositivos/fcm';
 
   static String get usuarios => '${AppEnv.apiBaseUrl}/usuarios';
   static String get vehiculos => '${AppEnv.apiBaseUrl}/vehiculos';

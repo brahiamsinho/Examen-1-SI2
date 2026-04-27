@@ -37,11 +37,14 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - emergencias_net
+    # start_period: initdb + muchos scripts en docker-entrypoint-initdb.d; pg_isready puede fallar
+    # mientras Postgres reinicia de init → modo normal. Sin start_period, el primer `up` a veces marca unhealthy.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 240s
 
   mailhog:
     image: mailhog/mailhog:v1.0.1
@@ -75,7 +78,7 @@ services:
       ALGORITHM: ${ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200,http://localhost:80}
+      CORS_ORIGINS: ${CORS_ORIGINS}
       ENVIRONMENT: ${ENVIRONMENT:-development}
       DEBUG: ${DEBUG:-true}
       API_PREFIX: ${API_PREFIX:-/api}
@@ -116,23 +119,25 @@ services:
       FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/app/firebase-credentials.json}
       PAGO_SIMULADO_AUTOCOMPLETE: ${PAGO_SIMULADO_AUTOCOMPLETE:-true}
       PAGO_PROVEEDOR_DEFAULT: ${PAGO_PROVEEDOR_DEFAULT:-SIMULADO}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
-      EVIDENCIAS_PUBLIC_BASE_URL: ${EVIDENCIAS_PUBLIC_BASE_URL:-}
-      EVIDENCIA_MAX_UPLOAD_BYTES: ${EVIDENCIA_MAX_UPLOAD_BYTES:-15728640}
-      SMTP_HOST: ${SMTP_HOST:-mailhog}
-      SMTP_PORT: ${SMTP_PORT:-1025}
-      SMTP_USE_TLS: ${SMTP_USE_TLS:-false}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_TIMEOUT_SECONDS: ${SMTP_TIMEOUT_SECONDS:-15}
-      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
-      EMAIL_STRICT: ${EMAIL_STRICT:-false}
-      MAIL_FROM: ${MAIL_FROM:-noreply@emergenciasviales.local}
-      EMAIL_LINK_BASE_URL: ${EMAIL_LINK_BASE_URL:-http://localhost:8000}
-      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-http://localhost}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      EVIDENCIAS_PUBLIC_BASE_URL: ${EVIDENCIAS_PUBLIC_BASE_URL}
+      EVIDENCIA_MAX_UPLOAD_BYTES: ${EVIDENCIA_MAX_UPLOAD_BYTES}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USE_TLS: ${SMTP_USE_TLS}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_TIMEOUT_SECONDS: ${SMTP_TIMEOUT_SECONDS}
+      EMAIL_ENABLED: ${EMAIL_ENABLED}
+      EMAIL_STRICT: ${EMAIL_STRICT}
+      MAIL_FROM: ${MAIL_FROM}
+      EMAIL_LINK_BASE_URL: ${EMAIL_LINK_BASE_URL}
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL}
+      API_PUBLIC_URL: ${API_PUBLIC_URL}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL}
       AI_ENABLED: ${AI_ENABLED:-false}
-      AI_INFERENCE_BASE_URL: ${AI_INFERENCE_BASE_URL:-}
+      AI_INFERENCE_BASE_URL: ${AI_INFERENCE_BASE_URL}
       AI_INFERENCE_TIMEOUT_S: ${AI_INFERENCE_TIMEOUT_S:-120}
       AI_INFERENCE_STUB: ${AI_INFERENCE_STUB:-false}
       AI_MAX_AUDIO_BYTES: ${AI_MAX_AUDIO_BYTES:-15728640}
@@ -162,8 +167,9 @@ services:
   ai-inference:
     profiles: ["ai"]
     build:
-      context: .
-      dockerfile: services/ai-inference/Dockerfile
+      # Contexto acotado: evita enviar mobile/frontend/docs al daemon (build mucho más rápido).
+      context: ./services/ai-inference
+      dockerfile: Dockerfile
     container_name: emergencias_ai_inference
     restart: unless-stopped
     environment:
@@ -184,6 +190,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        MAILHOG_WEB_URL: ${MAILHOG_WEB_URL:-}
     container_name: emergencias_frontend
     restart: unless-stopped
     environment:

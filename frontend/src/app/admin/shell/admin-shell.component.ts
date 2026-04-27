@@ -15,6 +15,7 @@ export class AdminShellComponent {
 
   readonly nav = [
     { path: '/admin/panel', label: 'Resumen', exact: true },
+    { path: '/admin/panel/finanzas', label: 'Finanzas', exact: true },
     { path: '/admin/panel/usuarios', label: 'Usuarios', exact: false },
     { path: '/admin/panel/roles', label: 'Roles', exact: false },
     { path: '/admin/panel/permisos', label: 'Permisos', exact: false },

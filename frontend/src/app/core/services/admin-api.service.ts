@@ -3,6 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type {
+  AccionBitacora,
+  AdminFinanzasReportes,
+  AdminFinanzasResumen,
   BitacoraDto,
   PermisoDto,
   RolDto,
@@ -13,7 +16,6 @@ import type {
   UsuarioCreatePayload,
   UsuarioListDto,
   UsuarioUpdatePayload,
-  AccionBitacora,
 } from '../models/admin-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -106,5 +108,19 @@ export class AdminApiService {
 
   updateTaller(id: number, body: TallerUpdatePayload): Observable<TallerDto> {
     return this.http.put<TallerDto>(`${this.base}/talleres/${id}`, body);
+  }
+
+  getFinanzasResumen(filters?: { desde?: string; hasta?: string }): Observable<AdminFinanzasResumen> {
+    let params = new HttpParams();
+    if (filters?.desde) params = params.set('desde', filters.desde);
+    if (filters?.hasta) params = params.set('hasta', filters.hasta);
+    return this.http.get<AdminFinanzasResumen>(`${this.base}/admin/finanzas/resumen`, { params });
+  }
+
+  getFinanzasReportes(filters?: { desde?: string; hasta?: string }): Observable<AdminFinanzasReportes> {
+    let params = new HttpParams();
+    if (filters?.desde) params = params.set('desde', filters.desde);
+    if (filters?.hasta) params = params.set('hasta', filters.hasta);
+    return this.http.get<AdminFinanzasReportes>(`${this.base}/admin/finanzas/reportes`, { params });
   }
 }

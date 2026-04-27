@@ -93,7 +93,7 @@ class FcmRegistration {
     final dio = _ref.read(tecnicoDioProvider);
     try {
       await dio.post<void>(
-        ApiConstants.portalTecnicoFcm,
+        ApiConstants.appTecnicoFcm,
         data: {'token': token, 'platform': _androidOrIos()},
       );
     } catch (_) {}
@@ -108,7 +108,7 @@ class FcmRegistration {
     if (t == null) return;
     final dio = _ref.read(tecnicoDioProvider);
     try {
-      await dio.delete<void>(ApiConstants.portalTecnicoFcm, data: {'token': t, 'platform': _androidOrIos()});
+      await dio.delete<void>(ApiConstants.appTecnicoFcm, data: {'token': t, 'platform': _androidOrIos()});
     } catch (_) {}
     _lastTecnicoToken['t'] = null;
   }

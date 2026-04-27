@@ -1,4 +1,4 @@
-/// Perfil cliente devuelto por `GET /portal/cliente/mi-perfil` y `POST /registro`.
+/// Perfil cliente devuelto por `GET /app/cliente/mi-perfil` y `POST /app/cliente/registro`.
 final class ClienteMiPerfil {
   const ClienteMiPerfil({
     required this.usuarioId,

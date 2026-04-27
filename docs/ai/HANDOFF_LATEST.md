@@ -3,6 +3,67 @@
 # Handoff para el próximo agente/sesión
 # Fecha: 2026-04-26
 
+## Cambios recientes (2026-04-26) — Dashboard admin financiero (KPIs comisiones/reportes) ✅
+
+- Se implementó módulo backend `admin_finanzas` (`schemas.py`, `service.py`, `router.py`) para exponer métricas financieras globales desde `comisiones_taller`, `pagos` y `solicitudes_emergencia`: comisión total plataforma (10 %), pagos confirmados, ticket promedio, conversión de finalizadas→pagadas, top talleres y serie diaria.
+- Se actualizó `frontend/src/app/admin/features/dashboard/` para mostrar filtros de fecha, tarjetas KPI, top talleres y barras diarias de comisión dentro del panel administrador.
+- Fix posterior: `admin.routes.ts` apuntaba a `./features/finanzas/admin-finanzas.component` inexistente y rompía `ng build`; se creó ese componente (wrapper standalone que renderiza `admin-dashboard`) para que compile y mantenga ruta `/admin/panel/finanzas`.
+- Sesión: `docs/ai/sessions/2026-04-26-admin-dashboard-finanzas-kpis.md`.
+
+## Cambios recientes (2026-04-26) — Pagos: registrar `comisiones_taller` al confirmar (ganancias dashboard) ✅
+
+- Tras `PAGADO` (Stripe o simulado) ahora se crea fila en `comisiones_taller` (10 % comisión, neto al taller), alineado a `dev_demo_santa_cruz`. Sin esto, el landing/reportes del taller seguían con sumas en 0. Código: `backend/app/modules/pagos_y_comisiones/pagos/repository.py` + `service.py`. Sesión: `docs/ai/sessions/2026-04-26-pagos-comisiones-taller-dashboard.md`.
+
+## Cambios recientes (2026-04-27) — `ai_payload` fijo en “Otros” tras subir foto (re-enriquecer IA) ✅
+
+- Tras **crear** la solicitud el flujo móvil suele añadir **foto/ubicación después**; el `enrich` solo corría al `POST` inicial, así que `fuentes` quedaba `["texto"]` y `OTROS`. Ahora: `enrich` también tras **evidencias**, **ubicación** y **actualizar texto**; lectura local de `uploads/evidencias` para análisis de imagen. Sesión: `docs/ai/sessions/2026-04-27-agent-ia-payload-reenrich-evidencia.md`.
+
+## Cambios recientes (2026-04-26) — YOLO: modelo Colab dejó de “reconocer” (en realidad usaba COCO) ✅
+
+- **Causa:** `.env` tenía `YOLO_MODEL=yolov8n.pt` y por defecto `YOLO_TASK=detect`; el contenedor nunca usaba el clasificador en `backend/incidentes_emergencias_v1.pt` salvo que se uniera `docker-compose.ai-custom-model.yml` y se forzara classify.
+- **Ajuste:** `.env` con `YOLO_TASK=classify`, `YOLO_MODEL=/models/incidentes_emergencias_v1.pt`, `YOLO_IMGSZ=224` **y** levantar con **`docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build --force-recreate ai-inference`** (el segundo archivo monta el `.pt` en `/models/...`). Sesión: `docs/ai/sessions/2026-04-26-yolo-custom-model-compose-env.md`.
+
+## Cambios recientes (2026-04-26) — Docker: Postgres `db` healthcheck + primer `up` ✅
+
+- `docker-compose.yml` (`db`): `healthcheck.start_period: 240s`, `retries: 12` — init largo + reinicio post-init ya no debería marcar `unhealthy` por carrera con `pg_isready`. Ver `docs/ai/DOCKER_BUILD_OPTIMIZATION.md`.
+
+## Cambios recientes (2026-04-26) — Docker: contexto `ai-inference` acotado + builds más livianos ✅
+
+- `docker-compose.yml`: build de `ai-inference` con `context: ./services/ai-inference` (no toda la repo). Backend: `COPY --chown` (sin `chown -R`). `.dockerignore` backend/frontend/ai-inference ampliados. Detalle: `docs/ai/DOCKER_BUILD_OPTIMIZATION.md`.
+
+## Cambios recientes (2026-04-26) — `.env` solo en la raíz del repo ✅
+
+- Eliminado `backend/.env.example`; `config.py` solo carga `<repo>/.env`. Plantilla única: `.env.example` raíz. `mobile/.env` intacto. Sesión: `docs/ai/sessions/2026-04-26-env-solo-raiz.md`.
+- Compose: `.env.example` documenta `TZ`/`PGTZ`/`YOLO_TASK`/Firebase; YAML mantiene fallbacks seguros para TZ, host Postgres, credenciales Firebase y `BACKEND_UPSTREAM` (evita warnings y valores vacíos con `.env` viejos). Sesión: `docs/ai/sessions/2026-04-26-compose-env-estricto.md`.
+
+## Cambios recientes (2026-04-26) — Panel taller Angular: historial, mis solicitudes, comisiones ✅
+
+- Sidebar y rutas bajo `/taller/panel/emergencias/`: **Mis solicitudes**, **Historial de atenciones**, **Servicios asignados**, **Comisiones**; consumen APIs existentes (`historial-atenciones`, `comisiones`, `comisiones/resumen`). Backend: `bandeja_id` opcional en `HistorialAtencionRead` y `ComisionTallerRead` para enlazar al detalle de bandeja. Sesión: `docs/ai/sessions/2026-04-26-taller-web-sidebar-historial-comisiones.md`.
+
+## Cambios recientes (2026-04-26) — Paquete `comunicacion_y_notificaciones` (4 módulos) ✅
+
+- Movidos `comunicaciones`, `dispositivos_push`, `mensajes_solicitud`, `notificaciones` → `modules/comunicacion_y_notificaciones/`; imports `app.modules.comunicacion_y_notificaciones.*`. `main`, `db_metadata`, `pagos`, `tecnico`, `atencion/taller_emergencias`, seeds. Sesión: `docs/ai/sessions/2026-04-26-backend-comunicacion-y-notificaciones.md`.
+
+## Cambios recientes (2026-04-26) — Paquete `atencion` (`taller_emergencias`) ✅
+
+- `modules/taller_emergencias` → `modules/atencion/taller_emergencias/`; imports `app.modules.atencion.taller_emergencias.*`. `main`, seeds, `incidentes` (solicitudes), `ai/repository`, tests. Sesión: `docs/ai/sessions/2026-04-26-backend-atencion-taller-emergencias.md`.
+
+## Cambios recientes (2026-04-26) — Paquete `talleres_y_tecnicos` (`talleres`, `taller_responsable`, `tecnico`) ✅
+
+- Movidos desde raíz de `modules/`: `acceso_y_administracion/talleres` → `talleres_y_tecnicos/talleres`, `taller_responsable`, `tecnico`. Imports `app.modules.talleres_y_tecnicos.*`; `acceso_y_administracion/__init__.py` actualizado. Sesión: `docs/ai/sessions/2026-04-26-backend-talleres-y-tecnicos-paquete.md`.
+
+## Cambios recientes (2026-04-26) — Paquete `incidentes` (`emergencias` bajo `incidentes/emergencias`) ✅
+
+- Movido `modules/emergencias` → `modules/incidentes/emergencias/`; imports `app.modules.incidentes.emergencias.*`; `main`, `db_metadata`, taller/tecnico/pagos/mensajes/notificaciones/ai/seeds/tests actualizados. URLs sin cambio. Sesión: `docs/ai/sessions/2026-04-26-backend-incidentes-emergencias-paquete.md`.
+
+## Cambios recientes (2026-04-26) — Paquete `clientes_y_vehiculos` (clientes + vehiculos) ✅
+
+- Carpetas movidas a `backend/app/modules/clientes_y_vehiculos/{clientes,vehiculos}/`; imports globales actualizados (regex evita doble `clientes_y_vehiculos`). `main.py`, `db_metadata`, emergencias, pagos, técnico, seeds, etc. Sesión: `docs/ai/sessions/2026-04-26-backend-clientes-y-vehiculos-paquete.md`.
+
+## Cambios recientes (2026-04-26) — Carpeta `acceso_y_administracion` (auth, permisos, roles, usuarios, bitácora, talleres) ✅
+
+- Se movieron esos seis paquetes a `backend/app/modules/acceso_y_administracion/`; se añadió `__init__.py` del padre; `main.py`, `db_metadata.py`, `dependencies.py`, el resto de módulos, seeds y tests quedaron con imports `app.modules.acceso_y_administracion.*`. Verificar en Docker/venv: `python -c "from app.main import app"`. Sesión: `docs/ai/sessions/2026-04-26-backend-acceso-y-administracion-paquete.md`.
+
 ## Cambios recientes (2026-04-26) — Módulos backend: auth / roles / permisos + notificaciones / push / mensajes ✅
 
 - El monolito `backend/app/modules/acceso/` se reemplazó por **`auth`**, **`roles`**, **`permisos`** (mismas tablas y prefijos API).
@@ -26,7 +87,7 @@
 
 ## Cambios recientes (2026-04-26) — Seed demo media prioridad (comunicaciones, IA, multi-taller) ✅
 
-- **`backend/app/seeds/dev_demo_media_prioridad.py`:** notificaciones, chat, `ai_payload` demo, disponibilidad taller SC, segundo taller La Paz + bandeja retroactiva en `[DEMO-SC]`. Se encadena después de `ensure_demo_santa_cruz_datos` en `python -m app.seeds` y en `lifespan` si `SEED_DEMO_MEDIA_PRIORIDAD_ON_START=true`. Variables `SEED_TALLER2_*` documentadas en `backend/.env.example`.
+- **`backend/app/seeds/dev_demo_media_prioridad.py`:** notificaciones, chat, `ai_payload` demo, disponibilidad taller SC, segundo taller La Paz + bandeja retroactiva en `[DEMO-SC]`. Se encadena después de `ensure_demo_santa_cruz_datos` en `python -m app.seeds` y en `lifespan` si `SEED_DEMO_MEDIA_PRIORIDAD_ON_START=true`. Variables `SEED_TALLER2_*` documentadas en `.env.example` (raíz del repo).
 
 ## Cambios recientes (2026-04-26) — Seed demo Santa Cruz (emergencias + pagos) ✅
 
@@ -78,7 +139,7 @@
 ## Cambios recientes (2026-04-25) — Fixes críticos reportados por pruebas reales ✅
 
 - **Push técnico no recibido (aunque aparece en historial):** causa frecuente detectada en pruebas: el técnico registra token FCM *después* del evento (asignación/estado), por lo que no había token en el momento del envío.
-  - Fix: `backend/app/modules/comunicaciones/service.py` en `registrar_fcm_token` ahora reenvía notificaciones no leídas recientes (hasta 10) cuando es el primer token del usuario.
+  - Fix: `dispositivos_push/service.py` (paquete `comunicacion_y_notificaciones`) en `registrar_fcm_token` reenvía notificaciones no leídas recientes (hasta 10) cuando es el primer token del usuario.
 - **Hora BOT incorrecta en mobile (01:38 vs 21:38):**
   - Causa: timestamps API sin zona (`timestamp without time zone`) eran parseados como hora local en Dart.
   - Fix: `mobile/lib/core/utils/api_datetime.dart` + adopción en modelos cliente/técnico/pagos/comunicación para tratar naive timestamps como UTC y luego convertir a BOT en UI.
@@ -239,7 +300,7 @@ Compose carga `.env` del repo; `DATABASE_URL`, `SECRET_KEY`, `SEED_*`, **`AI_*`*
 - Problema reportado: “la notificación se ve como mensaje interno” (SnackBar en foreground).
 - Solución aplicada: en `mobile/lib/core/push/fcm_message_listener.dart` se reemplaza el aviso visual por notificación del sistema vía `flutter_local_notifications`.
 - Se mantiene deep-link: al tocar la notificación local, la app navega al chat/detalle según `tipo` y `solicitud_id`.
-- Backend con mejor observabilidad FCM: `backend/app/modules/comunicaciones/fcm_client.py` ahora loguea `FCM multicast enviado: success/failure/tokens` y detalle de fallos.
+- Backend con mejor observabilidad FCM: `comunicacion_y_notificaciones/dispositivos_push/fcm_client.py` loguea `FCM multicast enviado: success/failure/tokens` y detalle de fallos.
 - Verificación mínima completada:
   - `FCM_ENABLED=True` en runtime.
   - `POST /api/portal/cliente/dispositivos/fcm 204` en logs.

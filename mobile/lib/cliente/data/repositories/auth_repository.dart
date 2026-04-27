@@ -56,7 +56,7 @@ final class AuthRepository {
 
   Future<ClienteMiPerfil> fetchMiPerfil() async {
     try {
-      final res = await _dio.get<Map<String, dynamic>>(ApiConstants.portalClienteMiPerfil);
+      final res = await _dio.get<Map<String, dynamic>>(ApiConstants.appClienteMiPerfil);
       final data = res.data;
       if (data == null) {
         throw Exception('Respuesta vacía');
@@ -76,7 +76,7 @@ final class AuthRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteRegistro,
+        ApiConstants.appClienteRegistro,
         data: {
           'nombres': nombres.trim(),
           'apellidos': apellidos.trim(),
@@ -111,7 +111,7 @@ final class AuthRepository {
         'direccion': direccion.trim(),
       };
       final res = await _dio.put<Map<String, dynamic>>(
-        ApiConstants.portalClienteMiPerfil,
+        ApiConstants.appClienteMiPerfil,
         data: data,
       );
       final body = res.data;

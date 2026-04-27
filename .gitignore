@@ -1,11 +1,12 @@
 # .gitignore — Plataforma Emergencias Vehiculares
 
 # ── Variables de entorno (NUNCA versionar) ────────────────
-.env
-.env.*
+#.env
+#.env.*
 !.env.example
 !**/.env.example
 mobile/.env
+# Variables de entorno: usar solo `.env` en la raíz del repo (ver `.env.example`).
 backend/.env
 frontend/.env
 
@@ -13,8 +14,8 @@ frontend/.env
 __pycache__/
 *.py[cod]
 *.pyo
-.venv/
-venv/
+#.venv/
+#venv/
 *.egg-info/
 dist/
 .pytest_cache/
@@ -68,12 +69,12 @@ logs/
 
 
 # Evidencias (foto/audio) guardadas por el API en disco
-backend/uploads/
+#backend/uploads/
 
 # Pesos IA (grandes; el entrenamiento en Colab genera .pt en backend/)
 # Para usar el modelo: descargarlo de Drive/Colab y colocarlo en backend/
-backend/*.pt
-*.pt
+#backend/*.pt
+#*.pt
 
 # ── Credenciales de servicios externos (NUNCA versionar) ──
 google-credentials.json

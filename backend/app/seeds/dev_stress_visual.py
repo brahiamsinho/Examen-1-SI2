@@ -8,10 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.modules.roles.models import Rol
-from app.modules.roles.service import asignar_roles_usuario
-from app.modules.usuarios import service as usuarios_service
-from app.modules.usuarios.models import EstadoUsuarioEnum, Usuario
+from app.modules.acceso_y_administracion.roles.models import Rol
+from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario
+from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
+from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
 from app.seeds.dev_catalogos_vehiculo import ensure_catalogos_vehiculo_stress_extra
 from app.seeds.identidades_demo_sc import (
     CIUDAD_SANTA_CRUZ,

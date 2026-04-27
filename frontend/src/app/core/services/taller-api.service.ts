@@ -16,7 +16,7 @@ import type {
 @Injectable({ providedIn: 'root' })
 export class TallerApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/portal/taller`;
+  private readonly base = `${environment.apiUrl}/app/taller`;
 
   registro(body: RegistroTallerPayload): Observable<MiTallerDto> {
     return this.http.post<MiTallerDto>(`${this.base}/registro`, body);

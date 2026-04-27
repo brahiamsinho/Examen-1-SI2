@@ -65,6 +65,42 @@ export const TALLER_ROUTES: Routes = [
           ),
       },
       {
+        path: 'emergencias/mis-solicitudes',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'historial_atenciones:leer', historialModo: 'mis' },
+        loadComponent: () =>
+          import('./features/emergencias/historial-list/taller-emergencias-historial-list.component').then(
+            (m) => m.TallerEmergenciasHistorialListComponent,
+          ),
+      },
+      {
+        path: 'emergencias/historial',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'historial_atenciones:leer', historialModo: 'historial' },
+        loadComponent: () =>
+          import('./features/emergencias/historial-list/taller-emergencias-historial-list.component').then(
+            (m) => m.TallerEmergenciasHistorialListComponent,
+          ),
+      },
+      {
+        path: 'emergencias/servicios-asignados',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'historial_atenciones:leer', historialModo: 'servicios' },
+        loadComponent: () =>
+          import('./features/emergencias/historial-list/taller-emergencias-historial-list.component').then(
+            (m) => m.TallerEmergenciasHistorialListComponent,
+          ),
+      },
+      {
+        path: 'emergencias/comisiones',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'comisiones:leer' },
+        loadComponent: () =>
+          import('./features/emergencias/comisiones/taller-emergencias-comisiones.component').then(
+            (m) => m.TallerEmergenciasComisionesComponent,
+          ),
+      },
+      {
         path: 'emergencias/disponibilidad',
         canActivate: [tallerPermisoGuard],
         data: { permiso: 'disponibilidad:gestionar' },

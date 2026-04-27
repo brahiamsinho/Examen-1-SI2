@@ -7,7 +7,7 @@ import '../../../core/network/api_error.dart';
 typedef CatalogItem = ({int id, String nombre});
 typedef ModeloRow = ({int id, int marcaId, String nombre});
 
-/// Catálogos y vehículos del cliente (portal seguro).
+/// Catálogos y vehículos del cliente (rutas `/app/cliente/...` autenticadas).
 final class VehiculoRepository {
   VehiculoRepository(this._dio);
 
@@ -53,7 +53,7 @@ final class VehiculoRepository {
       final modelos = await fetchModelos();
       final modeloNombreById = {for (final m in modelos) m.id: m.nombre};
 
-      final res = await _dio.get<List<dynamic>>(ApiConstants.portalClienteMisVehiculos);
+      final res = await _dio.get<List<dynamic>>(ApiConstants.appClienteMisVehiculos);
       final raw = res.data ?? [];
       return [
         for (final item in raw)
@@ -81,7 +81,7 @@ final class VehiculoRepository {
       final modelos = await fetchModelos();
       final modeloNombreById = {for (final m in modelos) m.id: m.nombre};
 
-      final res = await _dio.get<Map<String, dynamic>>(ApiConstants.portalClienteMisVehiculo(id));
+      final res = await _dio.get<Map<String, dynamic>>(ApiConstants.appClienteMisVehiculo(id));
       final item = res.data;
       if (item == null) throw Exception('Vehículo no encontrado');
       return VehiculoDisplay(
@@ -109,7 +109,7 @@ final class VehiculoRepository {
   }) async {
     try {
       await _dio.post<void>(
-        ApiConstants.portalClienteMisVehiculos,
+        ApiConstants.appClienteMisVehiculos,
         data: {
           'placa': placa.trim().toUpperCase(),
           'marca_id': marcaId,
@@ -135,7 +135,7 @@ final class VehiculoRepository {
   }) async {
     try {
       await _dio.put<void>(
-        ApiConstants.portalClienteMisVehiculo(id),
+        ApiConstants.appClienteMisVehiculo(id),
         data: {
           if (placa != null) 'placa': placa.trim().toUpperCase(),
           if (marcaId != null) 'marca_id': marcaId,

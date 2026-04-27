@@ -12,7 +12,7 @@ final class PagosRepository {
 
   Future<List<PagoRead>> listarPorSolicitud(int solicitudId) async {
     try {
-      final res = await _dio.get<List<dynamic>>(ApiConstants.portalClienteEmergenciaPagos(solicitudId));
+      final res = await _dio.get<List<dynamic>>(ApiConstants.appClienteEmergenciaPagos(solicitudId));
       final raw = res.data ?? [];
       return [
         for (final e in raw)
@@ -31,7 +31,7 @@ final class PagosRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaPagos(solicitudId),
+        ApiConstants.appClienteEmergenciaPagos(solicitudId),
         data: {
           'monto': monto,
           'metodo': metodo.apiValue,
@@ -53,7 +53,7 @@ final class PagosRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaPagoCompletarSimulado(solicitudId, pagoId),
+        ApiConstants.appClienteEmergenciaPagoCompletarSimulado(solicitudId, pagoId),
       );
       final m = res.data;
       if (m == null) throw Exception('Respuesta vacía');
@@ -70,7 +70,7 @@ final class PagosRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaPagoConfirmarStripe(solicitudId, pagoId),
+        ApiConstants.appClienteEmergenciaPagoConfirmarStripe(solicitudId, pagoId),
         data: {
           if (paymentIntentId != null) 'payment_intent_id': paymentIntentId,
         },

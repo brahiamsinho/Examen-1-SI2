@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+import httpx
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,6 +36,22 @@ from app.modules.ai.services.structured_summary import build_structured_summary
 _log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["IA — inferencia y reglas"])
+
+
+def _friendly_batch_inference_error(exc: BaseException) -> str:
+    """Mensaje legible para el cliente; el detalle técnico queda en logs."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        code = exc.response.status_code
+        if code == 400:
+            return (
+                "No se pudo analizar esta imagen: el servicio de visión no pudo decodificarla "
+                "(formato no admitido o archivo dañado). Prueba JPEG o PNG; si usas AVIF/HEIF, "
+                "reconstruye el contenedor ai-inference con la imagen actual (soporte libheif)."
+            )
+        if code == 413:
+            return "No se pudo analizar esta imagen: excede el tamaño permitido en inferencia."
+        return f"No se pudo analizar esta imagen: el servicio de visión respondió HTTP {code}."
+    return "No se pudo analizar esta imagen (error de inferencia o red). Revisa logs del backend."
 
 
 def _image_analyze_failure_response(mensaje: str) -> ImageAnalyzeResponse:
@@ -183,7 +200,7 @@ async def analyze_images_batch(
                 raise
         except Exception as e:
             _log.warning("analyze_images_batch evidencia_id=img-%s falló: %s", idx, e, exc_info=True)
-            parsed = _image_analyze_failure_response(f"No se pudo analizar la imagen: {e!s}")
+            parsed = _image_analyze_failure_response(_friendly_batch_inference_error(e))
         results.append(ImageAnalyzeItem(evidencia_id=f"img-{idx}", resultado=parsed))
         merged_hallazgos.extend(parsed.hallazgos)
         confidence_total += parsed.confianza

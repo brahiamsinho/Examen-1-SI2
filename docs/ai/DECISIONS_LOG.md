@@ -99,3 +99,23 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-04-26  
 **Decisión:** Separar el antiguo módulo `acceso` en tres paquetes (`auth`, `roles`, `permisos`) y el antiguo `comunicaciones` (modelo+repo+FCM+servicio) en `notificaciones`, `dispositivos_push`, `mensajes_solicitud`, dejando `comunicaciones` solo como capa de **routers** que delega.  
 **Por qué:** Límites de importación claros, coherencia con arquitectura modular por dominio y mantenimiento (cambiar FCM no arrastra el modelo de chat). Las tablas y URLs HTTP se mantienen; el registro de bitácora de asignación de roles pasa a `modulo="roles"`.
+
+## DEC-019 — Healthcheck de Postgres con `start_period` (2026-04-26)
+**Fecha:** 2026-04-26  
+**Decisión:** En `docker-compose.yml`, el servicio `db` usa `healthcheck.start_period: 240s` y `retries: 12` (antes sin `start_period`, 5 reintentos).  
+**Por qué:** En el primer arranque con volumen vacío, `initdb` + múltiples SQL en `docker-entrypoint-initdb.d` y el cierre/reapertura del servidor pueden hacer fallar `pg_isready` durante unos minutos sin que la BD esté “rota”; Docker marcaba **unhealthy** y Compose bloqueaba `backend` (`depends_on: condition: service_healthy`). `start_period` hace que esos fallos iniciales no cuenten hacia unhealthy.
+
+## DEC-018 — Contexto de build Docker acotado + `.dockerignore` (2026-04-26)
+**Fecha:** 2026-04-26  
+**Decisión:** El servicio `ai-inference` compila con `build.context: ./services/ai-inference` (no la raíz del monorepo). Se amplían `.dockerignore` en backend/frontend/ai-inference y el backend usa `COPY --chown` en lugar de `chown -R` post-copy.  
+**Por qué:** Un `context: .` envía mobile, frontend, docs y `.git` al daemon en cada build (transferencia y hashing lentos). `chown -R` sobre todo el árbol de aplicación penaliza cada invalidación de la capa `COPY`. Se mantiene la postura de **DEC-014** (sin `# syntax=` ni `--mount=cache` por defecto en Windows) hasta adoptar BuildKit estable en CI o en dev.
+
+## DEC-020 — YOLO custom: `.env` classify + override que monta el `.pt` (2026-04-26)
+**Fecha:** 2026-04-26  
+**Decisión:** No fijar en el `docker-compose.yml` base un bind a `backend/incidentes_emergencias_v1.pt` (los clones sin peso local fallarían al hacer `up`). El montaje queda en **`docker-compose.ai-custom-model.yml`**. El `.env` con modelo propio usa `YOLO_TASK=classify`, `YOLO_MODEL=/models/incidentes_emergencias_v1.pt`, `YOLO_IMGSZ=224` y se levanta con **dos** archivos compose.  
+**Por qué:** Un `.pt` solo en el host no basta: sin volumen, `/models/...` no existe en el contenedor; con `YOLO_TASK=detect` y `yolov8n.pt` el worker aplica COCO, no el clasificador de Colab.
+
+## DEC-021 — Re-ejecutar enriquecimiento IA al agregar evidencia/ubicación (2026-04-27)
+**Fecha:** 2026-04-27  
+**Decisión:** Tras insertar `solicitud_evidencias` (URL o archivo), tras insertar `solicitud_ubicaciones` y tras actualizar `descripcion_texto` en `REGISTRADA`, se llama de nuevo a `enrich_solicitud_ai_after_create` para recalcular `ai_payload`. Para enviar la imagen al worker se usa `load_evidencia_bytes` (lectura bajo `uploads/evidencias/` cuando el path de la URL es `/.../media/evidencias/<file>`) antes de `GET` HTTP.  
+**Por qué:** En el flujo real el cliente no siempre sube imagen al crear; si la IA solo corre en el `POST` inicial, queda `clasificacion.fuentes: ["texto"]` aun con foto posterior, y además un `httpx` a una URL pública con IP de LAN del teléfono es frágil dentro de Docker.

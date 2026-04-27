@@ -7,8 +7,7 @@ FROM python:3.11-slim-bookworm AS builder
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
@@ -22,10 +21,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-COPY --from=builder /install /usr/local
-COPY . .
+RUN useradd -m -u 1001 appuser
 
-RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
+COPY --from=builder /install /usr/local
+COPY --chown=appuser:appuser . .
+
 USER appuser
 
 EXPOSE 8000

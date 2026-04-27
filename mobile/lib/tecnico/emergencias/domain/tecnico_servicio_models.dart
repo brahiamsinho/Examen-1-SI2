@@ -1,4 +1,4 @@
-// Modelos — API `/portal/tecnico/emergencias` (CU32–CU34).
+// Modelos — API `/app/tecnico/emergencias` (CU32–CU34).
 import 'package:flutter/foundation.dart';
 
 import '../../../cliente/emergencias/domain/solicitud_emergencia_models.dart';

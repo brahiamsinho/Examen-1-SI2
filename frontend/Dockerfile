@@ -5,6 +5,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# En `docker compose build`, Compose inyecta el valor del `.env` raíz (puede ser vacío en prod).
+ARG MAILHOG_WEB_URL=
+ENV MAILHOG_WEB_URL=$MAILHOG_WEB_URL
+
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 

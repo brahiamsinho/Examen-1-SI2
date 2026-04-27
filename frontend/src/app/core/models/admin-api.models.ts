@@ -108,3 +108,45 @@ export interface TallerUpdatePayload {
   descripcion?: string | null;
   estado?: EstadoTaller;
 }
+
+/** Resumen financiero global (solo ADMIN) — decimales como string (JSON). */
+export interface TallerComisionFila {
+  taller_id: number;
+  nombre_comercial: string;
+  n_comisiones: number;
+  total_monto_servicio: string;
+  total_comision_plataforma: string;
+  total_neto_taller: string;
+}
+
+export interface AdminFinanzasResumen {
+  porcentaje_plataforma: string;
+  moneda: string;
+  desde: string | null;
+  hasta: string | null;
+  n_comisiones: number;
+  total_monto_servicio: string;
+  total_comision_plataforma: string;
+  total_neto_taller: string;
+  n_pagos_pagados: number;
+  total_monto_pagos: string;
+  n_solicitudes_finalizadas: number;
+  n_talleres_con_comision: number;
+  ticket_promedio_pagado: string;
+  tasa_conversion_pago_pct: string;
+  por_taller: TallerComisionFila[];
+}
+
+export interface AdminComisionSerieFila {
+  fecha: string;
+  n_comisiones: number;
+  total_monto_servicio: string;
+  total_comision_plataforma: string;
+  total_neto_taller: string;
+}
+
+export interface AdminFinanzasReportes {
+  resumen: AdminFinanzasResumen;
+  top_talleres: TallerComisionFila[];
+  serie_diaria: AdminComisionSerieFila[];
+}

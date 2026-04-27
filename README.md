@@ -39,7 +39,7 @@ Orden recomendado según el stack (**sin IA**, **con IA** o **con IA + modelo cu
 | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Levantar e inicializar todo** (Recomendado primera vez)                                   | `docker compose up -d --build`                                                                          |
 | **Incluir worker de IA** (Whisper + YOLO; servicio `ai-inference`)                          | `docker compose --profile ai up -d --build`                                                             |
-| **IA + modelo de clasificación propio** (peso local `backend/incidentes_emergencias_v1.pt`) | `docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build` |
+| **IA + modelo de clasificación propio** (peso local + `.env` con `YOLO_TASK=classify`; el override **monta** el `.pt` en el contenedor) | `docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build` |
 | Levantar servicios creados                                                                  | `docker compose up -d`                                                                                  |
 | Detener los contenedores                                                                    | `docker compose down`                                                                                   |
 | **Peligro:** Detener y borrar volúmenes (⚠️ Borra toda la base de datos)                    | `docker compose down -v`                                                                                |
@@ -66,7 +66,7 @@ El backend expone rutas bajo `/api/ai/...` y puede delegar audio e imagen a un c
 - **Permiso:** los endpoints de inferencia requieren **`ai:inferir`** (p. ej. usuario admin tras seeds).
 - **Tras cambiar código en `services/ai-inference/`:** reconstruir solo ese servicio, por ejemplo:  
   `docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build --force-recreate ai-inference`  
-  (ajustá los `-f` si no usás el modelo custom).
+  (si no usás modelo custom, alcanza `docker compose --profile ai ...` sin el segundo `-f`).
 - **Incidentes compuestos (Fase 1):**
   - `POST /api/ai/images/analyze-batch` acepta `files[]` y devuelve `hallazgos_consolidados`.
   - `POST /api/ai/incidents/classify` soporta `transcripciones_audio[]` y `hallazgos_vision_por_imagen[]`.
@@ -120,7 +120,7 @@ A partir de ahí, cuando **realmente cambies** modelos SQLAlchemy: `revision --a
 
 **Importante:** no ejecutes `--autogenerate` “de prueba” sin cambios en código: suele generar un diff enorme contra la BD creada por `init.sql` y `upgrade head` puede fallar (p. ej. `ALTER COLUMN id` en columnas IDENTITY). Si ya generaste un archivo malo en `alembic/versions/`, bórralo; si `upgrade` falló, la versión en BD suele seguir en `0001_baseline` (transacción revertida).
 
-- **Poblar datos demo (seeds):** `docker compose exec backend python -m app.seeds` — admin, cliente, taller, técnico según `SEED_*` (defaults en `backend/app/seeds/identidades_demo_sc.py`: nombres bolivianos, Santa Cruz, teléfonos +591 7701 00xx, dominio `*.sc-demo.test`, contraseña corta `scdemo1`). Catálogos de vehículo si faltan. Luego **demo Santa Cruz** (`[DEMO-SC]`), **demo media prioridad** (notificaciones, chat, `ai_payload`, disponibilidad, **segundo taller en Santa Cruz** con bandeja retroactiva) y **stress visual** (más marcas/modelos y 8 clientes `*.lista.sc-demo.test`). Variables opcionales: `SEED_*` en `.env` raíz y `backend/.env.example`.
+- **Poblar datos demo (seeds):** `docker compose exec backend python -m app.seeds` — admin, cliente, taller, técnico según `SEED_*` (defaults en `backend/app/seeds/identidades_demo_sc.py`: nombres bolivianos, Santa Cruz, teléfonos +591 7701 00xx, dominio `*.sc-demo.test`, contraseña corta `scdemo1`). Catálogos de vehículo si faltan. Luego **demo Santa Cruz** (`[DEMO-SC]`), **demo media prioridad** (notificaciones, chat, `ai_payload`, disponibilidad, **segundo taller en Santa Cruz** con bandeja retroactiva) y **stress visual** (más marcas/modelos y 8 clientes `*.lista.sc-demo.test`). Variables opcionales: `SEED_*` en `.env` raíz (ver `.env.example`).
 
 **Nota:** Alembic usa el driver síncrono **psycopg** (`postgresql+psycopg://…`); la API sigue usando **asyncpg** (`postgresql+asyncpg://…`). La conversión la hace `backend/alembic/env.py`.
 
@@ -305,8 +305,9 @@ docker compose logs --tail=100 backend
 
 ```bash
 # 1. Copiar variables de entorno
-cp .env.example .env          # editar SECRET_KEY y ajustar AI_* si se usa IA
+cp .env.example .env          # editar SECRET_KEY, CORS_ORIGINS, EMAIL_*, FRONTEND_*, BACKEND_URL, MAILHOG_WEB_URL, SMTP_*…
 cp mobile/.env.example mobile/.env   # editar API_BASE_URL
+# Frontend local (`cd frontend && npm start`): el proxy exige BACKEND_URL en el `.env` raíz; `prestart` genera MailHog desde MAILHOG_WEB_URL.
 
 # 2. Levantar el stack (con IA + modelo custom)
 docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build

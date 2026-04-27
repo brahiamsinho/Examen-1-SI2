@@ -61,7 +61,7 @@ final class TecnicoAuthRepository {
   Future<TecnicoPerfil> fetchPerfilCompleto(AuthMe me) async {
     try {
       if (me.roles.contains('TALLER_RESPONSABLE')) {
-        final res = await _dio.get<Map<String, dynamic>>(ApiConstants.portalTallerMiTaller);
+        final res = await _dio.get<Map<String, dynamic>>(ApiConstants.appTallerMiTaller);
         final data = res.data;
         if (data == null) {
           return TecnicoPerfil.minimal(me);

@@ -1,4 +1,4 @@
-/** Contratos alineados a `portal_taller_emergencias` (FastAPI). */
+/** Contratos alineados al módulo `taller_emergencias` (FastAPI). */
 
 export type EstadoSolicitudSeguimiento =
   | 'REGISTRADA'
@@ -76,7 +76,7 @@ export interface RechazarBandejaPayload {
   motivo_rechazo: string;
 }
 
-/** POST `/portal/taller/emergencias/solicitudes/{id}/asignar-tecnico` */
+/** POST `/app/taller/emergencias/solicitudes/{id}/asignar-tecnico` */
 export interface AsignarTecnicoPayload {
   tecnico_id: number;
   observacion?: string | null;
@@ -105,7 +105,7 @@ export interface AsignarTecnicoResultDto {
   asignacion: AsignacionTecnicoDto;
 }
 
-/** GET `/portal/taller/emergencias/reportes/dashboard` */
+/** GET `/app/taller/emergencias/reportes/dashboard` */
 export interface ResumenComisionesDto {
   taller_id: number;
   total_registros: number;
@@ -132,4 +132,45 @@ export interface ReporteTallerDashboardDto {
   bandeja_pendientes: number;
   solicitudes_por_estado: Record<string, number>;
   ganancias_por_tecnico: ReporteTecnicoGananciasDto[];
+}
+
+/** GET `/app/taller/emergencias/historial-atenciones` */
+export interface HistorialAtencionDto {
+  solicitud_id: number;
+  bandeja_id?: number | null;
+  taller_id: number | null;
+  tecnico_id: number | null;
+  estado: EstadoSolicitudSeguimiento;
+  created_at: string;
+  finalizada_at: string | null;
+  nombres: string;
+  apellidos: string;
+  placa: string;
+  marca: string | null;
+  modelo: string | null;
+  tipo_vehiculo: string | null;
+}
+
+export type EstadoComisionTaller = 'PENDIENTE' | 'CALCULADA' | 'LIQUIDADA' | 'ANULADA';
+
+export type EstadoPago = string;
+
+/** GET `/app/taller/emergencias/comisiones` */
+export interface ComisionTallerDto {
+  id: number;
+  solicitud_id: number;
+  bandeja_id?: number | null;
+  taller_id: number;
+  pago_id: number | null;
+  porcentaje_plataforma: string;
+  monto_servicio: string;
+  monto_comision: string;
+  monto_taller_neto: string;
+  estado: EstadoComisionTaller;
+  calculado_at: string;
+  liquidado_at: string | null;
+  pago_monto: string | null;
+  pago_estado: EstadoPago | null;
+  pago_pagado_at: string | null;
+  pago_moneda: string | null;
 }

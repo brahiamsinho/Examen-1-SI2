@@ -1,4 +1,5 @@
 # Inferencia IA (Whisper + Silero VAD + OpenCV). Perfil Docker Compose: `ai`.
+# Build: `context` = este directorio (ver docker-compose.yml).
 FROM python:3.11-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,11 +15,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     WHISPER_MODEL_SIZE=small
 
-COPY services/ai-inference/requirements.txt /tmp/requirements.txt
+COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY services/ai-inference/app /app/app
+COPY app /app/app
 
 EXPOSE 8080
 

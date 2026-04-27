@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "env:sync": "node scripts/sync-from-root-env.cjs",
+    "prestart": "node scripts/sync-from-root-env.cjs",
+    "prebuild": "node scripts/sync-from-root-env.cjs",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",

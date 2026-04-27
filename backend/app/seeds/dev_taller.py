@@ -8,12 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.core.timeutil import utc_now_naive
-from app.modules.roles.models import Rol
-from app.modules.roles.service import asignar_roles_usuario
-from app.modules.talleres import service as talleres_service
-from app.modules.talleres.models import EstadoTallerEnum, Taller
-from app.modules.usuarios import service as usuarios_service
-from app.modules.usuarios.models import EstadoUsuarioEnum, Usuario
+from app.modules.acceso_y_administracion.roles.models import Rol
+from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario
+from app.modules.talleres_y_tecnicos.talleres import service as talleres_service
+from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, Taller
+from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
+from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
 from app.seeds.identidades_demo_sc import TALLER_PRINCIPAL_LAT, TALLER_PRINCIPAL_LNG
 
 logger = logging.getLogger(__name__)

@@ -23,22 +23,25 @@ app/
 │   ├── security.py    ← bcrypt + JWT
 │   └── dependencies.py ← get_current_user, require_permission
 ├── modules/
-│   ├── auth/          ← Login, logout, sesiones JWT, tokens email (verificación / reset)
-│   ├── roles/         ← Rol, usuario_rol, asignación permisos a rol
-│   ├── permisos/      ← Catálogo de permisos
-│   ├── notificaciones/← In-app + orquestación push hacia FCM
-│   ├── dispositivos_push/ ← Tokens FCM, firebase-admin
-│   ├── mensajes_solicitud/← Chat por solicitud (cliente ↔ técnico)
-│   ├── comunicaciones/← Routers HTTP que agrupan FCM + notif + mensajes (sin lógica monolítica)
-│   ├── usuarios/      ← CRUD usuarios + clientes
-│   ├── vehiculos/     ← Catálogos + vehículos
-│   ├── talleres/      ← Talleres, técnicos, especialidades
-│   ├── portal_cliente/← API móvil/portal cliente (registro, perfil, vehículos)
-│   ├── portal_taller/ ← Portal responsable de taller (mi-taller, técnicos)
-│   ├── portal_taller_emergencias/ ← Ciclo 3 taller: bandeja, disponibilidad, asignación técnico, historial atenciones, comisiones
-│   ├── portal_tecnico_emergencias/ ← Ciclo 3 fase 3: servicios, ubicación, estado, mensajes (técnico)
-│   ├── ai/            ← Inferencia asistida: proxy a worker, reglas, prioridad, integración con emergencias
-│   └── bitacora/      ← Auditoría (solo lectura desde API)
+│   ├── acceso_y_administracion/  ← auth, roles, permisos, usuarios, bitácora (imports `app.modules.acceso_y_administracion.*`)
+│   ├── comunicacion_y_notificaciones/  ← CU19, CU21 (y routers cliente/técnico)
+│   │   ├── comunicaciones/ ← Routers HTTP que agrupan FCM + notif + mensajes
+│   │   ├── notificaciones/ ← In-app + orquestación push
+│   │   ├── dispositivos_push/ ← Tokens FCM, firebase-admin
+│   │   └── mensajes_solicitud/ ← Chat por solicitud (cliente ↔ técnico)
+│   ├── clientes_y_vehiculos/  ← CU1 + CU10 (dominio cliente + vehículo)
+│   │   ├── clientes/  ← ORM `Cliente`, schemas admin + `schemas_movil`, `router` `/app/cliente`, `service/`
+│   │   └── vehiculos/ ← Catálogos + vehículos (`/vehiculos`)
+│   ├── talleres_y_tecnicos/  ← CU22/CU23 + app técnico
+│   │   ├── talleres/      ← CRUD `/talleres`, `/especialidades`, `/tecnicos`
+│   │   ├── taller_responsable/ ← Portal `/app/taller`
+│   │   └── tecnico/       ← `/app/tecnico/emergencias` + `service/`
+│   ├── atencion/        ← Atención taller (CU24–CU31 en routers)
+│   │   └── taller_emergencias/ ← `/app/taller/emergencias` (bandeja, asignación, comisiones…)
+│   ├── incidentes/    ← Paquete análisis «Incidentes» (CU11–CU18)
+│   │   └── emergencias/ ← Cliente: `/app/cliente/emergencias` (solicitudes, seguimiento, ubicaciones, evidencias)
+│   ├── pagos/         ← Pagos emergencias (cliente)
+│   └── ai/            ← Inferencia asistida: proxy a worker, reglas, prioridad
 └── main.py            ← Registro de routers + CORS
 ```
 
@@ -74,11 +77,11 @@ En desarrollo con `docker-compose`, el contenedor Postgres ejecuta los SQL de `b
 
 ## Servicio de inferencia (`ai-inference`)
 
-Contenedor **opcional** (perfil Compose `ai`) definido en `docker-compose.yml`, build desde `services/ai-inference/Dockerfile`. Expone API HTTP interna (p. ej. visión en `/internal/vision/analyze`). El backend usa `AI_INFERENCE_BASE_URL` (p. ej. `http://ai-inference:8080`) y `httpx` para delegar audio/imagen. Override `docker-compose.ai-custom-model.yml` ajusta YOLO a **clasificación** con peso montado desde el host. Ver `DECISIONS_LOG` **DEC-010** y `HANDOFF_LATEST.md`.
+Contenedor **opcional** (perfil Compose `ai`) definido en `docker-compose.yml`, build con **contexto** `./services/ai-inference` y `Dockerfile` en esa carpeta (contexto acotado; ver `docs/ai/DOCKER_BUILD_OPTIMIZATION.md`). Expone API HTTP interna (p. ej. visión en `/internal/vision/analyze`). El backend usa `AI_INFERENCE_BASE_URL` (p. ej. `http://ai-inference:8080`) y `httpx` para delegar audio/imagen. Override `docker-compose.ai-custom-model.yml` ajusta YOLO a **clasificación** con peso montado desde el host. Ver `DECISIONS_LOG` **DEC-010** y `HANDOFF_LATEST.md`.
 
 ## Patrón de auditoría
 
-La función `registrar_accion()` en `bitacora/service.py`
+La función `registrar_accion()` en `acceso_y_administracion/bitacora/service.py`
 es el único punto de escritura a la bitácora.
 Todos los servicios la llaman después de cada operación exitosa.
 

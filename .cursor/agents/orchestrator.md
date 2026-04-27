@@ -37,6 +37,8 @@ Antes de actuar, revisá si existen:
 - docker-compose.yml
 - Dockerfiles
 
+Infra Docker (continuidad): el servicio `db` usa `healthcheck.start_period` largo para initdb + scripts en `docker-entrypoint-initdb.d`, evitando `unhealthy` por carrera con `pg_isready` en el primer `up` (no asumir “SQL malo” solo por ese mensaje).
+
 Reglas:
 
 - primero detectá el contexto real antes de proponer cambios

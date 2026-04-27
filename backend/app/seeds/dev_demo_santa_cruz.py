@@ -11,25 +11,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.timeutil import utc_now_naive
-from app.modules.emergencias import repository as em_repo
-from app.modules.emergencias.models import (
+from app.modules.incidentes.emergencias import repository as em_repo
+from app.modules.incidentes.emergencias.models import (
     EstadoSolicitudSeguimientoEnum,
     SolicitudEmergencia,
     TipoEvidenciaSolicitudEnum,
 )
-from app.modules.pagos.models import EstadoPagoEnum, MetodoPagoEnum, Pago
-from app.modules.portal_taller_emergencias import repository as pt_repo
-from app.modules.portal_taller_emergencias.models import (
+from app.modules.pagos_y_comisiones.pagos.models import EstadoPagoEnum, MetodoPagoEnum, Pago
+from app.modules.atencion.taller_emergencias import repository as pt_repo
+from app.modules.atencion.taller_emergencias.models import (
     ComisionTaller,
     EstadoAsignacionTecnicoEnum,
     EstadoBandejaTallerEnum,
     EstadoComisionTallerEnum,
     SolicitudTallerBandeja,
 )
-from app.modules.talleres.models import Taller, Tecnico
-from app.modules.usuarios.models import Cliente, Usuario
-from app.modules.vehiculos import service as vehiculos_service
-from app.modules.vehiculos.models import MarcaVehiculo, ModeloVehiculo, TipoVehiculo, Vehiculo
+from app.modules.talleres_y_tecnicos.talleres.models import Taller, Tecnico
+from app.modules.clientes_y_vehiculos.clientes.models import Cliente
+from app.modules.acceso_y_administracion.usuarios.models import Usuario
+from app.modules.clientes_y_vehiculos.vehiculos import service as vehiculos_service
+from app.modules.clientes_y_vehiculos.vehiculos.models import MarcaVehiculo, ModeloVehiculo, TipoVehiculo, Vehiculo
 
 from app.seeds.identidades_demo_sc import GEO_SC_CENTRO_LAT as SC_LAT, GEO_SC_CENTRO_LNG as SC_LON
 

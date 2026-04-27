@@ -7,17 +7,21 @@ import type {
   AsignarTecnicoPayload,
   AsignarTecnicoResultDto,
   BandejaIncidenteBaseDto,
+  ComisionTallerDto,
+  HistorialAtencionDto,
   RechazarBandejaPayload,
+  ResumenComisionesDto,
   SolicitudBandejaDetalleDto,
   TallerDisponibilidadDto,
   TallerDisponibilidadUpdatePayload,
   ReporteTallerDashboardDto,
+  EstadoSolicitudSeguimiento,
 } from '../models/taller-emergencias.models';
 
 @Injectable({ providedIn: 'root' })
 export class TallerEmergenciasApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/portal/taller/emergencias`;
+  private readonly base = `${environment.apiUrl}/app/taller/emergencias`;
 
   listBandejaDisponibles(): Observable<BandejaIncidenteBaseDto[]> {
     return this.http.get<BandejaIncidenteBaseDto[]>(`${this.base}/bandeja/disponibles`);
@@ -60,5 +64,27 @@ export class TallerEmergenciasApiService {
     if (params?.desde) p = p.set('desde', params.desde);
     if (params?.hasta) p = p.set('hasta', params.hasta);
     return this.http.get<ReporteTallerDashboardDto>(`${this.base}/reportes/dashboard`, { params: p });
+  }
+
+  listHistorialAtenciones(params?: {
+    estado?: EstadoSolicitudSeguimiento;
+    desde?: string;
+    hasta?: string;
+    limit?: number;
+  }): Observable<HistorialAtencionDto[]> {
+    let p = new HttpParams();
+    if (params?.estado) p = p.set('estado', params.estado);
+    if (params?.desde) p = p.set('desde', params.desde);
+    if (params?.hasta) p = p.set('hasta', params.hasta);
+    if (params?.limit != null) p = p.set('limit', String(params.limit));
+    return this.http.get<HistorialAtencionDto[]>(`${this.base}/historial-atenciones`, { params: p });
+  }
+
+  getResumenComisiones(): Observable<ResumenComisionesDto> {
+    return this.http.get<ResumenComisionesDto>(`${this.base}/comisiones/resumen`);
+  }
+
+  listComisiones(): Observable<ComisionTallerDto[]> {
+    return this.http.get<ComisionTallerDto[]>(`${this.base}/comisiones`);
   }
 }

@@ -46,6 +46,11 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () =>
           import('./features/bitacora/admin-bitacora.component').then((m) => m.AdminBitacoraComponent),
       },
+      {
+        path: 'finanzas',
+        loadComponent: () =>
+          import('./features/finanzas/admin-finanzas.component').then((m) => m.AdminFinanzasComponent),
+      },
     ],
   },
   {

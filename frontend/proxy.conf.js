@@ -27,10 +27,13 @@ function loadEnvFile(absPath) {
 
 const repoRoot = path.resolve(__dirname, "..");
 const rootEnv = loadEnvFile(path.join(repoRoot, ".env"));
-const target =
-  process.env.BACKEND_URL ||
-  rootEnv.BACKEND_URL ||
-  "http://localhost:8000";
+const target = (process.env.BACKEND_URL || rootEnv.BACKEND_URL || "").trim();
+if (!target) {
+  throw new Error(
+    "proxy.conf.js: definí BACKEND_URL en el archivo .env de la raíz del repositorio " +
+      "(o exportá process.env.BACKEND_URL). Ej.: BACKEND_URL=http://127.0.0.1:8000",
+  );
+}
 
 module.exports = {
   "/api": {

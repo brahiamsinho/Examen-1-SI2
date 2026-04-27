@@ -1,4 +1,4 @@
-// Modelos — GET `/portal/cliente/emergencias/{id}/seguimiento` (CU16–CU18).
+// Modelos — GET `/app/cliente/emergencias/{id}/seguimiento` (CU16–CU18).
 import 'package:flutter/foundation.dart';
 
 import '../../../core/utils/api_datetime.dart';

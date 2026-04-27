@@ -17,7 +17,7 @@ final class ComunicacionRepository {
   }) async {
     try {
       final res = await _dio.get<List<dynamic>>(
-        ApiConstants.portalClienteNotificaciones,
+        ApiConstants.appClienteNotificaciones,
         queryParameters: {
           'no_leidas': soloNoLeidas,
           'limit': limit,
@@ -45,7 +45,7 @@ final class ComunicacionRepository {
   Future<NotificacionRead> marcarNotificacionLeida(int notificacionId) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
-        ApiConstants.portalClienteNotificacionLeida(notificacionId),
+        ApiConstants.appClienteNotificacionLeida(notificacionId),
       );
       final m = res.data;
       if (m == null) throw Exception('Respuesta vacía');
@@ -58,7 +58,7 @@ final class ComunicacionRepository {
   Future<List<MensajeSolicitudRead>> listarMensajesSolicitud(int solicitudId) async {
     try {
       final res = await _dio.get<List<dynamic>>(
-        ApiConstants.portalClienteEmergenciaMensajes(solicitudId),
+        ApiConstants.appClienteEmergenciaMensajes(solicitudId),
       );
       final raw = res.data ?? [];
       return [
@@ -76,7 +76,7 @@ final class ComunicacionRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaMensajes(solicitudId),
+        ApiConstants.appClienteEmergenciaMensajes(solicitudId),
         data: {'mensaje': texto},
       );
       final m = res.data;
@@ -91,7 +91,7 @@ final class ComunicacionRepository {
   Future<void> registrarTokenFcm({required String token, String? platform}) async {
     try {
       await _dio.post<void>(
-        ApiConstants.portalClienteFcm,
+        ApiConstants.appClienteFcm,
         data: {
           'token': token,
           if (platform != null) 'platform': platform,
@@ -105,7 +105,7 @@ final class ComunicacionRepository {
   Future<void> eliminarTokenFcm({required String token, String? platform}) async {
     try {
       await _dio.delete<void>(
-        ApiConstants.portalClienteFcm,
+        ApiConstants.appClienteFcm,
         data: {
           'token': token,
           if (platform != null) 'platform': platform,

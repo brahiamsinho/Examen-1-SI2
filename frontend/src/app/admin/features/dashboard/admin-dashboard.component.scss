@@ -82,10 +82,75 @@
   margin-bottom: calc(t.$ev-space * 3);
 }
 
+.dash__headrow {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
 .dash__section-title {
   margin: 0 0 calc(t.$ev-space * 1.5);
   font-size: 1rem;
   font-weight: 700;
+}
+
+.dash__subtle {
+  margin: -0.5rem 0 0.85rem;
+  max-width: 52rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: t.$ev-muted;
+}
+
+.dash__th-muted {
+  font-weight: 600;
+  color: t.$ev-muted;
+}
+
+.dash__td-muted {
+  font-size: 0.8125rem;
+  color: t.$ev-muted;
+}
+
+.dash__filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.dash__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: t.$ev-muted;
+  font-size: 0.75rem;
+}
+
+.dash__input {
+  background: t.$ev-surface-2;
+  border: 1px solid t.$ev-border;
+  color: t.$ev-text;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+}
+
+.dash__btn {
+  border: 1px solid rgba(67, 97, 238, 0.4);
+  background: rgba(67, 97, 238, 0.2);
+  color: t.$ev-text;
+  border-radius: 8px;
+  padding: 0.52rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(67, 97, 238, 0.32);
+  }
 }
 
 .dash__chips {
@@ -135,4 +200,45 @@
 .dash__empty {
   color: t.$ev-muted;
   font-size: 0.875rem;
+}
+
+.dash__grid--fin {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+.dash__metric--money {
+  font-size: 1.5rem;
+}
+
+.dash__chart {
+  @include ui.ev-card;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.dash__barrow {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dash__barmeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: t.$ev-muted;
+}
+
+.dash__bartrack {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.dash__bar {
+  height: 100%;
+  min-width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(76, 201, 240, 0.75), rgba(67, 97, 238, 0.9));
 }

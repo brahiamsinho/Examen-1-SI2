@@ -1,7 +1,7 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-04-25 — Fase 1 multi-daño/multi-foto integrada
+# Actualizado: 2026-04-26 — Incluye `comunicacion_y_notificaciones`, `atencion`, `talleres_y_tecnicos`, `incidentes`, `clientes_y_vehiculos`, `acceso_y_administracion` (imports Python; API igual)
 # =========================================================
 
 ## ALTA — Entorno listo en 5 min
@@ -31,6 +31,9 @@
 ### Angular
 - [ ] Auth (login/guard/interceptor) y layout admin
 - [ ] Pantallas CRUD alineadas al backend (más allá del portal taller emergencias)
+- [x] **Dashboard admin financiero (2026-04-26):** KPIs de comisión plataforma (10%), filtros por fecha, top talleres y serie diaria conectados a `/api/admin/finanzas/resumen|reportes`.
+- [x] **Fix de compilación rutas finanzas:** creada vista `features/finanzas/admin-finanzas.component` para resolver import faltante en `admin.routes.ts`.
+- [x] **Portal taller emergencias (2026-04-26):** sidebar y rutas **Mis solicitudes**, **Historial de atenciones**, **Servicios asignados**, **Comisiones** (API `historial_atenciones:leer` / `comisiones:leer`); enlaces a detalle vía `bandeja_id` devuelto por backend en historial y listado de comisiones.
 
 ### Flutter
 - [ ] Tests (unit/widget), refresh token si se expone en API

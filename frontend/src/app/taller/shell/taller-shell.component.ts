@@ -32,6 +32,30 @@ export class TallerShellComponent implements OnInit {
       permiso: 'solicitudes_taller:leer',
     },
     {
+      path: '/taller/panel/emergencias/mis-solicitudes',
+      label: 'Mis solicitudes',
+      exact: true,
+      permiso: 'historial_atenciones:leer',
+    },
+    {
+      path: '/taller/panel/emergencias/historial',
+      label: 'Historial de atenciones',
+      exact: true,
+      permiso: 'historial_atenciones:leer',
+    },
+    {
+      path: '/taller/panel/emergencias/servicios-asignados',
+      label: 'Servicios asignados',
+      exact: true,
+      permiso: 'historial_atenciones:leer',
+    },
+    {
+      path: '/taller/panel/emergencias/comisiones',
+      label: 'Comisiones',
+      exact: true,
+      permiso: 'comisiones:leer',
+    },
+    {
       path: '/taller/panel/emergencias/disponibilidad',
       label: 'Disponibilidad',
       exact: true,

@@ -5,11 +5,11 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.modules.portal_taller_emergencias.models import (
+from app.modules.atencion.taller_emergencias.models import (
     EstadoBandejaTallerEnum,
     SolicitudTallerBandeja,
 )
-from app.modules.talleres.models import EstadoTecnicoEnum, EstadoTallerEnum, Taller, Tecnico
+from app.modules.talleres_y_tecnicos.talleres.models import EstadoTecnicoEnum, EstadoTallerEnum, Taller, Tecnico
 
 
 async def list_talleres_for_assignment(db: AsyncSession) -> list[dict]:

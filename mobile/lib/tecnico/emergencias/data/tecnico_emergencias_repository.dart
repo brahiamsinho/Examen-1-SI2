@@ -14,7 +14,7 @@ final class TecnicoEmergenciasRepository {
 
   Future<List<ServicioAsignadoTecnico>> listarServiciosAsignados() async {
     try {
-      final res = await _dio.get<List<dynamic>>(ApiConstants.portalTecnicoEmergenciasServiciosAsignados);
+      final res = await _dio.get<List<dynamic>>(ApiConstants.appTecnicoEmergenciasServiciosAsignados);
       final list = res.data ?? const [];
       return list
           .whereType<Map>()
@@ -28,7 +28,7 @@ final class TecnicoEmergenciasRepository {
   Future<UbicacionClienteActual> obtenerUbicacionCliente(int solicitudId) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
-        ApiConstants.portalTecnicoEmergenciaUbicacion(solicitudId),
+        ApiConstants.appTecnicoEmergenciaUbicacion(solicitudId),
       );
       final data = res.data;
       if (data == null) throw Exception('Respuesta vacía de ubicación.');
@@ -46,7 +46,7 @@ final class TecnicoEmergenciasRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalTecnicoEmergenciaUbicacionTecnico(solicitudId),
+        ApiConstants.appTecnicoEmergenciaUbicacionTecnico(solicitudId),
         data: {
           'latitud': latitud,
           'longitud': longitud,
@@ -70,7 +70,7 @@ final class TecnicoEmergenciasRepository {
   }) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
-        ApiConstants.portalTecnicoEmergenciaEstado(solicitudId),
+        ApiConstants.appTecnicoEmergenciaEstado(solicitudId),
         data: {
           'nuevo_estado': nuevoEstado.apiValue,
           'observacion': observacion,
@@ -87,7 +87,7 @@ final class TecnicoEmergenciasRepository {
 
   Future<List<MensajeSolicitudRead>> listarMensajes(int solicitudId) async {
     try {
-      final res = await _dio.get<List<dynamic>>(ApiConstants.portalTecnicoEmergenciaMensajes(solicitudId));
+      final res = await _dio.get<List<dynamic>>(ApiConstants.appTecnicoEmergenciaMensajes(solicitudId));
       final list = res.data ?? const [];
       return list
           .whereType<Map>()
@@ -104,7 +104,7 @@ final class TecnicoEmergenciasRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalTecnicoEmergenciaMensajes(solicitudId),
+        ApiConstants.appTecnicoEmergenciaMensajes(solicitudId),
         data: {'mensaje': texto},
       );
       final data = res.data;

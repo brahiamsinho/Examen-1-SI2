@@ -15,7 +15,7 @@ final class EmergenciasRepository {
 
   Future<List<SolicitudEmergenciaListItem>> listMine() async {
     try {
-      final res = await _dio.get<List<dynamic>>(ApiConstants.portalClienteEmergencias);
+      final res = await _dio.get<List<dynamic>>(ApiConstants.appClienteEmergencias);
       final raw = res.data ?? [];
       return [
         for (final e in raw)
@@ -28,7 +28,7 @@ final class EmergenciasRepository {
 
   Future<SolicitudEmergenciaDetail> fetchDetail(int solicitudId) async {
     try {
-      final res = await _dio.get<Map<String, dynamic>>(ApiConstants.portalClienteEmergencia(solicitudId));
+      final res = await _dio.get<Map<String, dynamic>>(ApiConstants.appClienteEmergencia(solicitudId));
       final m = res.data;
       if (m == null) throw Exception('Solicitud no encontrada');
       return SolicitudEmergenciaDetail.fromJson(m);
@@ -41,7 +41,7 @@ final class EmergenciasRepository {
   Future<SolicitudSeguimiento> fetchSeguimiento(int solicitudId) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaSeguimiento(solicitudId),
+        ApiConstants.appClienteEmergenciaSeguimiento(solicitudId),
       );
       final m = res.data;
       if (m == null) throw Exception('Seguimiento no disponible');
@@ -54,7 +54,7 @@ final class EmergenciasRepository {
   Future<UbicacionTecnicoCompartida> fetchUbicacionTecnico(int solicitudId) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaUbicacionTecnico(solicitudId),
+        ApiConstants.appClienteEmergenciaUbicacionTecnico(solicitudId),
       );
       final m = res.data;
       if (m == null) throw Exception('Ubicación no disponible');
@@ -71,7 +71,7 @@ final class EmergenciasRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergencias,
+        ApiConstants.appClienteEmergencias,
         data: {
           'vehiculo_id': vehiculoId,
           if (descripcionTexto != null) 'descripcion_texto': descripcionTexto,
@@ -89,7 +89,7 @@ final class EmergenciasRepository {
   Future<SolicitudEmergenciaDetail> patchTexto(int solicitudId, {String? descripcionTexto}) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergencia(solicitudId),
+        ApiConstants.appClienteEmergencia(solicitudId),
         data: {'descripcion_texto': descripcionTexto},
       );
       final m = res.data;
@@ -110,7 +110,7 @@ final class EmergenciasRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaUbicaciones(solicitudId),
+        ApiConstants.appClienteEmergenciaUbicaciones(solicitudId),
         data: {
           'latitud': latitud,
           'longitud': longitud,
@@ -147,7 +147,7 @@ final class EmergenciasRepository {
         ),
       });
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaEvidenciasArchivo(solicitudId),
+        ApiConstants.appClienteEmergenciaEvidenciasArchivo(solicitudId),
         data: form,
       );
       final m = res.data;
@@ -168,7 +168,7 @@ final class EmergenciasRepository {
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
-        ApiConstants.portalClienteEmergenciaEvidencias(solicitudId),
+        ApiConstants.appClienteEmergenciaEvidencias(solicitudId),
         data: {
           'tipo': tipoApi,
           'archivo_url': archivoUrl,

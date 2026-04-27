@@ -1,4 +1,4 @@
-// Modelos de dominio — API `/portal/cliente/emergencias` (snake_case JSON).
+// Modelos de dominio — API `/app/cliente/emergencias` (snake_case JSON).
 import 'package:flutter/foundation.dart';
 
 import '../../../core/utils/api_datetime.dart';

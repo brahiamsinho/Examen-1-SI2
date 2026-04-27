@@ -4,7 +4,7 @@ import { AdminAuthService } from '../services/admin-auth.service';
 import { TallerAuthService } from '../services/taller-auth.service';
 import { environment } from '../../../environments/environment';
 
-/** Bearer: portal taller (`/api/portal/taller/*`) vs resto del panel admin. */
+/** Bearer: app taller responsable (`/api/app/taller/*`) vs resto del panel admin. */
 export const apiAuthInterceptor: HttpInterceptorFn = (req, next) => {
   const api = environment.apiUrl;
   const isApi = req.url.includes(`${api}/`) || req.url.endsWith(api);
@@ -20,21 +20,21 @@ export const apiAuthInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  // Login/hydrate/logout pasan Bearer explícito; no sustituir con otra sesión (p. ej. admin + portal taller).
+  // Login/hydrate/logout pasan Bearer explícito; no sustituir con otra sesión (p. ej. admin + app taller).
   if (req.headers.has('Authorization')) {
     return next(req);
   }
 
-  const portalPrefix = `${api}/portal/taller`;
-  const isPortal = req.url.includes(portalPrefix);
+  const tallerAppPrefix = `${api}/app/taller`;
+  const isTallerApp = req.url.includes(tallerAppPrefix);
   const isPublicRegistro =
-    isPortal && req.url.includes('/portal/taller/registro') && req.method === 'POST';
+    isTallerApp && req.url.includes('/app/taller/registro') && req.method === 'POST';
 
   if (isPublicRegistro) {
     return next(req);
   }
 
-  const token = isPortal
+  const token = isTallerApp
     ? inject(TallerAuthService).getAccessToken()
     : inject(AdminAuthService).getAccessToken();
 

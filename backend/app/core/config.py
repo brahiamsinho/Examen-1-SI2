@@ -1,11 +1,12 @@
 # app/core/config.py
 # =========================================================
 # Configuración central (pydantic-settings).
-# Prioridad: variables de entorno del proceso > .env raíz repo > backend/.env
+# Prioridad: variables de entorno del proceso > `.env` en la raíz del repo (única fuente).
 # =========================================================
 from pathlib import Path
 from typing import List
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.seeds import identidades_demo_sc as _seed_sc
@@ -15,9 +16,9 @@ _REPO_ROOT = _BACKEND_DIR.parent
 
 
 def _env_files() -> tuple[str, ...]:
-    """Solo archivos existentes; raíz del repo tiene precedencia sobre backend/.env."""
-    paths = [_BACKEND_DIR / ".env", _REPO_ROOT / ".env"]
-    return tuple(str(p) for p in paths if p.is_file())
+    """Solo el `.env` en la raíz del repositorio (Compose y dev local usan el mismo archivo)."""
+    p = _REPO_ROOT / ".env"
+    return (str(p),) if p.is_file() else ()
 
 
 class Settings(BaseSettings):
@@ -27,6 +28,23 @@ class Settings(BaseSettings):
         case_sensitive=True,
         extra="ignore",
     )
+
+    @field_validator(
+        "API_PUBLIC_URL",
+        "APP_PUBLIC_URL",
+        "EVIDENCIAS_PUBLIC_BASE_URL",
+        "AI_INFERENCE_BASE_URL",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_PUBLISHABLE_KEY",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+        mode="before",
+    )
+    @classmethod
+    def _empty_str_to_none(cls, v: object) -> object:
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
 
     # ── API ──────────────────────────────────────────────
     API_PREFIX: str = "/api"
@@ -43,8 +61,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # ── CORS (lista separada por coma en .env raíz) ───────
-    CORS_ORIGINS: str = "http://localhost:4200,http://localhost:80"
+    # ── CORS (lista separada por coma; solo .env / entorno, sin default en código) ───────
+    CORS_ORIGINS: str
 
     @property
     def cors_origins_list(self) -> List[str]:
@@ -147,17 +165,20 @@ class Settings(BaseSettings):
     EMAIL_ENABLED: bool = True
     # Si true, un fallo SMTP hace fallar la petición (recomendado en producción).
     EMAIL_STRICT: bool = False
-    SMTP_HOST: str = "localhost"
+    SMTP_HOST: str
     SMTP_PORT: int = 1025
     SMTP_TIMEOUT_SECONDS: int = 15
     SMTP_USE_TLS: bool = False
     SMTP_USER: str | None = None
     SMTP_PASSWORD: str | None = None
-    MAIL_FROM: str = "noreply@emergenciasviales.local"
-    # URL base donde el navegador abre la API (enlaces en correos).
-    EMAIL_LINK_BASE_URL: str = "http://localhost:8000"
-    # SPA taller (restablecer contraseña con token en query).
-    FRONTEND_PUBLIC_URL: str = "http://localhost"
+    MAIL_FROM: str
+    # URL base pública del API (enlaces en correos). Obligatorio en `.env` (IP o dominio del servidor).
+    EMAIL_LINK_BASE_URL: str
+    # URL pública del SPA (Angular). Definir en `.env`.
+    FRONTEND_PUBLIC_URL: str
+    # Atajos de despliegue (IP elástica / dominio): si están definidos, tienen prioridad sobre las dos anteriores.
+    API_PUBLIC_URL: str | None = None
+    APP_PUBLIC_URL: str | None = None
 
     # ── Servicio de inferencia IA (contenedor Docker ai-inference) ──
     AI_ENABLED: bool = False
@@ -169,10 +190,22 @@ class Settings(BaseSettings):
     AI_INFERENCE_STUB: bool = False
 
     # Evidencias CU13/CU14 — subida directa al API (multipart). URL pública del fichero (IA / taller).
-    # Si es None, se usa el Host de cada petición (útil en dev). En Docker, a veces hace falta
-    # `http://emergencias_backend:8000` para que el propio backend pueda descargar el archivo.
+    # Si es None, se usa API_PUBLIC_URL o el Host de cada petición. En Docker interno a veces conviene
+    # fijar EVIDENCIAS_PUBLIC_BASE_URL al origen alcanzable desde otros servicios.
     EVIDENCIAS_PUBLIC_BASE_URL: str | None = None
     EVIDENCIA_MAX_UPLOAD_BYTES: int = 15 * 1024 * 1024
+
+    @property
+    def api_public_base_url(self) -> str:
+        """Base pública del API (emails, etc.): `API_PUBLIC_URL` o `EMAIL_LINK_BASE_URL`."""
+        u = (self.API_PUBLIC_URL or self.EMAIL_LINK_BASE_URL or "").strip()
+        return u.rstrip("/")
+
+    @property
+    def app_public_base_url(self) -> str:
+        """URL pública del front (SPA Angular): `APP_PUBLIC_URL` o `FRONTEND_PUBLIC_URL`."""
+        u = (self.APP_PUBLIC_URL or self.FRONTEND_PUBLIC_URL or "").strip()
+        return u.rstrip("/")
 
     @property
     def evidencias_upload_dir(self) -> Path:

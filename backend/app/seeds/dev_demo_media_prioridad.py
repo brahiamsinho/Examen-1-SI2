@@ -12,20 +12,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.core.timeutil import utc_now_naive
-from app.modules.mensajes_solicitud import repository as msg_repo
-from app.modules.mensajes_solicitud.models import SolicitudMensaje
-from app.modules.notificaciones import repository as notif_repo
-from app.modules.notificaciones.models import Notificacion, TipoNotificacionEnum
-from app.modules.roles.models import Rol
-from app.modules.roles.service import asignar_roles_usuario
-from app.modules.emergencias import repository as em_repo
-from app.modules.emergencias.models import SolicitudEmergencia
-from app.modules.portal_taller_emergencias import repository as pt_repo
-from app.modules.portal_taller_emergencias.models import EstadoBandejaTallerEnum, SolicitudTallerBandeja
-from app.modules.talleres import service as talleres_service
-from app.modules.talleres.models import EstadoTallerEnum, Taller
-from app.modules.usuarios import service as usuarios_service
-from app.modules.usuarios.models import EstadoUsuarioEnum, Usuario
+from app.modules.comunicacion_y_notificaciones.mensajes_solicitud import repository as msg_repo
+from app.modules.comunicacion_y_notificaciones.mensajes_solicitud.models import SolicitudMensaje
+from app.modules.comunicacion_y_notificaciones.notificaciones import repository as notif_repo
+from app.modules.comunicacion_y_notificaciones.notificaciones.models import Notificacion, TipoNotificacionEnum
+from app.modules.acceso_y_administracion.roles.models import Rol
+from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario
+from app.modules.incidentes.emergencias import repository as em_repo
+from app.modules.incidentes.emergencias.models import SolicitudEmergencia
+from app.modules.atencion.taller_emergencias import repository as pt_repo
+from app.modules.atencion.taller_emergencias.models import EstadoBandejaTallerEnum, SolicitudTallerBandeja
+from app.modules.talleres_y_tecnicos.talleres import service as talleres_service
+from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, Taller
+from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
+from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
 from app.seeds.dev_demo_santa_cruz import DEMO_MARKER, _ctx_demo
 from app.seeds.identidades_demo_sc import TALLER_SECUNDARIO_LAT, TALLER_SECUNDARIO_LNG
 

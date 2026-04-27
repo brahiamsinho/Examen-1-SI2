@@ -8,3 +8,11 @@ coverage
 .dockerignore
 .env
 .env.*
+
+.vscode
+.idea
+**/*.spec.ts
+e2e
+karma.conf.js
+.eslintcache
+storybook-static

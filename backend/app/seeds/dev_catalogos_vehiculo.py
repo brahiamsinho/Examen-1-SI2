@@ -4,7 +4,7 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.vehiculos.models import MarcaVehiculo, ModeloVehiculo, TipoVehiculo
+from app.modules.clientes_y_vehiculos.vehiculos.models import MarcaVehiculo, ModeloVehiculo, TipoVehiculo
 
 logger = logging.getLogger(__name__)
 

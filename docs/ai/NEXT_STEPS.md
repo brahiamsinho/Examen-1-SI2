@@ -42,6 +42,7 @@
 ### Backend
 - [ ] Endpoint refresh / recuperación de contraseña real si producto lo exige
 - [ ] Paginación y tests pytest ampliados
+- [ ] Definir/implementar recurso API `servicios` (rutas, contrato, permisos) para ejecutar la matriz de `docs/ai/TESTING_STRATEGY.md`.
 
 ## MEDIA — Dominio emergencias (Ciclo 2; parte ya implementada en repo)
 

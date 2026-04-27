@@ -2,11 +2,10 @@
 # =========================================================
 # Stack: PostgreSQL, FastAPI backend, Angular frontend, Mailhog.
 #
-# Copy .env.example to .env in the repo root; Compose loads ./.env automatically.
+# Copy .env.example to .env in the repo root; Compose loads ./.env automatically. si
 # =========================================================
 
 services:
-
   db:
     image: postgres:15-alpine
     container_name: emergencias_db
@@ -163,7 +162,6 @@ services:
       - ./backend/firebase-credentials.json:/app/firebase-credentials.json:ro
       - ./backend/uploads:/app/uploads
 
-
   ai-inference:
     profiles: ["ai"]
     build:
@@ -204,13 +202,11 @@ services:
     networks:
       - emergencias_net
 
-
 volumes:
   postgres_data:
     name: emergencias_postgres_data
   ai_inference_cache:
     name: emergencias_ai_inference_cache
-
 
 networks:
   emergencias_net:

@@ -3,6 +3,17 @@
 # Handoff para el próximo agente/sesión
 # Fecha: 2026-04-26
 
+## Cambios recientes (2026-04-26) — Word `pruebas_api_servicio` + Prueba 2 mapeo ✅
+
+- `docs/ai/TESTING_STRATEGY.md` incorpora: nota sobre el `.docx` (no leíble como texto en el IDE), explicación de que **no** hay `POST /servicios` con Spa/horarios, tabla y sección con **Prueba 2** equivalente a `POST /api/app/cliente/emergencias` (201) o `.../bandeja/{id}/aceptar` (200) + `curl` de ejemplo.
+- Sesión: `docs/ai/sessions/2026-04-26-pruebas-api-servicio-docx-prueba-2.md`.
+
+## Cambios recientes (2026-04-26) — Documentación pruebas API recurso `servicios` ✅
+
+- Se creó `docs/ai/TESTING_STRATEGY.md` con 10 pruebas funcionales para `GET /servicios/{id}` y `GET /servicios` (existente, inexistente, ID inválido, ID negativo, post-delete, consistencia, post-update, lista completa, lista vacía y alto volumen).
+- Se incluyó plantilla `curl`, criterios de aceptación y nota de mapeo: en el backend actual no hay ruta `/servicios` aún.
+- Sesión: `docs/ai/sessions/2026-04-26-testing-strategy-servicios-api.md`.
+
 ## Cambios recientes (2026-04-26) — Dashboard admin financiero (KPIs comisiones/reportes) ✅
 
 - Se implementó módulo backend `admin_finanzas` (`schemas.py`, `service.py`, `router.py`) para exponer métricas financieras globales desde `comisiones_taller`, `pagos` y `solicitudes_emergencia`: comisión total plataforma (10 %), pagos confirmados, ticket promedio, conversión de finalizadas→pagadas, top talleres y serie diaria.

@@ -1,7 +1,7 @@
 # docker-compose.override.yml
 # =========================================================
 # Override DESARROLLO LOCAL (se fusiona con docker-compose.yml).
-# Producción: docker compose -f docker-compose.yml up
+# Producción: docker compose -f docker-compose.yml up si
 # =========================================================
 
 services:

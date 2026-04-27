@@ -35,15 +35,15 @@ Orden recomendado según el stack (**sin IA**, **con IA** o **con IA + modelo cu
 
 ### Arranque del entorno
 
-| Acción                                                                                      | Comando                                                                                                 |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Levantar e inicializar todo** (Recomendado primera vez)                                   | `docker compose up -d --build`                                                                          |
-| **Incluir worker de IA** (Whisper + YOLO; servicio `ai-inference`)                          | `docker compose --profile ai up -d --build`                                                             |
+| Acción                                                                                                                                  | Comando                                                                                                 |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Levantar e inicializar todo** (Recomendado primera vez)                                                                               | `docker compose up -d --build`                                                                          |
+| **Incluir worker de IA** (Whisper + YOLO; servicio `ai-inference`)                                                                      | `docker compose --profile ai up -d --build`                                                             |
 | **IA + modelo de clasificación propio** (peso local + `.env` con `YOLO_TASK=classify`; el override **monta** el `.pt` en el contenedor) | `docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build` |
-| Levantar servicios creados                                                                  | `docker compose up -d`                                                                                  |
-| Detener los contenedores                                                                    | `docker compose down`                                                                                   |
-| **Peligro:** Detener y borrar volúmenes (⚠️ Borra toda la base de datos)                    | `docker compose down -v`                                                                                |
-| **Peligro:** Igual que arriba **y** borrar imágenes construidas del proyecto                | `docker compose down -v --rmi all`                                                                      |
+| Levantar servicios creados                                                                                                              | `docker compose up -d`                                                                                  |
+| Detener los contenedores                                                                                                                | `docker compose down`                                                                                   |
+| **Peligro:** Detener y borrar volúmenes (⚠️ Borra toda la base de datos)                                                                | `docker compose down -v`                                                                                |
+| **Peligro:** Igual que arriba **y** borrar imágenes construidas del proyecto                                                            | `docker compose down -v --rmi all`                                                                      |
 
 El primer arranque tras `docker compose down -v --rmi all` puede tardar varios minutos (build de imágenes, Postgres hasta _healthy_, descarga de modelos en el volumen de caché del worker).
 
@@ -265,12 +265,12 @@ docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --pro
 
 Usuarios creados por los seeds (configurables en `.env` con `SEED_*`):
 
-| Rol     | Email                         | Contraseña |
-| ------- | ----------------------------- | ---------- |
+| Rol     | Email                          | Contraseña |
+| ------- | ------------------------------ | ---------- |
 | Admin   | `patricio.mendez@sc-demo.test` | `scdemo1`  |
-| Cliente | `carlos.vega@sc-demo.test`    | `scdemo1`  |
-| Taller  | `luis.rivera@sc-demo.test`    | `scdemo1`  |
-| Técnico | `marco.salas@sc-demo.test`    | `scdemo1`  |
+| Cliente | `carlos.vega@sc-demo.test`     | `scdemo1`  |
+| Taller  | `luis.rivera@sc-demo.test`     | `scdemo1`  |
+| Técnico | `marco.salas@sc-demo.test`     | `scdemo1`  |
 
 ### Base de datos — Acceso directo
 
@@ -359,3 +359,5 @@ docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f do
 
 5Verificar
 docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml exec backend alembic current
+
+#si

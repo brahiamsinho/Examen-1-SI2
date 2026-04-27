@@ -81,7 +81,7 @@ async def lifespan(app: FastAPI):
                 )
     yield
 
-# ── Importar todos los routers ────────────────────────────────
+# ── Importar todos los routers si ────────────────────────────────
 from app.modules.acceso_y_administracion.auth.router import auth_router
 from app.modules.acceso_y_administracion.permisos.router import permisos_router
 from app.modules.acceso_y_administracion.roles.router import roles_router
@@ -152,7 +152,7 @@ app.include_router(tecnico_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 app.include_router(ai_router, prefix=PREFIX)
 
-# Archivos de evidencia (foto/audio) servidos en HTTPS/HTTP según el entorno.
+# Archivos de evidencia (foto/audio) servidos en HTTPS/HTTP según el entorno. si
 _evid_dir = settings.evidencias_upload_dir
 _evid_dir.mkdir(parents=True, exist_ok=True)
 app.mount(

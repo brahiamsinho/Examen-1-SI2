@@ -1,10 +1,15 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-04-26 — dashboard admin financiero (KPIs + reportes) ✅
+# Última actualización: 2026-04-26 — TESTING_STRATEGY: mapeo Word (Prueba 2 `POST /servicios`) al dominio real ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA completo ✅
+
+### Documentación de pruebas API (2026-04-26) ✅
+- [x] Se agregó `docs/ai/TESTING_STRATEGY.md` con 10 casos de prueba para `GET /servicios/{id}` y `GET /servicios`, incluyendo entradas, resultados esperados y criterios de aceptación.
+- [x] Se dejó explícito que actualmente no existe ruta `/servicios` en `backend/app`; el documento queda como plan reusable para mapear al endpoint real cuando se implemente.
+- [x] **Prueba 2 (plantilla Word / captura):** se documenta que el contrato `POST /servicios` con `nombre` + `horario_*` **no** existe en el repo; el mapeo sugerido es `POST /api/app/cliente/emergencias` (201, alta) o `POST /api/app/taller/emergencias/bandeja/{id}/aceptar` (200, taller toma el caso), con cuerpos/roles reales.
 
 ### Panel admin — dashboard financiero (2026-04-26) ✅
 - [x] **Backend:** se creó `app/modules/acceso_y_administracion/admin_finanzas/` con endpoints `GET /api/admin/finanzas/resumen` y `GET /api/admin/finanzas/reportes` (rango `desde`/`hasta`) para KPIs globales: comisión plataforma (10 %), total cobrado, ticket promedio, conversión a pago, talleres con comisión, top talleres y serie diaria.

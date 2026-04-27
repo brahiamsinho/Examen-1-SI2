@@ -384,3 +384,4 @@ async def analyze_image(file: UploadFile = File(...)):
         "objetos_detectados": objetos_detectados,
         "modelo_deteccion": modelo_path,
     }
+#si

@@ -63,6 +63,11 @@
 - [x] **`.cursor/agents/security.md`** — JWT, RBAC, secretos, CORS, Stripe, FCM, uploads, hardening pre-prod.
 - [x] **`orchestrator.md`** actualizado con tabla de delegación y distinción `ai-inference` vs `ai-researcher`.
 
+### Enterprise Architect — arquitectura de sistema (2026-05-29) ✅
+- [x] Paquete `Model/Arquitectura` (ID **28**) y diagrama de componentes **ID 31** replicando la vista “Sistema” (clientes, módulos backend, capas, PostgreSQL, Stripe/FCM/medios, worker IA).
+- [x] Diagrama **ID 32** `component Acceso capas por dominio`: 4 columnas Web/API/Service/Repository + PostgreSQL compartido (acceso, usuarios, roles/permisos, bitácora).
+- [x] Guía de trazabilidad EA ↔ código: `docs/ai/EA_ARCHITECTURE_SYSTEM_GUIDE.md`.
+
 ### Documentación de pruebas API (2026-04-26) ✅
 - [x] Se agregó `docs/ai/TESTING_STRATEGY.md` con 10 casos de prueba para `GET /servicios/{id}` y `GET /servicios`, incluyendo entradas, resultados esperados y criterios de aceptación.
 - [x] Se dejó explícito que actualmente no existe ruta `/servicios` en `backend/app`; el documento queda como plan reusable para mapear al endpoint real cuando se implemente.

@@ -203,6 +203,33 @@
 - Sesión: `docs/ai/sessions/2026-05-24-agent-subagentes-ia-qa-security.md`.
 - Decisión: `DECISIONS_LOG` **DEC-022**.
 
+## Cambios recientes (2026-05-30) — EA CU36 comunicación **lineal MVC** (MCP) ✅
+
+- **`/Model/Comunicacion`** → **`comm CU36 lineal MVC flujo principal`** (diagramID **40**).
+- Topología: `Cliente → V.Seguimiento → SeguimientoController → entidades` (sin estrella, sin V.Error en lienzo).
+- Mensajes 538–545; Association 533–537 ocultas en diagrama 40.
+- Sesión: `docs/ai/sessions/2026-05-30-agent-ea-cu36-lineal-mvc-mcp.md`
+- **Manual:** separar etiquetas Cliente–Vista (1.Abrir, 1.1, 1.6).
+
+## Cambios recientes (2026-05-29) — EA arquitectura del sistema (componentes) ✅
+
+- Paquete **`Model/Arquitectura`** (packageID **28**).
+- Diagrama oficial **`component Arquitectura del sistema`** (diagramID **31**): hub FastAPI, módulos alineados a `ARCHITECTURE.md`, capas, PostgreSQL, medios, externos, `ai-inference`.
+- Guía: `docs/ai/EA_ARCHITECTURE_SYSTEM_GUIDE.md`.
+- Sesión: `docs/ai/sessions/2026-05-29-agent-ea-arquitectura-sistema.md`.
+
+## Cambios recientes (2026-05-29) — EA análisis de clases: patrón simplificado ✅
+
+- **Guía obligatoria** para nuevos CUs: `docs/ai/EA_ANALYSIS_CLASS_GUIDE.md` (1 vista, 1–2 controles, 2–4 entidades; sin V.Error ni pantallas de otros CUs).
+- **Seleccionar taller:** diagrama oficial ID **26** en `Model/Clase`; obsoleto ID 25.
+- **CU36 ubicación:** análisis ID **27**; comunicación ID **22** en `Model/Comunicacion`.
+- **Procesar pago pasarela:** análisis ID **28** en `Model/Clase` (2 vistas: Resumen + Pasarela).
+- **Actualizar estado atención (técnico):** análisis ID **29** en `Model/Clase`.
+- **Gestionar tenant (admin SaaS):** análisis ID **30** — diseño lógico; API tenant aún no en código.
+- Guía BCE: máximo **2** boundaries por CU (`EA_ANALYSIS_CLASS_GUIDE.md`).
+- Draw.io comunicación: `docs/diagrams/*-comunicacion.drawio` (CU36–CU40).
+- Decisión: `DECISIONS_LOG` **DEC-037**, **DEC-038**.
+
 ## Cambios recientes (2026-04-26) — Word `pruebas_api_servicio` + Prueba 2 mapeo ✅
 
 - `docs/ai/TESTING_STRATEGY.md` incorpora: nota sobre el `.docx` (no leíble como texto en el IDE), explicación de que **no** hay `POST /servicios` con Spa/horarios, tabla y sección con **Prueba 2** equivalente a `POST /api/app/cliente/emergencias` (201) o `.../bandeja/{id}/aceptar` (200) + `curl` de ejemplo.

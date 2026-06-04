@@ -3,6 +3,10 @@
 # Arquitectura del Sistema — Ciclo 1
 # =========================================================
 
+## Diagrama en Enterprise Architect
+
+Vista de **componentes** del sistema completo: paquete `Model/Arquitectura`, diagrama `component Arquitectura del sistema` (ID **31**). Detalle y tabla módulo ↔ carpeta: `docs/ai/EA_ARCHITECTURE_SYSTEM_GUIDE.md`.
+
 ## Patrón Arquitectónico
 
 **Arquitectura Modular por Dominio** (Domain-driven Modular Architecture).

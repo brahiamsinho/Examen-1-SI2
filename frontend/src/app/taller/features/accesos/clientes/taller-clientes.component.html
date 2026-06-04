@@ -1,0 +1,56 @@
+<div class="pg">
+  <header class="pg__header">
+    <h2 class="pg__title">Cuentas clientes</h2>
+    <p class="pg__lead">
+      Clientes finales registrados en la app móvil bajo el slug de tu organización. Aquí consultas identidad y estado;
+      el alta ocurre desde la app, no desde el panel taller.
+    </p>
+  </header>
+
+  <div class="pg__info" role="note">
+    Solo lectura en este ciclo: el responsable de taller puede auditar cuentas, no crear clientes manualmente.
+  </div>
+
+  <div class="pg__alert" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="pg__toolbar" *ngIf="!loading">
+    <input
+      type="search"
+      class="pg__search"
+      [(ngModel)]="search"
+      placeholder="Buscar por nombre, email o teléfono…"
+      aria-label="Buscar clientes"
+    />
+    <select class="pg__select" [(ngModel)]="estado" aria-label="Filtrar por estado">
+      <option value="">Todos los estados</option>
+      <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
+    </select>
+    <button type="button" class="pg__btn" (click)="reload()">Actualizar</button>
+  </div>
+
+  <p class="pg__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="pg__tablewrap" *ngIf="!loading">
+    <table class="pg__table">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Ciudad</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of filtered">
+          <td>{{ c.nombres }} {{ c.apellidos }}</td>
+          <td>{{ c.email }}</td>
+          <td>{{ c.telefono || '—' }}</td>
+          <td>{{ c.ciudad || '—' }}</td>
+          <td><span class="pg__pill">{{ c.estado }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="pg__empty" *ngIf="!filtered.length">Sin clientes registrados en tu organización.</p>
+  </div>
+</div>

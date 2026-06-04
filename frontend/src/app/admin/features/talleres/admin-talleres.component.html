@@ -1,8 +1,29 @@
 <div class="tal">
   <h2 class="tal__h">Gestión de talleres</h2>
-  <p class="tal__lead">Alta, edición y estados</p>
+  <p class="tal__lead">
+    Crea talleres con cuenta de acceso al portal <strong>/taller</strong> en un solo paso (organización + datos + credenciales).
+  </p>
 
   <div class="tal__alert" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="tal__filterbar" *ngIf="tenantCtx.isPlatformSuperadmin() && tenants.length">
+    <div class="tal__filter-field">
+      <span class="tal__filter-label">Filtrar listado por organización</span>
+      <select
+        class="tal__select tal__select--filter"
+        [ngModel]="tenantCtx.selectedTenantId()"
+        (ngModelChange)="onPageTenantFilterChange($event)"
+        aria-label="Filtrar talleres por organización"
+      >
+        <option [ngValue]="null">Todas (plataforma)</option>
+        <option *ngFor="let t of tenants" [ngValue]="t.id">{{ t.nombre }} ({{ t.slug }})</option>
+      </select>
+    </div>
+    <p class="tal__filter-hint">
+      El selector del navbar usa el mismo filtro. Para dar de alta un taller, elige la organización dentro del formulario
+      «Nuevo taller».
+    </p>
+  </div>
 
   <div class="tal__toolbar" *ngIf="!loading">
     <input
@@ -114,46 +135,85 @@
   </div>
 
   <div class="tal__modal tal__modal--wide" *ngIf="modalCreate" role="dialog" aria-modal="true">
-    <h3>Nuevo taller</h3>
-    <p class="tal__muted" *ngIf="!responsablesTaller.length" role="status">
-      No hay usuarios con rol <strong>TALLER_RESPONSABLE</strong>. Asígnalo en Usuarios → Roles y vuelve aquí.
-    </p>
-    <label class="tal__lbl">Usuario responsable (rol taller)</label>
-    <select
-      class="tal__inp"
-      [(ngModel)]="createForm.usuario_responsable_id"
-      [disabled]="!responsablesTaller.length"
-    >
-      <option *ngFor="let u of responsablesTaller" [ngValue]="u.id">
-        {{ u.nombres }} {{ u.apellidos }} — {{ u.email }}
-      </option>
-    </select>
-    <label class="tal__lbl">Nombre comercial</label>
-    <input class="tal__inp" [(ngModel)]="createForm.nombre_comercial" />
-    <label class="tal__lbl">Teléfono contacto</label>
-    <input class="tal__inp" [(ngModel)]="createForm.telefono_contacto" />
-    <label class="tal__lbl">Email contacto</label>
-    <input class="tal__inp" [(ngModel)]="createForm.email_contacto" />
-    <label class="tal__lbl">Dirección</label>
-    <input class="tal__inp" [(ngModel)]="createForm.direccion" />
-    <label class="tal__lbl">Ciudad</label>
-    <input class="tal__inp" [(ngModel)]="createForm.ciudad" />
-    <label class="tal__lbl">Descripción</label>
-    <input class="tal__inp" [(ngModel)]="createForm.descripcion" />
-    <label class="tal__lbl">Estado inicial</label>
-    <select class="tal__inp" [(ngModel)]="createForm.estado">
-      <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
-    </select>
-    <div class="tal__modal-actions">
-      <button type="button" class="tal__btn" (click)="closeModals()">Cancelar</button>
-      <button
-        type="button"
-        class="tal__btn tal__btn--primary"
-        [disabled]="busy || !responsablesTaller.length"
-        (click)="create()"
-      >
-        Crear
+    <h3 *ngIf="!provisionResult">Nuevo taller y cuenta de acceso</h3>
+    <h3 *ngIf="provisionResult">Taller creado</h3>
+
+    <ng-container *ngIf="provisionResult as done">
+      <p class="tal__success-lead">
+        El responsable ya puede iniciar sesión en el portal del taller.
+      </p>
+      <dl class="tal__dl tal__dl--success">
+        <dt>URL de acceso</dt>
+        <dd><code>/taller</code></dd>
+        <dt>Organización (slug)</dt>
+        <dd><code>{{ done.tenant_slug }}</code></dd>
+        <dt>Email responsable</dt>
+        <dd><code>{{ done.responsable_email }}</code></dd>
+        <dt>Taller</dt>
+        <dd>{{ done.nombre_comercial }} · {{ done.ciudad }}</dd>
+      </dl>
+      <p class="tal__muted">
+        En login, el responsable debe indicar el slug <strong>{{ done.tenant_slug }}</strong> y la contraseña definida al crear.
+      </p>
+      <div class="tal__modal-actions">
+        <button type="button" class="tal__btn tal__btn--primary" (click)="closeModals()">Cerrar</button>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="!provisionResult">
+      <ng-container *ngIf="tenantCtx.isPlatformSuperadmin()">
+        <label class="tal__lbl">Organización <span class="tal__req">*</span></label>
+        <select class="tal__inp" [(ngModel)]="createTenantId" aria-required="true">
+          <option [ngValue]="null">— Selecciona organización —</option>
+          <option *ngFor="let t of tenants" [ngValue]="t.id">{{ t.nombre }} · slug: {{ t.slug }}</option>
+        </select>
+        <p class="tal__muted" *ngIf="createTenantSlug">
+          Login en <code>/taller</code> con slug <strong>{{ createTenantSlug }}</strong>.
+        </p>
+      </ng-container>
+
+      <p class="tal__section-title">Datos del taller</p>
+      <label class="tal__lbl">Nombre comercial <span class="tal__req">*</span></label>
+      <input class="tal__inp" [(ngModel)]="provisionForm.nombre_comercial" />
+      <div class="tal__grid2">
+        <label class="tal__lbl">Teléfono contacto (mín. 5 dígitos)<input class="tal__inp" [(ngModel)]="provisionForm.telefono_contacto" /></label>
+        <label class="tal__lbl">Email contacto<input class="tal__inp" [(ngModel)]="provisionForm.email_contacto" type="email" /></label>
+      </div>
+      <label class="tal__lbl">Dirección</label>
+      <input class="tal__inp" [(ngModel)]="provisionForm.direccion" />
+      <label class="tal__lbl">Ciudad</label>
+      <input class="tal__inp" [(ngModel)]="provisionForm.ciudad" />
+      <label class="tal__lbl">Descripción</label>
+      <input class="tal__inp" [(ngModel)]="provisionForm.descripcion" />
+      <label class="tal__lbl">Estado inicial</label>
+      <select class="tal__inp" [(ngModel)]="provisionForm.estado">
+        <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+      </select>
+
+      <p class="tal__section-title">Acceso al portal /taller</p>
+      <button type="button" class="tal__btn tal__btn--ghost" (click)="copyContactFromResponsable()">
+        Copiar email/teléfono a contacto del taller
       </button>
-    </div>
+      <label class="tal__lbl">Nombre completo responsable <span class="tal__req">*</span></label>
+      <input class="tal__inp" [(ngModel)]="provisionForm.responsable_nombre_completo" />
+      <div class="tal__grid2">
+        <label class="tal__lbl">Email login<input class="tal__inp" [(ngModel)]="provisionForm.responsable_email" type="email" /></label>
+        <label class="tal__lbl">Teléfono<input class="tal__inp" [(ngModel)]="provisionForm.responsable_telefono" /></label>
+        <label class="tal__lbl">Contraseña<input class="tal__inp" [(ngModel)]="provisionForm.responsable_password" type="password" autocomplete="new-password" /></label>
+        <label class="tal__lbl">Confirmar contraseña<input class="tal__inp" [(ngModel)]="provisionPassword2" type="password" autocomplete="new-password" /></label>
+      </div>
+
+      <div class="tal__modal-actions">
+        <button type="button" class="tal__btn" (click)="closeModals()">Cancelar</button>
+        <button
+          type="button"
+          class="tal__btn tal__btn--primary"
+          [disabled]="busy || (tenantCtx.isPlatformSuperadmin() && createTenantId == null)"
+          (click)="provision()"
+        >
+          Crear taller y cuenta de acceso
+        </button>
+      </div>
+    </ng-container>
   </div>
 </div>

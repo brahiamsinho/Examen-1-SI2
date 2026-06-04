@@ -165,6 +165,13 @@ export class TallerAuthService {
       catchError(() => of(false)),
     );
   }
+
+  /** Sin lista de permisos en JWT → se asume acceso (compatibilidad sesiones antiguas). */
+  tienePermiso(codigo: string): boolean {
+    const permisos = this.getMe()?.permisos;
+    if (!permisos?.length) return true;
+    return permisos.includes(codigo);
+  }
 }
 
 export class TallerAuthError extends Error {

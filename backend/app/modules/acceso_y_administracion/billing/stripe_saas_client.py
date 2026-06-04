@@ -6,6 +6,27 @@ from typing import Any
 import stripe
 
 
+def crear_checkout_suscripcion_publica(
+    *,
+    secret_key: str,
+    price_id: str,
+    customer_email: str,
+    success_url: str,
+    cancel_url: str,
+    metadata: dict[str, str],
+) -> dict[str, Any]:
+    stripe.api_key = secret_key
+    session = stripe.checkout.Session.create(
+        mode="subscription",
+        customer_email=customer_email,
+        line_items=[{"price": price_id, "quantity": 1}],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata=metadata,
+    )
+    return {"id": session.id, "url": session.url}
+
+
 def crear_checkout_suscripcion(
     *,
     secret_key: str,

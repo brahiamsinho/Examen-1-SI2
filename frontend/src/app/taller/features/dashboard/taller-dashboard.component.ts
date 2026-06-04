@@ -118,6 +118,18 @@ export class TallerDashboardComponent implements OnInit {
     return p.includes('comisiones:leer');
   }
 
+  puedeVerUsuarios(): boolean {
+    return this.auth.tienePermiso('usuarios:leer');
+  }
+
+  puedeVerClientes(): boolean {
+    return this.auth.tienePermiso('clientes:leer');
+  }
+
+  puedeGestionarRoles(): boolean {
+    return this.auth.tienePermiso('roles:gestionar');
+  }
+
   parseDecimal(s: string): number {
     const n = Number(s);
     return Number.isFinite(n) ? n : 0;

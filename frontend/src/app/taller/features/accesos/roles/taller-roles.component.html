@@ -1,0 +1,78 @@
+<div class="pg">
+  <header class="pg__header">
+    <h2 class="pg__title">Roles</h2>
+    <p class="pg__lead">
+      Catálogo de roles del sistema. Puedes revisar permisos de <strong>TECNICO</strong> y
+      <strong>TALLER_RESPONSABLE</strong>; roles de plataforma (ADMIN) son solo consulta.
+    </p>
+  </header>
+
+  <div class="pg__alert" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="pg__toolbar" *ngIf="!loading">
+    <input
+      type="search"
+      class="pg__search"
+      [(ngModel)]="search"
+      placeholder="Buscar rol…"
+      aria-label="Buscar roles"
+    />
+  </div>
+
+  <p class="pg__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="pg__tablewrap" *ngIf="!loading">
+    <table class="pg__table">
+      <thead>
+        <tr>
+          <th>Rol</th>
+          <th>Descripción</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of filtered">
+          <td><code>{{ r.nombre }}</code></td>
+          <td>{{ r.descripcion || '—' }}</td>
+          <td class="pg__actions">
+            <button type="button" class="pg__mini" (click)="openView(r)">Ver</button>
+            <button
+              type="button"
+              class="pg__mini"
+              *ngIf="puedeEditarPermisos(r)"
+              [disabled]="busy"
+              (click)="openPerm(r)"
+            >
+              Permisos
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pg__backdrop" *ngIf="modalView || modalPerm" (click)="closeModals()"></div>
+
+  <div class="pg__modal" *ngIf="modalView && selectedRol" role="dialog" aria-modal="true">
+    <h3>{{ selectedRol.nombre }}</h3>
+    <p class="pg__muted">{{ selectedRol.descripcion || 'Sin descripción' }}</p>
+    <button type="button" class="pg__btn pg__btn--primary" (click)="closeModals()">Cerrar</button>
+  </div>
+
+  <div class="pg__modal pg__modal--wide" *ngIf="modalPerm && selectedRol" role="dialog" aria-modal="true">
+    <h3>Permisos — {{ selectedRol.nombre }}</h3>
+    <div *ngFor="let entry of permisosByModulo() | keyvalue">
+      <p class="pg__muted"><strong>{{ entry.key }}</strong></p>
+      <label class="pg__check" *ngFor="let p of entry.value">
+        <input type="checkbox" [checked]="permIds.has(p.id)" (change)="togglePerm(p.id)" />
+        <span><code>{{ p.codigo }}</code> — {{ p.nombre }}</span>
+      </label>
+    </div>
+    <div class="pg__modal-actions">
+      <button type="button" class="pg__btn" (click)="closeModals()">Cancelar</button>
+      <button type="button" class="pg__btn pg__btn--primary" [disabled]="busy" (click)="savePerm()">
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>

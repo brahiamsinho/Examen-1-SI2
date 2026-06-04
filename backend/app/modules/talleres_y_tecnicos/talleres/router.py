@@ -1,5 +1,5 @@
 # app/modules/talleres/router.py
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -10,6 +10,7 @@ from app.core.tenant_context import effective_list_tenant_id
 from app.modules.talleres_y_tecnicos.talleres import service
 from app.modules.talleres_y_tecnicos.talleres.schemas import (
     TallerCreate, TallerRead, TallerUpdate,
+    TallerProvisionIn, TallerProvisionRead,
     TecnicoCreate, TecnicoRead, TecnicoUpdate,
     EspecialidadCreate, EspecialidadRead
 )
@@ -28,9 +29,51 @@ async def listar_talleres(
     return await service.get_talleres(db, list_tenant_id=scope)
 
 @router.post("/", response_model=TallerRead, status_code=201)
-async def crear_taller(body: TallerCreate, db: AsyncSession = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)):
-    return await service.create_taller(body.model_dump(), db, current_user.id)
+async def crear_taller(
+    body: TallerCreate,
+    ctx: AuthContext = Depends(bind_auth_context),
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    data = body.model_dump()
+    if ctx.is_platform_superadmin:
+        if data.get("tenant_id") is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Selecciona una organización (tenant_id) antes de crear el taller.",
+            )
+    else:
+        data["tenant_id"] = ctx.tenant_id
+    await service.validate_responsable_tenant(
+        db, usuario_id=data["usuario_responsable_id"], tenant_id=data["tenant_id"]
+    )
+    return await service.create_taller(data, db, current_user.id)
+
+
+@router.post("/provision", response_model=TallerProvisionRead, status_code=201)
+async def provisionar_taller(
+    body: TallerProvisionIn,
+    ctx: AuthContext = Depends(bind_auth_context),
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    if ctx.is_platform_superadmin:
+        if body.tenant_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Selecciona una organización (tenant_id) antes de crear el taller.",
+            )
+        tenant_id = body.tenant_id
+    else:
+        if ctx.tenant_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tu cuenta no está asociada a una organización.",
+            )
+        tenant_id = ctx.tenant_id
+    return await service.provision_taller_con_responsable(
+        body, db, tenant_id=tenant_id, ejecutor_id=current_user.id
+    )
 
 @router.get("/{taller_id}", response_model=TallerRead)
 async def obtener_taller(taller_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):

@@ -43,6 +43,36 @@
   font-size: 0.8125rem;
 }
 
+.usr__filterbar {
+  @include ui.ev-filter-bar;
+}
+
+.usr__filter-field {
+  @include ui.ev-filter-field;
+}
+
+.usr__filter-label {
+  @include ui.ev-filter-label;
+}
+
+.usr__filter-hint {
+  flex: 1;
+  min-width: 200px;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: t.$ev-muted;
+  line-height: 1.45;
+  align-self: center;
+}
+
+.usr__select--filter {
+  width: 100%;
+}
+
+.usr__req {
+  color: #f87171;
+}
+
 .usr__tablewrap {
   @include ui.ev-card;
   padding: 0;

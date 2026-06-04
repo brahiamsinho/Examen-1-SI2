@@ -48,20 +48,26 @@ async def crear_checkout_session(
     *,
     success_url: str,
     cancel_url: str,
+    price_id: str | None = None,
 ) -> dict:
-    if not _stripe_saas_ready():
+    if not settings.stripe_enabled:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Billing SaaS no configurado (STRIPE_SAAS_PRICE_STARTER, STRIPE_SAAS_WEBHOOK_SECRET).",
+            detail="Billing SaaS no configurado (STRIPE_SECRET_KEY).",
         )
     tenant = await ensure_stripe_customer(db, await tenants_service.get_tenant_by_id(db, tenant_id))
-    price_id = settings.stripe_saas_price_id
+    resolved_price = (price_id or settings.stripe_saas_price_id or "").strip()
+    if not resolved_price:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No hay Price ID de Stripe (plan o STRIPE_SAAS_PRICE_STARTER).",
+        )
 
     def _run() -> dict:
         return stripe_saas_client.crear_checkout_suscripcion(
             secret_key=settings.STRIPE_SECRET_KEY,
             customer_id=tenant.stripe_customer_id,
-            price_id=price_id,
+            price_id=resolved_price,
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={"tenant_id": str(tenant.id), "tenant_slug": tenant.slug},

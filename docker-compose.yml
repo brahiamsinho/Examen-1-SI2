@@ -85,6 +85,9 @@ services:
       DEBUG: ${DEBUG:-true}
       API_PREFIX: ${API_PREFIX:-/api}
       UVICORN_PORT: ${UVICORN_PORT:-8000}
+      RUN_MIGRATIONS_ON_START: ${RUN_MIGRATIONS_ON_START:-true}
+      RUN_SEEDS_ON_START: ${RUN_SEEDS_ON_START:-false}
+      RUN_SEEDS_IN_LIFESPAN: ${RUN_SEEDS_IN_LIFESPAN:-false}
       SEED_ADMIN_ON_START: ${SEED_ADMIN_ON_START:-false}
       # Defaults alineados con `app/seeds/identidades_demo_sc.py` (Santa Cruz, BO). Sobreescribir en `.env` raíz.
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-patricio.mendez@sc-demo.test}

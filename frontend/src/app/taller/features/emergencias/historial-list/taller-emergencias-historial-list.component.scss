@@ -1,14 +1,13 @@
 @use '../../../../admin/admin-theme' as t;
 @use '../../../../admin/admin-ui' as ui;
+@use '../../../taller-page' as tp;
 
 .emg__h {
-  @include ui.ev-page-title;
+  @include tp.taller-page-title;
 }
 
 .emg__lead {
-  margin: -1rem 0 1rem;
-  color: t.$ev-muted;
-  font-size: 0.875rem;
+  @include tp.taller-page-lead;
 }
 
 .emg__alert {

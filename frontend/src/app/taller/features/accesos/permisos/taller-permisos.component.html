@@ -1,0 +1,52 @@
+<div class="pg">
+  <header class="pg__header">
+    <h2 class="pg__title">Permisos</h2>
+    <p class="pg__lead">
+      Catálogo de permisos por módulo. La asignación a roles se hace desde la pantalla <strong>Roles</strong>.
+    </p>
+  </header>
+
+  <div class="pg__info" role="note">
+    Los permisos se definen en la base del sistema; este panel es de consulta para auditar qué acciones existen.
+  </div>
+
+  <div class="pg__alert" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="pg__toolbar" *ngIf="!loading">
+    <select class="pg__select" [(ngModel)]="modulo" aria-label="Filtrar por módulo">
+      <option value="">Todos los módulos</option>
+      <option *ngFor="let m of modulos" [value]="m">{{ m }}</option>
+    </select>
+    <input
+      type="search"
+      class="pg__search"
+      [(ngModel)]="search"
+      placeholder="Buscar código o nombre…"
+      aria-label="Buscar permisos"
+    />
+  </div>
+
+  <p class="pg__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="pg__tablewrap" *ngIf="!loading">
+    <table class="pg__table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Módulo</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of filtered">
+          <td><code>{{ p.codigo }}</code></td>
+          <td>{{ p.nombre }}</td>
+          <td><span class="pg__pill">{{ p.modulo }}</span></td>
+          <td>{{ p.descripcion || '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="pg__empty" *ngIf="!filtered.length">Sin resultados.</p>
+  </div>
+</div>

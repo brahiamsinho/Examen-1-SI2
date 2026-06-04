@@ -6,12 +6,16 @@ import type {
   AccionBitacora,
   AdminFinanzasReportes,
   AdminFinanzasResumen,
+  AdminPanelOverview,
   BitacoraDto,
+  ClienteListDto,
   PermisoDto,
   RolDto,
   RolPermisosDto,
   TallerCreatePayload,
   TallerDto,
+  TallerProvisionDto,
+  TallerProvisionPayload,
   TallerUpdatePayload,
   TenantCreatePayload,
   TenantDto,
@@ -19,6 +23,8 @@ import type {
   UsuarioCreatePayload,
   UsuarioListDto,
   UsuarioUpdatePayload,
+  PricingPlanDto,
+  PricingPlanUpdatePayload,
 } from '../models/admin-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -74,6 +80,14 @@ export class AdminApiService {
       params = params.set('tenant_id', String(filters.tenant_id));
     }
     return this.http.get<UsuarioListDto[]>(`${this.base}/usuarios/`, { params });
+  }
+
+  listClientes(filters?: { tenant_id?: number }): Observable<ClienteListDto[]> {
+    let params = new HttpParams();
+    if (filters?.tenant_id != null) {
+      params = params.set('tenant_id', String(filters.tenant_id));
+    }
+    return this.http.get<ClienteListDto[]>(`${this.base}/clientes/`, { params });
   }
 
   getUsuario(id: number): Observable<UsuarioListDto> {
@@ -159,8 +173,20 @@ export class AdminApiService {
     return this.http.post<TallerDto>(`${this.base}/talleres/`, body);
   }
 
+  provisionTaller(body: TallerProvisionPayload): Observable<TallerProvisionDto> {
+    return this.http.post<TallerProvisionDto>(`${this.base}/talleres/provision`, body);
+  }
+
   updateTaller(id: number, body: TallerUpdatePayload): Observable<TallerDto> {
     return this.http.put<TallerDto>(`${this.base}/talleres/${id}`, body);
+  }
+
+  getPanelOverview(filters?: { tenant_id?: number }): Observable<AdminPanelOverview> {
+    let params = new HttpParams();
+    if (filters?.tenant_id != null) {
+      params = params.set('tenant_id', String(filters.tenant_id));
+    }
+    return this.http.get<AdminPanelOverview>(`${this.base}/admin/panel/overview`, { params });
   }
 
   getFinanzasResumen(filters?: {
@@ -185,5 +211,13 @@ export class AdminApiService {
     if (filters?.hasta) params = params.set('hasta', filters.hasta);
     if (filters?.tenant_id != null) params = params.set('tenant_id', String(filters.tenant_id));
     return this.http.get<AdminFinanzasReportes>(`${this.base}/admin/finanzas/reportes`, { params });
+  }
+
+  listPricingPlans(): Observable<PricingPlanDto[]> {
+    return this.http.get<PricingPlanDto[]>(`${this.base}/admin/pricing-plans`);
+  }
+
+  updatePricingPlan(slug: string, payload: PricingPlanUpdatePayload): Observable<PricingPlanDto> {
+    return this.http.patch<PricingPlanDto>(`${this.base}/admin/pricing-plans/${slug}`, payload);
   }
 }

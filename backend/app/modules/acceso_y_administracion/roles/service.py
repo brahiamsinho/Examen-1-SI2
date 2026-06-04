@@ -1,4 +1,5 @@
 # app/modules/roles/service.py
+from fastapi import HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,8 +45,7 @@ async def asignar_permisos_rol(rol_id: int, permiso_ids: list[int], db: AsyncSes
         )
 
 
-async def asignar_roles_usuario(usuario_id: int, rol_ids: list[int], db: AsyncSession) -> None:
-    """Reemplaza todos los roles del usuario por los nuevos."""
+async def _replace_usuario_roles(usuario_id: int, rol_ids: list[int], db: AsyncSession) -> None:
     await db.execute(delete(UsuarioRol).where(UsuarioRol.usuario_id == usuario_id))
     for rid in rol_ids:
         db.add(
@@ -55,3 +55,24 @@ async def asignar_roles_usuario(usuario_id: int, rol_ids: list[int], db: AsyncSe
                 asignado_at=utc_now_naive(),
             )
         )
+
+
+async def asignar_roles_usuario(usuario_id: int, rol_ids: list[int], db: AsyncSession) -> None:
+    """Reemplaza todos los roles del usuario por los nuevos (panel admin)."""
+    if rol_ids:
+        res = await db.execute(select(Rol).where(Rol.id.in_(rol_ids)))
+        nombres = {r.nombre for r in res.scalars().all()}
+        if "CLIENTE" in nombres:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "El rol CLIENTE no se asigna desde el panel admin. "
+                    "Los clientes se registran en la app móvil con el slug de la organización (X-Tenant-Slug)."
+                ),
+            )
+    await _replace_usuario_roles(usuario_id, rol_ids, db)
+
+
+async def asignar_roles_usuario_seed(usuario_id: int, rol_ids: list[int], db: AsyncSession) -> None:
+    """Reemplaza roles en seeds/CLI; no aplica restricciones del panel admin."""
+    await _replace_usuario_roles(usuario_id, rol_ids, db)

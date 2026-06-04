@@ -48,6 +48,8 @@ export interface TallerDashboardDto {
   tecnicos_activos: number;
   disponibilidad_general: string;
   taller_estado: EstadoTaller;
+  usuarios_activos: number;
+  clientes_registrados: number;
 }
 
 export interface EspecialidadDto {

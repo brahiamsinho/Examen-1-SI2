@@ -35,8 +35,11 @@ async def get_usuarios_admin(
         roles_by_user[uid].append(nombre)
     out: list[UsuarioListRead] = []
     for u in users:
+        rnames = roles_by_user.get(u.id, [])
+        if "CLIENTE" in rnames:
+            continue
         base = UsuarioRead.model_validate(u)
-        out.append(UsuarioListRead(**base.model_dump(), roles=roles_by_user.get(u.id, [])))
+        out.append(UsuarioListRead(**base.model_dump(), roles=rnames))
     return out
 
 
@@ -198,9 +201,44 @@ async def delete_usuario(usuario_id: int, db: AsyncSession, ejecutor_id: int | N
     )
 
 
-async def get_clientes(db: AsyncSession) -> list[Cliente]:
-    result = await db.execute(select(Cliente))
+async def get_clientes(db: AsyncSession, list_tenant_id: int | None = None) -> list[Cliente]:
+    stmt = select(Cliente).order_by(Cliente.id.desc())
+    if list_tenant_id is not None:
+        stmt = stmt.where(Cliente.tenant_id == list_tenant_id)
+    result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_clientes_admin(
+    db: AsyncSession, list_tenant_id: int | None = None
+) -> list:
+    from app.modules.clientes_y_vehiculos.clientes.schemas import ClienteListRead
+
+    stmt = (
+        select(Cliente, Usuario)
+        .join(Usuario, Usuario.id == Cliente.usuario_id)
+        .order_by(Usuario.apellidos, Usuario.nombres)
+    )
+    if list_tenant_id is not None:
+        stmt = stmt.where(Cliente.tenant_id == list_tenant_id)
+    rows = (await db.execute(stmt)).all()
+    out = []
+    for cliente, usuario in rows:
+        out.append(
+            ClienteListRead(
+                id=cliente.id,
+                usuario_id=cliente.usuario_id,
+                nombres=usuario.nombres,
+                apellidos=usuario.apellidos,
+                email=usuario.email,
+                telefono=usuario.telefono,
+                estado=usuario.estado.value if hasattr(usuario.estado, "value") else str(usuario.estado),
+                ciudad=cliente.ciudad,
+                direccion=cliente.direccion,
+                created_at=cliente.created_at,
+            )
+        )
+    return out
 
 
 async def create_cliente(data: dict, db: AsyncSession) -> Cliente:

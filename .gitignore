@@ -99,3 +99,12 @@ mobile/.env
 # ── Locks / configs locales opcionales ───────────────────
 skills-lock.json
 opencode.jsonc
+
+tmp-login.json
+tmp-tenant.json
+tmp-user.json
+tmp-user-token.json
+tmp-user-refresh-token.json
+tmp-user-access-token.json
+tmp-user-refresh-token.json
+docs/puds/_tmp_*

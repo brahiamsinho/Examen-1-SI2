@@ -1,7 +1,77 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-05-28 (memoria Ciclo 4 sincronizada)
+# Fecha: 2026-06-04 (Admin planes/precios + Stripe landing)
+
+## Cambios recientes (2026-06-04) — Admin planes y precios + Stripe ✅
+
+- **Pedido:** ocultar Roles/Permisos del sidebar admin; gestionar planes de la landing + pasarela Stripe.
+- **Sidebar:** grupo **Comercial → Planes y precios** (superadmin); quitado grupo Acceso del menú.
+- **Admin UI:** `/admin/panel/planes-precios` — editar precio, beneficios, CTA, `stripe_price_id`, activo/destacado.
+- **Landing:** planes desde API pública; checkout Stripe con modal de email.
+- **Backend:** migración `0019_pricing_plans.sql`.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-admin-planes-precios-stripe.md`.
+
+## Cambios recientes (2026-06-04) — Rediseño panel taller + accesos ✅
+
+- **Pedido:** UI/UX del panel taller debe cubrir técnicos **y** usuarios/cuentas clientes, roles y permisos.
+- **Shell:** sidebar agrupada (General, Emergencias, Equipo, Accesos y cuentas), iconos, colapsable, mobile drawer, acento verde — patrón admin.
+- **Rutas:** `/taller/panel/accesos/usuarios|clientes|roles|permisos` con guards por permiso JWT.
+- **Backend:** migración `0018_taller_acceso_permisos.sql`; `GET /clientes` con tenant + datos usuario; dashboard con KPIs usuarios/clientes.
+- **Interceptor:** Bearer taller en APIs compartidas cuando la SPA está en `/taller/panel`.
+- **Probar:** re-login en `/taller` tras migración para refrescar permisos en JWT.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-taller-panel-accesos-redesign.md`.
+
+## Cambios recientes (2026-06-04) — Login taller: selector de organización ✅
+
+- **Pedido:** en `/taller`, el slug de organización debe ser seleccionable (no texto libre).
+- **Implementación:** `PublicApiService` → `GET /api/public/tenants`; `taller-login` carga orgs activas y muestra `<select>` con `nombre (slug)`.
+- **Preselección:** query `?org=` → localStorage `ev_tenant_slug` → primera org de la lista.
+- **Archivos:** `public-api.service.ts`, `taller-login.component.{ts,html,scss}`.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-taller-login-org-select.md`.
+
+## Cambios recientes (2026-06-04) — Fix provision taller (422 teléfono corto) ✅
+
+- **Síntoma:** al crear taller en admin, error genérico / confuso; logs `POST /api/talleres/provision` → **422**.
+- **Causa:** `telefono_contacto` con valor `"123"` (< 5 caracteres exigidos por Pydantic). El email del responsable sí era válido; el contacto del taller no se copió automáticamente.
+- **Fix backend:** `TallerProvisionIn` — `@model_validator` rellena `telefono_contacto` / `email_contacto` desde datos del responsable si faltan o son demasiado cortos.
+- **Fix frontend:** validación local + `apiErrorMessage()` con mensajes legibles (422/409); hint «mín. 5 dígitos» en el campo teléfono contacto.
+- **Nota:** si reintentas con el mismo email tras un intento parcial exitoso, verás **409** «El email ya está registrado» — el taller `Angelica` en org `si2-angelica` ya se creó en prueba API.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-fix-provision-taller-telefono.md`.
+
+## Cambios recientes (2026-06-04) — Docker entrypoint migraciones + seeds ✅
+
+- **Objetivo:** al `docker compose up --build`, el backend aplica migraciones y seeds sin pasos manuales.
+- **Entrypoint:** `backend/Dockerfile` → `python -m app.db.docker_bootstrap` → uvicorn.
+- **Migraciones:** Alembic (`stamp head` si initdb ya creó esquema; si no `upgrade head`) + SQL `0002`–`0017` vía tabla `app_sql_migrations`.
+- **Seeds:** `app/seeds/runner.py` compartido; en Compose dev `SEED_*_ON_START=true` y `RUN_SEEDS_IN_LIFESPAN=false` (evita doble ejecución con `--reload`).
+- **Vars:** `RUN_MIGRATIONS_ON_START`, `RUN_SEEDS_ON_START`, `RUN_SEEDS_IN_LIFESPAN` (ver `.env.example`).
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-docker-migrations-seeds-entrypoint.md`.
+
+## Cambios recientes (2026-06-04) — Fix login panel admin ✅
+
+- **Síntoma:** `/admin/login` → *"Tu cuenta no tiene rol de administrador"* (a veces 502 al reiniciar Docker).
+- **Causas:** (1) credencial taller (`luis.rivera@sc-demo.test`) usada en portal admin; (2) seeds `dev_cliente` fallaban 8× al arranque porque `asignar_roles_usuario` bloquea rol `CLIENTE` → backend lento → 502.
+- **Fix:** `asignar_roles_usuario_seed()` en `roles/service.py`; seeds `dev_cliente.py` y `dev_stress_visual.py` migrados.
+- **Login admin demo:** `patricio.mendez@sc-demo.test` / `scdemo1` (rol `ADMIN`, superadmin plataforma).
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-fix-admin-login-seeds-cliente.md`.
+
+## Cambios recientes (2026-06-04) — Fix crear organización ✅
+
+- **Problema:** `POST /api/admin/tenants` devolvía **422** (validación Pydantic) si el slug tenía mayúsculas o espacios; la UI mostraba *"¿slug duplicado?"* (mensaje engañoso).
+- **Causa:** el pattern `^[a-z0-9]+(?:-[a-z0-9]+)*$` se aplicaba **antes** de normalizar; duplicado real sería **409** con `"Slug de tenant ya existe"`.
+- **Fix backend:** `tenants/schemas.py` — `normalize_tenant_slug()` + `@field_validator("slug", mode="before")`; `service.py` reutiliza el helper.
+- **Fix frontend:** `admin-organizaciones.component.ts/html/scss` — normaliza slug al escribir, validación local, `apiErrorMessage()` distingue 409/422/400.
+- **Verificado:** API 201 con body `{"slug":"Nueva-Org-Test",...}` → tenant id 3 slug `nueva-org-test`.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-fix-crear-organizacion-slug.md`.
+
+## Cambios recientes (2026-06-04) — Admin provision taller ✅
+
+- **`POST /api/talleres/provision`:** usuario ACTIVO + rol `TALLER_RESPONSABLE` + taller con `tenant_id` (atómico).
+- **Admin Talleres:** formulario único (datos taller + credenciales login `/taller`); éxito muestra slug + email.
+- **Sidebar:** quitado menú **Usuarios**; altas de responsable solo desde Talleres.
+- **Docs:** DEC-030, `FLOWS_PORTAL_TALLER.md` §6, sesión `2026-06-04-agent-admin-provision-taller.md`.
+- **Probar:** superadmin → Talleres → Nuevo taller → login `/taller` con slug de la org.
 
 ## Ciclo 4 — estado implementación (CU36–CU40)
 
@@ -35,6 +105,38 @@
 - **4.3.1.2 Diseño lógico (paquetes MVC):** EA package **12**, diagrama **39**; PlantUML D-007; doc `docs/puds/diseño/DISEÑO_LOGICO_4_3_1_2_PAQUETES.md`.
 - **Diagrama componente principal:** EA package **13**, diagrama **40**; PlantUML D-008; script `scripts/ea-create-componente-principal.ps1`; doc `docs/puds/diseño/DISEÑO_COMPONENTE_PRINCIPAL.md`.
 - **MCP EA:** `.cursor/mcp.json` incluye `Enterprise Architect` con `-enableEdit` (reiniciar Cursor para usar MCP en chat).
+
+## Índice documentación — sesión 2026-05-28 (hasta este momento)
+
+| Tema | Documento principal |
+|------|---------------------|
+| Flujos `/taller` (registro, login, panel) | **`docs/ai/FLOWS_PORTAL_TALLER.md`** |
+| Secuencia UML registro→login | `docs/diagrams/uml/sequence-taller-registro-login.puml` |
+| Landing rediseño (plan + implementación) | `docs/ai/LANDING_REDESIGN_PLAN.md`, sesión `2026-05-28-agent-landing-paleta-a-dark.md` |
+| Admin SaaS usuarios/talleres | `docs/ai/sessions/2026-05-28-agent-saas-admin-usuarios-talleres.md` |
+| Consolidación sesión | `docs/ai/sessions/2026-05-28-agent-documentacion-flujos-landing.md` |
+
+**Regla rápida:** crear taller ≠ login; registro en `/taller/registro`; login solo en `/taller`.
+
+## Cambios recientes (2026-05-28) — Documentación flujos portal taller ✅
+
+- Análisis formalizado: registro público, verificación email, login con `X-Tenant-Slug`, panel `require_taller_responsable`, contraste `POST /api/talleres/` admin.
+- DEC-029 en `DECISIONS_LOG.md`.
+
+## Cambios recientes (2026-05-28) — Landing Paleta A (Dark Pro Soft) ✅
+
+- Implementado plan **`docs/ai/LANDING_REDESIGN_PLAN.md`** — Paleta A, fases 1–3.
+- Archivos: `frontend/src/app/public/pages/landing/landing-page.component.{html,scss,ts}`, fuentes en `frontend/src/index.html` (Outfit + Inter).
+- Hero: product frame + filas preview; sección bento `#producto`; pricing/accesos/flujo/módulos/CTA; nav glass oscuro al scroll.
+- Ver sesión: `docs/ai/sessions/2026-05-28-agent-landing-paleta-a-dark.md`.
+- Probar: `docker compose up -d --build frontend` → `http://localhost/` (Ctrl+Shift+R).
+
+## Cambios recientes (2026-05-28) — Admin SaaS usuarios/talleres ✅
+
+- Panel **Usuarios:** no lista ni asigna rol `CLIENTE`; alta con `tenant_id` según organización del selector superior; opción “cuenta de plataforma” para superadmin.
+- Panel **Talleres / Usuarios:** filtro de organización **en la página** (sincronizado con navbar); modal «Nuevo taller» / «Crear usuario» con selector de organización en el formulario (no obliga usar solo el navbar).
+- **Clientes:** solo registro móvil con slug (`X-Tenant-Slug`); ver `docs/ai/sessions/2026-05-28-agent-saas-admin-usuarios-talleres.md`.
+- Rebuild: `docker compose up -d --build backend frontend`.
 
 ## Cambios recientes (2026-05-29) — Login admin “colgado” con API OK ✅
 

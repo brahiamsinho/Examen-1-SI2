@@ -24,7 +24,8 @@ export type AdminNavIcon =
   | 'shield'
   | 'key'
   | 'wrench'
-  | 'clipboard';
+  | 'clipboard'
+  | 'credit-card';
 
 export interface AdminNavItem {
   path: string;
@@ -86,11 +87,15 @@ export class AdminShellComponent implements OnInit {
       ],
     },
     {
-      label: 'Acceso',
+      label: 'Comercial',
       items: [
-        { path: '/admin/panel/usuarios', label: 'Usuarios', exact: false, icon: 'users' },
-        { path: '/admin/panel/roles', label: 'Roles', exact: false, icon: 'shield' },
-        { path: '/admin/panel/permisos', label: 'Permisos', exact: false, icon: 'key' },
+        {
+          path: '/admin/panel/planes-precios',
+          label: 'Planes y precios',
+          exact: true,
+          icon: 'credit-card',
+          superadminOnly: true,
+        },
       ],
     },
     {
@@ -107,6 +112,13 @@ export class AdminShellComponent implements OnInit {
     const stored = this.tenantCtx.selectedTenantId();
     this.tenantFilter = stored == null ? 'all' : String(stored);
     this.rebuildNavGroups();
+
+    this.tenantCtx.tenantChanges$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((id) => {
+        this.tenantFilter = id == null ? 'all' : String(id);
+        this.cdr.markForCheck();
+      });
 
     this.syncPageTitle(this.router.url);
     this.router.events
@@ -187,6 +199,7 @@ export class AdminShellComponent implements OnInit {
       '/admin/panel': 'Resumen',
       '/admin/panel/finanzas': 'Finanzas',
       '/admin/panel/organizaciones': 'Organizaciones',
+      '/admin/panel/planes-precios': 'Planes y precios',
       '/admin/panel/usuarios': 'Usuarios',
       '/admin/panel/roles': 'Roles',
       '/admin/panel/permisos': 'Permisos',

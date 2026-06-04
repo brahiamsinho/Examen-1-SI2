@@ -1,12 +1,14 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { distinctUntilChanged, forkJoin, skip } from 'rxjs';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import { AdminTenantContextService } from '../../../core/services/admin-tenant-context.service';
 import type {
   EstadoUsuario,
   RolDto,
+  TenantDto,
   UsuarioCreatePayload,
   UsuarioListDto,
   UsuarioUpdatePayload,
@@ -21,10 +23,16 @@ import type {
 })
 export class AdminUsuariosComponent implements OnInit {
   private readonly api = inject(AdminApiService);
-  private readonly tenantCtx = inject(AdminTenantContextService);
+  readonly tenantCtx = inject(AdminTenantContextService);
+  private readonly destroyRef = inject(DestroyRef);
 
   usuarios: UsuarioListDto[] = [];
   roles: RolDto[] = [];
+  tenants: TenantDto[] = [];
+  /** Organización en modal crear (superadmin, si no es cuenta plataforma). */
+  createTenantId: number | null = null;
+  /** Solo superadmin: alta sin tenant_id (admin global de plataforma). */
+  createPlatformAccount = false;
   search = '';
   estado: EstadoUsuario | '' = '';
   rolFilter = '';
@@ -54,7 +62,37 @@ export class AdminUsuariosComponent implements OnInit {
   readonly estados: EstadoUsuario[] = ['ACTIVO', 'INACTIVO', 'BLOQUEADO', 'PENDIENTE'];
 
   ngOnInit(): void {
+    if (this.tenantCtx.isPlatformSuperadmin()) {
+      this.api
+        .listTenants()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ next: (rows) => (this.tenants = rows) });
+    }
     this.reload();
+    this.tenantCtx.tenantChanges$
+      .pipe(skip(1), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.reload());
+  }
+
+  get assignableRoles(): RolDto[] {
+    return this.roles.filter((r) => r.nombre !== 'CLIENTE');
+  }
+
+  get rolesForFilter(): RolDto[] {
+    return this.assignableRoles;
+  }
+
+  onPageTenantFilterChange(id: number | null): void {
+    this.tenantCtx.setSelectedTenantId(id);
+  }
+
+  openCreateModal(): void {
+    this.error = null;
+    this.createTenantId = this.tenantCtx.selectedTenantId();
+    if (this.tenantCtx.isPlatformSuperadmin() && this.createTenantId == null && this.tenants.length === 1) {
+      this.createTenantId = this.tenants[0].id;
+    }
+    this.modalCreate = true;
   }
 
   reload(): void {
@@ -136,8 +174,21 @@ export class AdminUsuariosComponent implements OnInit {
       this.error = 'La contraseña debe tener al menos 4 caracteres.';
       return;
     }
+    const body: UsuarioCreatePayload = { ...this.createForm };
+    if (this.tenantCtx.isPlatformSuperadmin()) {
+      if (this.createPlatformAccount) {
+        delete body.tenant_id;
+      } else {
+        if (this.createTenantId == null) {
+          this.error =
+            'Selecciona la organización en el formulario o marca "Cuenta de plataforma (sin organización)".';
+          return;
+        }
+        body.tenant_id = this.createTenantId;
+      }
+    }
     this.busy = true;
-    this.api.createUsuario(this.createForm).subscribe({
+    this.api.createUsuario(body).subscribe({
       next: () => {
         this.modalCreate = false;
         this.busy = false;
@@ -151,6 +202,8 @@ export class AdminUsuariosComponent implements OnInit {
           username: '',
           estado: 'ACTIVO',
         };
+        this.createPlatformAccount = false;
+        this.createTenantId = null;
       },
       error: () => {
         this.busy = false;
@@ -162,7 +215,7 @@ export class AdminUsuariosComponent implements OnInit {
   openRoles(u: UsuarioListDto): void {
     this.selected = u;
     const names = new Set(u.roles || []);
-    this.rolIds = new Set(this.roles.filter((r) => names.has(r.nombre)).map((r) => r.id));
+    this.rolIds = new Set(this.assignableRoles.filter((r) => names.has(r.nombre)).map((r) => r.id));
     this.modalRoles = true;
   }
 

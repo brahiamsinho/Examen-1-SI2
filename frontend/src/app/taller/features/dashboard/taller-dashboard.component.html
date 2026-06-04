@@ -1,6 +1,10 @@
 <div class="dash">
-  <h2 class="dash__h">Resumen operativo</h2>
-  <p class="dash__lead">Taller web — resumen y accesos a emergencias, técnicos y configuración.</p>
+  <header class="dash__header">
+    <h2 class="dash__h">Resumen operativo</h2>
+    <p class="dash__lead">
+      Operaciones del taller, equipo técnico, emergencias y gestión de accesos (usuarios, clientes, roles y permisos).
+    </p>
+  </header>
 
   <div class="dash__alert" *ngIf="permisoDenegado" role="status">{{ permisoDenegado }}</div>
   <div class="dash__alert" *ngIf="error" role="alert">{{ error }}</div>
@@ -26,6 +30,16 @@
       <p class="dash__metric"><span class="dash__pill">{{ data.taller_estado }}</span></p>
       <a routerLink="/taller/panel/mi-taller" class="dash__link">Mi taller →</a>
     </article>
+    <article class="dash__card dash__card--accesos" *ngIf="puedeVerUsuarios()">
+      <h3 class="dash__card-title">Usuarios activos</h3>
+      <p class="dash__metric">{{ data.usuarios_activos }}</p>
+      <a routerLink="/taller/panel/accesos/usuarios" class="dash__link">Gestionar usuarios →</a>
+    </article>
+    <article class="dash__card dash__card--accesos" *ngIf="puedeVerClientes()">
+      <h3 class="dash__card-title">Cuentas clientes</h3>
+      <p class="dash__metric">{{ data.clientes_registrados }}</p>
+      <a routerLink="/taller/panel/accesos/clientes" class="dash__link">Ver clientes →</a>
+    </article>
     <article class="dash__card dash__card--emergencias" *ngIf="puedeVerSolicitudesEmergencias()">
       <h3 class="dash__card-title">Emergencias</h3>
       <p class="dash__hint">Bandeja de solicitudes pendientes; en cada incidente podés aceptar o rechazar y asignar técnico.</p>
@@ -38,6 +52,9 @@
     <div class="dash__chips">
       <a routerLink="/taller/panel/mi-taller" class="dash__chip">Mi taller</a>
       <a routerLink="/taller/panel/tecnicos" class="dash__chip">Técnicos</a>
+      <a *ngIf="puedeVerUsuarios()" routerLink="/taller/panel/accesos/usuarios" class="dash__chip">Usuarios</a>
+      <a *ngIf="puedeVerClientes()" routerLink="/taller/panel/accesos/clientes" class="dash__chip">Clientes</a>
+      <a *ngIf="puedeGestionarRoles()" routerLink="/taller/panel/accesos/roles" class="dash__chip">Roles</a>
       <a
         *ngIf="puedeVerSolicitudesEmergencias()"
         routerLink="/taller/panel/emergencias/solicitudes"

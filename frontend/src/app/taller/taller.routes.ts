@@ -47,6 +47,34 @@ export const TALLER_ROUTES: Routes = [
           import('./features/tecnicos/taller-tecnicos.component').then((m) => m.TallerTecnicosComponent),
       },
       {
+        path: 'accesos/usuarios',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'usuarios:leer' },
+        loadComponent: () =>
+          import('./features/accesos/usuarios/taller-usuarios.component').then((m) => m.TallerUsuariosComponent),
+      },
+      {
+        path: 'accesos/clientes',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'clientes:leer' },
+        loadComponent: () =>
+          import('./features/accesos/clientes/taller-clientes.component').then((m) => m.TallerClientesComponent),
+      },
+      {
+        path: 'accesos/roles',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'roles:gestionar' },
+        loadComponent: () =>
+          import('./features/accesos/roles/taller-roles.component').then((m) => m.TallerRolesComponent),
+      },
+      {
+        path: 'accesos/permisos',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'roles:gestionar' },
+        loadComponent: () =>
+          import('./features/accesos/permisos/taller-permisos.component').then((m) => m.TallerPermisosComponent),
+      },
+      {
         path: 'emergencias/solicitudes',
         canActivate: [tallerPermisoGuard],
         data: { permiso: 'solicitudes_taller:leer' },

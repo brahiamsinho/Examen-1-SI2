@@ -3,7 +3,6 @@
 # Punto de entrada principal de la aplicación FastAPI
 # Aquí se registran todos los routers y se configura CORS
 # =========================================================
-import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -16,78 +15,13 @@ from app.core.tenant_middleware import TenantSlugMiddleware
 
 _log = logging.getLogger(__name__)
 
-# Evita dos seeds concurrentes en el mismo proceso (p. ej. uvicorn --reload disparando lifespan dos veces).
-_startup_seed_lock = asyncio.Lock()
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if (
-        settings.SEED_ADMIN_ON_START
-        or settings.SEED_CLIENTE_ON_START
-        or settings.SEED_TALLER_ON_START
-        or settings.SEED_TECNICO_ON_START
-        or settings.SEED_DEMO_SANTA_CRUZ_ON_START
-        or settings.SEED_DEMO_MEDIA_PRIORIDAD_ON_START
-        or settings.SEED_STRESS_VISUAL_ON_START
-    ):
-        from app.core.database import AsyncSessionLocal
-        from app.seeds.dev_admin import ensure_baseline_rol_permisos, ensure_dev_admin
-        from app.seeds.dev_catalogos_vehiculo import ensure_catalogos_vehiculo_demo
-        from app.seeds.dev_cliente import ensure_dev_cliente
-        from app.seeds.dev_tecnico import ensure_dev_tecnico
-        from app.seeds.dev_taller import ensure_dev_taller
-        from app.seeds.dev_demo_media_prioridad import ensure_demo_media_prioridad
-        from app.seeds.dev_demo_santa_cruz import ensure_demo_santa_cruz_datos
-        from app.seeds.dev_stress_visual import ensure_stress_visual_seed
-        from app.seeds.dev_tenant import ensure_default_tenant
+    if settings.RUN_SEEDS_IN_LIFESPAN:
+        from app.seeds.runner import run_startup_seeds, seeds_enabled_for_startup
 
-        async with _startup_seed_lock:
-            # Tras `docker compose up`, Postgres puede reiniciarse al terminar init.sql;
-            # un intento único suele dar Connection refused aunque el healthcheck ya sea "healthy".
-            last_err: BaseException | None = None
-            for attempt in range(1, 9):
-                try:
-                    async with AsyncSessionLocal() as session:
-                        tenant_id = await ensure_default_tenant(session)
-                        await ensure_baseline_rol_permisos(session)
-                        await ensure_catalogos_vehiculo_demo(session)
-                        if settings.SEED_ADMIN_ON_START:
-                            await ensure_dev_admin(session, require_enabled_flag=False)
-                        if settings.SEED_CLIENTE_ON_START:
-                            await ensure_dev_cliente(
-                                session, tenant_id=tenant_id, require_enabled_flag=False
-                            )
-                        if settings.SEED_TALLER_ON_START:
-                            await ensure_dev_taller(
-                                session, tenant_id=tenant_id, require_enabled_flag=False
-                            )
-                        if settings.SEED_TECNICO_ON_START:
-                            await ensure_dev_tecnico(
-                                session, tenant_id=tenant_id, require_enabled_flag=False
-                            )
-                        if settings.SEED_DEMO_SANTA_CRUZ_ON_START:
-                            await ensure_demo_santa_cruz_datos(session, require_enabled_flag=False)
-                        if settings.SEED_DEMO_MEDIA_PRIORIDAD_ON_START:
-                            await ensure_demo_media_prioridad(session, require_enabled_flag=False)
-                        if settings.SEED_STRESS_VISUAL_ON_START:
-                            await ensure_stress_visual_seed(session, require_enabled_flag=False)
-                        await session.commit()
-                    break
-                except Exception as e:
-                    last_err = e
-                    _log.warning(
-                        "Seeds intento %s/8: %s — reintento en 2s",
-                        attempt,
-                        e,
-                    )
-                    await asyncio.sleep(2)
-            else:
-                _log.error(
-                    "Seeds (admin/cliente/taller/técnico) no pudieron tras 8 intentos. "
-                    "Manual: docker compose exec backend python -m app.seeds",
-                    exc_info=last_err,
-                )
+        if seeds_enabled_for_startup():
+            await run_startup_seeds()
     yield
 
 # ── Importar todos los routers si ────────────────────────────────
@@ -101,8 +35,15 @@ from app.modules.acceso_y_administracion.bitacora.router import router as bitaco
 from app.modules.acceso_y_administracion.admin_finanzas.router import (
     router as admin_finanzas_router,
 )
+from app.modules.acceso_y_administracion.admin_dashboard.router import (
+    router as admin_dashboard_router,
+)
 from app.modules.acceso_y_administracion.tenants.router import router as tenants_router
 from app.modules.acceso_y_administracion.public_tenants.router import router as public_tenants_router
+from app.modules.acceso_y_administracion.pricing_plans.router import (
+    admin_router as pricing_plans_admin_router,
+    public_router as pricing_public_router,
+)
 from app.modules.acceso_y_administracion.billing.router import router as billing_webhooks_router
 from app.modules.talleres_y_tecnicos.taller_responsable.router import router as taller_responsable_router
 from app.modules.atencion.taller_emergencias.router import router as taller_emergencias_router
@@ -157,8 +98,11 @@ app.include_router(especialidades_router, prefix=PREFIX)
 app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
 app.include_router(admin_finanzas_router, prefix=PREFIX)
+app.include_router(admin_dashboard_router, prefix=PREFIX)
 app.include_router(tenants_router, prefix=PREFIX)
 app.include_router(public_tenants_router, prefix=PREFIX)
+app.include_router(pricing_plans_admin_router, prefix=PREFIX)
+app.include_router(pricing_public_router, prefix=PREFIX)
 app.include_router(billing_webhooks_router, prefix=PREFIX)
 app.include_router(taller_responsable_router, prefix=PREFIX)
 app.include_router(taller_emergencias_router, prefix=PREFIX)

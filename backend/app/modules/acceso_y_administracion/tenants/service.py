@@ -11,6 +11,7 @@ from app.modules.acceso_y_administracion.tenants.models import (
     PlanTenantEnum,
     Tenant,
 )
+from app.modules.acceso_y_administracion.tenants.schemas import normalize_tenant_slug
 
 DEFAULT_TENANT_SLUG = "demo-sc"
 
@@ -53,7 +54,7 @@ async def ensure_default_tenant(db: AsyncSession) -> Tenant:
 
 
 async def create_tenant(db: AsyncSession, data: dict) -> Tenant:
-    slug = data["slug"].strip().lower()
+    slug = normalize_tenant_slug(data["slug"])
     dup = await get_tenant_by_slug(db, slug)
     if dup is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug de tenant ya existe")

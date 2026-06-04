@@ -39,6 +39,7 @@ Detalle: `docs/diagrams/agent-memory/RULES.md`, `DEPLOYMENT_DIAGRAM_UML_GUIDE.md
 | D-006 | `uml/deployment-docker-azure.puml` | **UML 2.5 despliegue** |
 | D-008 | `uml/componente-principal-sistema.puml` | **UML Component — principal del sistema** |
 | D-010 | `uml/class-auth-login.puml` | UML 2.5 clases |
+| D-011 | `uml/sequence-taller-registro-login.puml` | UML 2.5 secuencia — portal taller |
 
 Inventario completo: `docs/diagrams/README.md`, `agent-memory/CURRENT_STATE.md`.
 
@@ -49,7 +50,8 @@ Inventario completo: `docs/diagrams/README.md`, `agent-memory/CURRENT_STATE.md`.
 | **`PUDS_GUIDE.md`** | Fases PUDS, trazabilidad, cuándo C4 vs UML |
 | `PACKAGE_DESIGN.md` | Paquetes lógicos + enlaces `.puml` |
 | `TRACEABILITY_MATRIX.md` | Pendiente — con `puds` |
-| `SEQUENCE_FLOWS.md` | Pendiente |
+| `SEQUENCE_FLOWS.md` | Índice flujos + enlaces a `.puml` |
+| `FLOWS_PORTAL_TALLER.md` | Flujo completo `/taller` (registro, login, panel) |
 | `COMPONENTS_OVERVIEW.md` | Pendiente |
 
 ## Render local

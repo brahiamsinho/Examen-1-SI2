@@ -2,14 +2,15 @@
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from fastapi import HTTPException, status
 
 from app.core.timeutil import utc_now_naive
 from app.modules.acceso_y_administracion.auth.email_tokens import crear_y_enviar_verificacion_email
 from app.modules.acceso_y_administracion.usuarios.models import Usuario, EstadoUsuarioEnum
 from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
-from app.modules.acceso_y_administracion.roles.models import Rol
+from app.modules.acceso_y_administracion.roles.models import Rol, UsuarioRol
+from app.modules.clientes_y_vehiculos.clientes.models import Cliente
 from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario
 from app.modules.talleres_y_tecnicos.talleres.models import (
     Taller,
@@ -319,6 +320,9 @@ async def dashboard_taller(usuario_id: int, db: AsyncSession) -> TallerDashboard
     taller = t_res.scalar_one_or_none()
     if not taller:
         raise HTTPException(status_code=404, detail="No se encontró taller para tu cuenta.")
+    user = await usuarios_service.get_usuario_by_id(usuario_id, db)
+    tenant_id = user.tenant_id
+
     techs = await talleres_service.get_tecnicos(db, taller_id=taller.id)
     total = len(techs)
     activos = sum(1 for x in techs if x.estado == EstadoTecnicoEnum.ACTIVO)
@@ -327,9 +331,31 @@ async def dashboard_taller(usuario_id: int, db: AsyncSession) -> TallerDashboard
     else:
         pct = round(100 * activos / total)
         disp = f"{activos} de {total} técnicos activos ({pct}% disponibilidad operativa)."
+
+    usuarios_activos = 0
+    clientes_registrados = 0
+    if tenant_id is not None:
+        staff_stmt = (
+            select(func.count(func.distinct(Usuario.id)))
+            .select_from(Usuario)
+            .join(UsuarioRol, UsuarioRol.usuario_id == Usuario.id)
+            .join(Rol, Rol.id == UsuarioRol.rol_id)
+            .where(
+                Usuario.tenant_id == tenant_id,
+                Usuario.estado == EstadoUsuarioEnum.ACTIVO,
+                Rol.nombre != "CLIENTE",
+            )
+        )
+        usuarios_activos = int((await db.execute(staff_stmt)).scalar_one() or 0)
+
+        cli_stmt = select(func.count()).select_from(Cliente).where(Cliente.tenant_id == tenant_id)
+        clientes_registrados = int((await db.execute(cli_stmt)).scalar_one() or 0)
+
     return TallerDashboardRead(
         tecnicos_registrados=total,
         tecnicos_activos=activos,
         disponibilidad_general=disp,
         taller_estado=taller.estado,
+        usuarios_activos=usuarios_activos,
+        clientes_registrados=clientes_registrados,
     )

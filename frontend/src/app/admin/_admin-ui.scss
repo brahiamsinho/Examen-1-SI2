@@ -79,6 +79,37 @@
   border: 1px solid t.$ev-border;
 }
 
+/** Barra de filtros de página (p. ej. organización SaaS) — visible junto al contenido. */
+@mixin ev-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: calc(t.$ev-space * 2);
+  margin-bottom: calc(t.$ev-space * 2);
+  padding: calc(t.$ev-space * 1.75) calc(t.$ev-space * 2);
+  border-radius: t.$ev-radius-md;
+  background: t.$ev-surface;
+  border: 1px solid t.$ev-border;
+  box-shadow: t.$ev-shadow-soft;
+}
+
+@mixin ev-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 220px;
+  flex: 1;
+  max-width: 360px;
+}
+
+@mixin ev-filter-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: t.$ev-muted;
+}
+
 @mixin ev-input {
   padding: 0.625rem 0.875rem;
   border-radius: t.$ev-radius-sm;
@@ -223,6 +254,44 @@
   max-height: 90vh;
   overflow: auto;
   box-shadow: t.$ev-shadow-card;
+  color: t.$ev-text;
+
+  h3 {
+    margin: 0 0 calc(t.$ev-space * 1.5);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: t.$ev-text;
+  }
+}
+
+@mixin ev-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: calc(t.$ev-space * 0.5);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: t.$ev-muted;
+}
+
+@mixin ev-form-field {
+  @include ev-input;
+  width: 100%;
+  box-sizing: border-box;
+
+  option {
+    background: t.$ev-surface;
+    color: t.$ev-text;
+  }
+}
+
+@mixin ev-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: calc(t.$ev-space * 1);
+  margin-top: calc(t.$ev-space * 2);
 }
 
 @mixin ev-badge($bg, $color, $border) {

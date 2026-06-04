@@ -1,8 +1,47 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-05-28 — Ciclo 4 memoria + validación CU36–CU40
+# Actualizado: 2026-06-04 — Admin planes/precios + Stripe landing
 # =========================================================
+
+## ALTA — Planes y precios + Stripe (2026-06-04)
+
+1. Reiniciar backend: `docker compose up -d --build backend` (migración `0019_pricing_plans.sql`).
+2. Admin superadmin → **Comercial → Planes y precios** → editar plan Pro → pegar `stripe_price_id` de Stripe.
+3. Configurar `.env`: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`.
+4. Landing `#precios` → plan de pago → email → redirect Stripe Checkout.
+5. Rebuild frontend si usas Docker: `docker compose up -d --build frontend`.
+
+## ALTA — Login panel admin (verificado 2026-06-04)
+
+1. ~~Seeds CLIENTE bloqueaban arranque~~ — corregido con `asignar_roles_usuario_seed`.
+2. Usar solo **`patricio.mendez@sc-demo.test`** / **`scdemo1`** en `/admin/login`.
+3. Tras `docker compose up --build`, migraciones y seeds demo corren solos (entrypoint); login admin sin `alembic stamp` manual.
+4. Opcional UX: mensaje distinto si el usuario existe pero no tiene rol ADMIN.
+
+## MEDIA — Admin SaaS organizaciones
+
+1. ~~Fix 422 al crear org (slug mayúsculas)~~ — hecho 2026-06-04.
+2. Probar en UI: `/admin/panel/organizaciones` → slug `Mi Empresa` o `Nueva-Org` → debe crear OK; slug `mi-empresa` → 409 con mensaje claro.
+3. Si el frontend Docker no refleja cambios: `docker compose up -d --build frontend`.
+
+## MEDIA — Admin SaaS talleres (provision)
+
+1. ~~Formulario único taller + credenciales~~ — hecho 2026-06-04 (`POST /api/talleres/provision`).
+2. Probar: crear taller en org `demo-sc` → login `/taller` con slug + email + password del formulario.
+3. Opcional: ocultar ruta `/admin/panel/usuarios` o redirigir a talleres.
+
+## MEDIA — PUDS / diagramas (flujos taller)
+
+1. Leer **`docs/ai/FLOWS_PORTAL_TALLER.md`** antes de cambiar registro o login taller.
+2. Exportar o sincronizar **`docs/diagrams/uml/sequence-taller-registro-login.puml`** en EA/draw.io si el examen pide secuencia.
+3. Opcional: extender registro público con `tenant_id` / slug (ver §7 FLOWS_PORTAL_TALLER).
+
+## MEDIA — Landing (post Paleta A)
+
+1. ~~Paleta A + fases 1–3~~ — hecho 2026-05-28; ver `docs/ai/sessions/2026-05-28-agent-landing-paleta-a-dark.md`.
+2. Opcional fase 4–5 del plan: screenshot real panel taller en product frame; acordeón módulos por categoría.
+3. QA contraste WCAG y `prefers-reduced-motion` en navegador real.
 
 ## ALTA — Entorno listo en 5 min
 

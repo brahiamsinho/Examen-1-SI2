@@ -94,3 +94,5 @@ class TallerDashboardRead(BaseModel):
     tecnicos_activos: int
     disponibilidad_general: str
     taller_estado: EstadoTallerEnum
+    usuarios_activos: int = 0
+    clientes_registrados: int = 0

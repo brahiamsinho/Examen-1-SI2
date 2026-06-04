@@ -1,0 +1,5 @@
+@use '../taller-accesos-page';
+
+.pg {
+  @include taller-accesos-page.taller-accesos-page;
+}

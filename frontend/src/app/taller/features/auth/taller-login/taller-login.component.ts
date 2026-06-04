@@ -8,6 +8,10 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TallerAuthService, TallerAuthError } from '../../../../core/services/taller-auth.service';
+import {
+  PublicApiService,
+  PublicTenantOption,
+} from '../../../../core/services/public-api.service';
 import { TenantSlugService } from '../../../../core/services/tenant-slug.service';
 
 @Component({
@@ -23,9 +27,13 @@ export class TallerLoginComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly tenantSlug = inject(TenantSlugService);
+  private readonly publicApi = inject(PublicApiService);
+
+  tenants: PublicTenantOption[] = [];
+  loadingTenants = true;
 
   readonly form = this.fb.nonNullable.group({
-    orgSlug: ['demo-sc', [Validators.required, Validators.minLength(2)]],
+    orgSlug: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(1)]],
     remember: [false],
@@ -37,10 +45,54 @@ export class TallerLoginComponent implements OnInit {
 
   ngOnInit(): void {
     const org = this.route.snapshot.queryParamMap.get('org');
-    const resolved = this.tenantSlug.resolveFromQueryParam(org);
-    if (resolved) {
-      this.form.patchValue({ orgSlug: resolved });
+    const preferred = this.tenantSlug.resolveFromQueryParam(org);
+    this.form.controls.orgSlug.disable();
+
+    this.publicApi.listActiveTenants().subscribe({
+      next: (tenants) => {
+        this.tenants = tenants;
+        this.loadingTenants = false;
+        const slug = this.resolveOrgSlug(preferred, tenants);
+        if (slug) {
+          this.form.patchValue({ orgSlug: slug });
+        }
+        if (tenants.length === 0) {
+          this.form.controls.orgSlug.disable();
+        } else {
+          this.form.controls.orgSlug.enable();
+        }
+      },
+      error: () => {
+        this.loadingTenants = false;
+        if (preferred) {
+          this.form.patchValue({ orgSlug: preferred });
+          this.form.controls.orgSlug.enable();
+        } else {
+          this.form.controls.orgSlug.disable();
+        }
+      },
+    });
+  }
+
+  tenantLabel(t: PublicTenantOption): string {
+    return `${t.nombre} (${t.slug})`;
+  }
+
+  private resolveOrgSlug(
+    preferred: string | null,
+    tenants: PublicTenantOption[],
+  ): string | null {
+    if (preferred && tenants.some((t) => t.slug === preferred)) {
+      return preferred;
     }
+    const stored = this.tenantSlug.get();
+    if (stored && tenants.some((t) => t.slug === stored)) {
+      return stored;
+    }
+    if (tenants.length > 0) {
+      return tenants[0].slug;
+    }
+    return preferred ?? stored;
   }
 
   togglePassword(): void {

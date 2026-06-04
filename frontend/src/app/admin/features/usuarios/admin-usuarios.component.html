@@ -1,8 +1,28 @@
 <div class="usr">
   <h2 class="usr__h">Gestión de usuarios</h2>
-  <p class="usr__lead">Alta, edición, roles y estados</p>
-
+  <p class="usr__lead">
+    Personal de plataforma y de organizaciones (admin, taller, técnico). Los
+    <strong>clientes finales</strong> se registran en la app móvil con el <strong>slug</strong> de la organización.
+  </p>
   <div class="usr__alert" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="usr__filterbar" *ngIf="tenantCtx.isPlatformSuperadmin() && tenants.length">
+    <div class="usr__filter-field">
+      <span class="usr__filter-label">Filtrar listado por organización</span>
+      <select
+        class="usr__select usr__select--filter"
+        [ngModel]="tenantCtx.selectedTenantId()"
+        (ngModelChange)="onPageTenantFilterChange($event)"
+        aria-label="Filtrar usuarios por organización"
+      >
+        <option [ngValue]="null">Todas (plataforma)</option>
+        <option *ngFor="let t of tenants" [ngValue]="t.id">{{ t.nombre }} ({{ t.slug }})</option>
+      </select>
+    </div>
+    <p class="usr__filter-hint">
+      Mismo criterio que el selector del navbar. Al crear usuario, eliges la organización en el formulario.
+    </p>
+  </div>
 
   <div class="usr__toolbar" *ngIf="!loading">
     <input
@@ -18,9 +38,9 @@
     </select>
     <select class="usr__select" [(ngModel)]="rolFilter" aria-label="Filtrar por rol">
       <option value="">Todos los roles</option>
-      <option *ngFor="let r of roles" [value]="r.nombre">{{ r.nombre }}</option>
+      <option *ngFor="let r of rolesForFilter" [value]="r.nombre">{{ r.nombre }}</option>
     </select>
-    <button type="button" class="usr__btn usr__btn--primary" (click)="modalCreate = true">Crear usuario</button>
+    <button type="button" class="usr__btn usr__btn--primary" (click)="openCreateModal()">Crear usuario</button>
   </div>
 
   <p class="usr__muted" *ngIf="loading">Cargando…</p>
@@ -100,6 +120,20 @@
 
   <div class="usr__modal usr__modal--wide" *ngIf="modalCreate" role="dialog" aria-modal="true">
     <h3>Crear usuario</h3>
+    <p class="usr__muted" *ngIf="tenantCtx.isPlatformSuperadmin()">
+      Después de crear, asigna roles (TALLER_RESPONSABLE, TECNICO, ADMIN). No se asigna CLIENTE desde aquí.
+    </p>
+    <label class="usr__check" *ngIf="tenantCtx.isPlatformSuperadmin()">
+      <input type="checkbox" [(ngModel)]="createPlatformAccount" />
+      <span>Cuenta de plataforma (sin organización / sin slug)</span>
+    </label>
+    <ng-container *ngIf="tenantCtx.isPlatformSuperadmin() && !createPlatformAccount">
+      <label class="usr__lbl">Organización <span class="usr__req">*</span></label>
+      <select class="usr__inp" [(ngModel)]="createTenantId" aria-required="true">
+        <option [ngValue]="null">— Selecciona organización —</option>
+        <option *ngFor="let t of tenants" [ngValue]="t.id">{{ t.nombre }} · slug: {{ t.slug }}</option>
+      </select>
+    </ng-container>
     <div class="usr__grid2">
       <label class="usr__lbl">Nombres<input class="usr__inp" [(ngModel)]="createForm.nombres" /></label>
       <label class="usr__lbl">Apellidos<input class="usr__inp" [(ngModel)]="createForm.apellidos" /></label>
@@ -143,7 +177,7 @@
   <div class="usr__modal usr__modal--wide" *ngIf="modalRoles && selected" role="dialog" aria-modal="true">
     <h3>Roles — {{ selected.email }}</h3>
     <p class="usr__muted">Selecciona uno o varios roles y guarda.</p>
-    <label class="usr__check" *ngFor="let r of roles">
+    <label class="usr__check" *ngFor="let r of assignableRoles">
       <input type="checkbox" [checked]="rolIds.has(r.id)" (change)="toggleRol(r.id)" />
       <span>{{ r.nombre }}</span>
       <span class="usr__hint" *ngIf="r.descripcion">— {{ r.descripcion }}</span>

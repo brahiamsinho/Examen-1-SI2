@@ -43,6 +43,7 @@ C4 usa includes remotos de [C4-PlantUML](https://github.com/plantuml-stdlib/C4-P
 | `uml/packages-backend-logical.puml` | UML paquetes | Módulos `app.modules.*` |
 | `uml/sequence-emergencia-alta-cliente.puml` | UML 2.5 secuencia | Alta emergencia cliente |
 | `uml/sequence-auth-login.puml` | UML 2.5 secuencia | Login `POST /api/auth/login` |
+| `uml/sequence-taller-registro-login.puml` | UML 2.5 secuencia | Registro taller → verificación → login → panel (`docs/ai/FLOWS_PORTAL_TALLER.md`) |
 | `uml/class-auth-login.puml` | UML clases | Login `POST /api/auth/login` |
 | `uml/deployment-docker-azure.puml` | UML despliegue | Docker Compose en VM Microsoft Azure |
 | `uml/componente-principal-sistema.puml` | UML Component | Hub FastAPI + módulos + capas |

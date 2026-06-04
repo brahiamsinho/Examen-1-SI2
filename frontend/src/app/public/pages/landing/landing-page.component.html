@@ -1,16 +1,15 @@
 <div class="landing">
-  <!-- Navbar (Figma Make: Navbar.tsx) -->
   <nav class="nav" [class.nav--scrolled]="navScrolled">
     <div class="nav__inner">
       <button type="button" class="nav__brand" (click)="scrollTo('#inicio')">
         <span class="nav__logo" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" fill="currentColor" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7l3-7z" stroke-linejoin="round" />
           </svg>
         </span>
         <span class="nav__brand-text">
           <span class="nav__brand-title">VEHI<span class="nav__brand-accent">ASSIST</span></span>
-          <span class="nav__brand-sub">Plataforma Inteligente</span>
+          <span class="nav__brand-sub">Emergencias vehiculares</span>
         </span>
       </button>
 
@@ -21,11 +20,11 @@
       </div>
 
       <div class="nav__actions nav__actions--desktop">
-        <a routerLink="/taller" class="nav__secondary-link" (click)="closeMenu()">Ingresar taller</a>
+        <a routerLink="/taller" class="nav__secondary-link" (click)="closeMenu()">Ingresar</a>
         <a routerLink="/taller/registro" class="nav__cta">Registrar taller</a>
       </div>
 
-      <button type="button" class="nav__burger" (click)="toggleMenu()" aria-label="Menú">
+      <button type="button" class="nav__burger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-label="Menú">
         @if (menuOpen) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 6L6 18M6 6l12 12" />
@@ -50,31 +49,22 @@
   </nav>
 
   <main>
-    <!-- Hero (Figma Make: HeroSection.tsx) -->
     <section id="inicio" class="hero">
-      <div class="hero__bg" aria-hidden="true">
-        <div class="hero__orb hero__orb--1"></div>
-        <div class="hero__orb hero__orb--2"></div>
-        <div class="hero__orb hero__orb--3"></div>
-        <div class="hero__grid"></div>
-      </div>
-
+      <div class="hero__mesh" aria-hidden="true"></div>
       <div class="hero__content">
-        <div class="hero__grid2">
-          <div class="hero__col hero__col--text">
-            <div class="hero__badge">
-              <span class="hero__badge-dot"></span>
-              <span>Prototipo web + móvil en evolución</span>
-            </div>
-
+        <div class="hero__layout">
+          <div class="hero__copy">
+            <p class="eyebrow">
+              <span class="eyebrow__dot" aria-hidden="true"></span>
+              Plataforma SaaS · Web + móvil
+            </p>
             <h1 class="hero__title">
-              <span class="hero__title-line">Emergencias</span>
-              <span class="hero__title-line">Vehiculares,</span>
-              <span class="hero__title-line hero__title-line--gradient">Coordinadas de punta a punta.</span>
+              Emergencias vehiculares,<br />
+              <span class="hero__title-accent">coordinadas de punta a punta.</span>
             </h1>
             <p class="hero__lead">
-              Cliente reporta desde la app; taller y técnico responden con bandeja, disponibilidad y seguimiento en
-              tiempo real. Aquí entras al <strong>portal web del taller</strong> o revisas cómo está armado el flujo.
+              El cliente reporta desde la app; el taller y el técnico responden con bandeja, mapa y cierre
+              documentado. Multi-tenant con slug por organización.
             </p>
 
             <div class="hero__stats">
@@ -88,280 +78,320 @@
 
             <div class="hero__actions">
               <a routerLink="/taller/registro" class="btn btn--primary">
-                <svg class="btn__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                  <path d="M9 22V12h6v10" />
-                </svg>
                 Registrar taller
-                <svg class="btn__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </a>
-              <button type="button" class="btn btn--ghost" (click)="scrollTo('#como-funciona')">Cómo funciona</button>
-            </div>
-
-            <div class="hero__pills">
-              @for (t of techPills; track t) {
-                <span class="hero__pill">{{ t }}</span>
-              }
+              <button type="button" class="btn btn--ghost" (click)="scrollTo('#precios')">Ver planes</button>
             </div>
           </div>
 
-          <div class="hero__col hero__col--visual">
-            <div class="hero__card">
-              <img [src]="heroImage" alt="Emergencia vehicular asistencia" class="hero__img" width="1080" height="720" />
-              <div class="hero__img-fade"></div>
-              <div class="hero__map">
-                <span class="hero__map-icon" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1118 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                </span>
-                <div class="hero__map-text">
-                  <div class="hero__map-title">Seguimiento en tiempo real</div>
-                  <div class="hero__map-sub">Mecánico a 2.3 km — ETA 8 min</div>
-                </div>
-                <div class="hero__map-status">
-                  <span class="hero__map-pulse"></span>
-                  EN RUTA
-                </div>
-              </div>
+          <div class="product-frame" aria-label="Vista previa del panel de operación">
+            <div class="product-frame__chrome">
+              <span class="product-frame__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="product-frame__title">Panel de operación</span>
+              <span class="product-frame__live">
+                <span class="product-frame__live-dot" aria-hidden="true"></span>
+                En vivo
+              </span>
             </div>
-
-            @for (card of floatingCards; track card.title; let i = $index) {
-              <div [attr.class]="'hero__float hero__float--' + i + ' hero__float--' + card.accent">
-                <div class="hero__float-body">
-                  <span class="hero__float-dot"></span>
+            <div class="product-frame__media">
+              <img [src]="heroImage" alt="" class="product-frame__img" width="1200" height="800" />
+              <div class="product-frame__overlay" aria-hidden="true"></div>
+            </div>
+            <ul class="product-frame__list">
+              @for (row of heroPreviewRows; track row.label) {
+                <li class="product-frame__row">
                   <div>
-                    <div class="hero__float-title">{{ card.title }}</div>
-                    <div class="hero__float-sub">{{ card.sub }}</div>
+                    <span class="product-frame__row-label">{{ row.label }}</span>
+                    <span class="product-frame__row-sub">{{ row.sub }}</span>
                   </div>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-
-        <button type="button" class="hero__scroll" (click)="scrollTo('#caracteristicas')">
-          <span class="hero__scroll-label">Descubrir</span>
-          <span class="hero__scroll-mouse" aria-hidden="true"><span class="hero__scroll-wheel"></span></span>
-        </button>
-      </div>
-    </section>
-
-    <!-- Características -->
-    <section id="caracteristicas" class="band band--tight">
-      <div class="band__inner">
-        <h2 class="band__h">Una sola plataforma, toda la operación</h2>
-        <p class="band__p">
-          Reporte, asignación, desplazamiento y cierre documentado — con visibilidad para cliente, taller y administración.
-        </p>
-        <ul class="feat-list">
-          <li>Geolocalización y ETA para asistencias</li>
-          <li>Roles y permisos alineados a tu modelo de negocio</li>
-          <li>API unificada para web (Angular) y app móvil (Flutter)</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- Accesos reales al prototipo (sustituye CTAs tipo “demo”) -->
-    <section id="portales" class="band band--portales">
-      <div class="band__inner band__inner--wide">
-        <h2 class="band__h">Accesos del entorno</h2>
-        <p class="band__p">
-          El taller se gestiona en <strong>Angular</strong> (este sitio). Cliente y técnico usan la <strong>app Flutter</strong>
-          contra la misma API. Elige el rol que quieras probar:
-        </p>
-        <div class="portales__grid">
-          <a routerLink="/taller/registro" class="portal-card">
-            <span class="portal-card__tag">Web</span>
-            <h3 class="portal-card__title">Alta de taller</h3>
-            <p class="portal-card__desc">Crea el usuario responsable y el perfil del taller (verificación por correo en entorno dev).</p>
-            <span class="portal-card__cta">Ir al registro</span>
-          </a>
-          <a routerLink="/taller" class="portal-card">
-            <span class="portal-card__tag">Web</span>
-            <h3 class="portal-card__title">Portal taller</h3>
-            <p class="portal-card__desc">Inicia sesión cuando el taller ya esté activo: panel, emergencias y operación.</p>
-            <span class="portal-card__cta">Abrir login</span>
-          </a>
-          <a routerLink="/admin" class="portal-card">
-            <span class="portal-card__tag">Web</span>
-            <h3 class="portal-card__title">Administración</h3>
-            <p class="portal-card__desc">Backoffice para roles administrativos del prototipo (usuarios, permisos, catálogos).</p>
-            <span class="portal-card__cta">Ir al admin</span>
-          </a>
-          <div class="portal-card portal-card--static">
-            <span class="portal-card__tag">Móvil</span>
-            <h3 class="portal-card__title">Cliente y técnico</h3>
-            <p class="portal-card__desc">
-              Ejecuta la app Flutter del repositorio apuntando a la API local. Registro de cliente, vehículos, emergencias y
-              bandeja del técnico viven ahí.
-            </p>
+                  <span class="product-frame__badge" [attr.data-tone]="row.tone">{{ row.status }}</span>
+                </li>
+              }
+            </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Cómo funciona -->
-    <section id="como-funciona" class="band">
-      <div class="band__inner band__inner--steps">
-        <h2 class="band__h band__h--center">Cómo funciona</h2>
-        <div class="steps">
-          <div class="step">
-            <span class="step__n">1</span>
-            <h3 class="step__t">Reporte</h3>
-            <p class="step__d">El cliente registra la emergencia y el contexto del vehículo.</p>
-          </div>
-          <div class="step">
-            <span class="step__n">2</span>
-            <h3 class="step__t">Coordinación</h3>
-            <p class="step__d">La plataforma asigna taller o técnico según reglas y cobertura.</p>
-          </div>
-          <div class="step">
-            <span class="step__n">3</span>
-            <h3 class="step__t">Resolución</h3>
-            <p class="step__d">Seguimiento en vivo, bitácora y cierre con trazabilidad.</p>
-          </div>
+    <section class="trust" aria-label="Stack tecnológico">
+      <div class="trust__inner">
+        <span class="trust__label">Construido con</span>
+        <div class="trust__pills">
+          @for (t of stackPills; track t) {
+            <span class="pill">{{ t }}</span>
+          }
         </div>
       </div>
     </section>
 
-    <!-- Módulos (Figma Make: ModulesSection.tsx) -->
-    <section id="modulos" class="modules">
-      <div class="modules__bg" aria-hidden="true"></div>
-      <div class="modules__inner">
-        <header class="modules__head">
-          <div class="modules__tag">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-            <span>Módulos del sistema</span>
-          </div>
-          <h2 class="modules__title">
-            <span class="modules__title-line">9 módulos integrados</span>
-            <span class="modules__title-line modules__title-line--grad">para una operación completa.</span>
-          </h2>
-          <p class="modules__sub">
-            Cada módulo está diseñado para cubrir un aspecto crítico del proceso, funcionando de forma integrada y
-            escalable.
+    <section id="producto" class="bento">
+      <div class="bento__inner">
+        <header class="section-head">
+          <p class="eyebrow eyebrow--section">Producto</p>
+          <h2 class="section-head__title">Una plataforma, toda la operación</h2>
+          <p class="section-head__sub">
+            Diseñado para talleres que contratan el SaaS: incidentes, asignación, seguimiento y administración en un
+            solo lugar.
           </p>
         </header>
-
-        <div class="modules__grid">
-          @for (m of modules; track m.title) {
-            <article class="mod-card" [attr.data-accent]="m.accent">
-              <div class="mod-card__top">
-                <div class="mod-card__icon" [attr.data-a]="m.accent"></div>
-                <span class="mod-card__badge" [attr.data-a]="m.accent">{{ m.badge }}</span>
-              </div>
-              <h3 class="mod-card__title">{{ m.title }}</h3>
-              <p class="mod-card__desc">{{ m.desc }}</p>
+        <div class="bento__grid">
+          @for (cell of bentoCells; track cell.title) {
+            <article class="bento__cell" [class.bento__cell--wide]="cell.size === 'wide'" [class.bento__cell--tall]="cell.size === 'tall'">
+              <span class="bento__icon" [attr.data-icon]="cell.icon" aria-hidden="true"></span>
+              <h3 class="bento__title">{{ cell.title }}</h3>
+              <p class="bento__desc">{{ cell.desc }}</p>
             </article>
           }
         </div>
-
-        <p class="modules__foot">
-          Arquitectura modular diseñada para escalar con tu operación.
-          <span class="modules__foot-accent">Nuevos módulos en desarrollo continuo.</span>
-        </p>
       </div>
     </section>
 
-    <!-- Beneficios -->
-    <section id="beneficios" class="band band--tight">
-      <div class="band__inner band__inner--center">
-        <h2 class="band__h">Beneficios</h2>
-        <p class="band__p">Menos fricción entre actores, más control operativo y datos listos para auditoría y mejora continua.</p>
-      </div>
-    </section>
-
-    <!-- Tecnologías -->
-    <section id="tecnologias" class="band">
-      <div class="band__inner band__inner--center">
-        <h2 class="band__h">Stack</h2>
-        <div class="hero__pills hero__pills--center">
-          @for (t of ['Angular 17', 'FastAPI', 'PostgreSQL', 'Flutter', 'Docker', 'Azure']; track t) {
-            <span class="hero__pill">{{ t }}</span>
+    <section id="precios" class="pricing">
+      <div class="pricing__inner">
+        <header class="section-head section-head--center">
+          <p class="eyebrow eyebrow--section">Planes y precios</p>
+          <h2 class="section-head__title">Escala con tu taller</h2>
+          <p class="section-head__sub">Precios referenciales en BOB para el prototipo académico.</p>
+        </header>
+        <div class="pricing__grid">
+          @if (pricingLoading) {
+            <p class="pricing__loading">Cargando planes…</p>
+          }
+          @for (plan of pricingPlans; track plan.id) {
+            <article class="price-card" [class.price-card--featured]="plan.featured" [attr.data-plan]="plan.id">
+              @if (plan.badge) {
+                <span class="price-card__ribbon">{{ plan.badge }}</span>
+              }
+              <h3 class="price-card__name">{{ plan.name }}</h3>
+              <p class="price-card__desc">{{ plan.description }}</p>
+              <div class="price-card__price">
+                @if (plan.priceMonthly === 0) {
+                  <span class="price-card__amount">Gratis</span>
+                } @else {
+                  <span class="price-card__currency">Bs.</span>
+                  <span class="price-card__amount">{{ plan.priceMonthly }}</span>
+                  <span class="price-card__period">/mes</span>
+                }
+              </div>
+              <ul class="price-card__benefits">
+                @for (b of plan.benefits; track b) {
+                  <li>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    {{ b }}
+                  </li>
+                }
+              </ul>
+              @if (plan.stripeCheckout && stripeEnabled) {
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn--primary]="plan.featured"
+                  [class.btn--ghost]="!plan.featured"
+                  (click)="onPlanCta(plan)"
+                >
+                  {{ plan.ctaLabel }}
+                </button>
+              } @else if (plan.ctaRouterLink) {
+                <a [routerLink]="plan.ctaRouterLink" class="btn" [class.btn--primary]="plan.featured" [class.btn--ghost]="!plan.featured">
+                  {{ plan.ctaLabel }}
+                </a>
+              } @else if (plan.ctaHref) {
+                <button type="button" class="btn btn--ghost" (click)="scrollTo(plan.ctaHref!)">{{ plan.ctaLabel }}</button>
+              }
+            </article>
           }
         </div>
       </div>
     </section>
 
-    <!-- Contacto -->
-    <section id="contacto" class="band band--contact">
-      <div class="band__inner band__inner--center">
-        <h2 class="band__h">Sobre este proyecto</h2>
-        <p class="band__p">
-          Entorno académico / prototipo: sin “solicitud de demo” comercial. Para probar el flujo usa los enlaces de
-          <strong>Accesos</strong>; en desarrollo local los correos de verificación llegan a MailHog.
-        </p>
-        <div class="contact__actions">
-          <button type="button" class="btn btn--ghost" (click)="scrollTo('#portales')">Ver accesos</button>
-          <button type="button" class="btn btn--primary" (click)="scrollTo('#inicio')">Volver arriba</button>
+    <section id="portales" class="access">
+      <div class="access__inner">
+        <header class="section-head">
+          <p class="eyebrow eyebrow--section">Entorno de prueba</p>
+          <h2 class="section-head__title">Accesos del prototipo</h2>
+          <p class="section-head__sub">Taller y admin en web; cliente y técnico en la app Flutter del repositorio.</p>
+        </header>
+        <div class="access__grid">
+          <a routerLink="/taller/registro" class="access-card">
+            <span class="access-card__tag">Web</span>
+            <h3>Alta de taller</h3>
+            <p>Crea responsable y perfil del taller.</p>
+            <span class="access-card__link">Ir al registro →</span>
+          </a>
+          <a routerLink="/taller" class="access-card">
+            <span class="access-card__tag">Web</span>
+            <h3>Portal taller</h3>
+            <p>Bandeja, emergencias y operación.</p>
+            <span class="access-card__link">Abrir login →</span>
+          </a>
+          <a routerLink="/admin" class="access-card">
+            <span class="access-card__tag">Web</span>
+            <h3>Administración</h3>
+            <p>Usuarios, organizaciones y finanzas.</p>
+            <span class="access-card__link">Ir al admin →</span>
+          </a>
+          <div class="access-card access-card--static">
+            <span class="access-card__tag">Móvil</span>
+            <h3>Cliente y técnico</h3>
+            <p>App Flutter + API local + slug de organización.</p>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <section id="como-funciona" class="flow">
+      <div class="flow__inner">
+        <header class="section-head section-head--center">
+          <p class="eyebrow eyebrow--section">Flujo</p>
+          <h2 class="section-head__title">Cómo funciona</h2>
+        </header>
+        <div class="flow__steps">
+          <article class="flow__step">
+            <span class="flow__n">1</span>
+            <h3>Reporte</h3>
+            <p>El cliente registra la emergencia desde la app con el slug de su organización.</p>
+          </article>
+          <article class="flow__step">
+            <span class="flow__n">2</span>
+            <h3>Coordinación</h3>
+            <p>La plataforma asigna taller o técnico según cobertura y disponibilidad.</p>
+          </article>
+          <article class="flow__step">
+            <span class="flow__n">3</span>
+            <h3>Resolución</h3>
+            <p>Seguimiento en vivo, bitácora y cierre con trazabilidad completa.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="modulos" class="modules">
+      <div class="modules__inner">
+        <header class="section-head section-head--center">
+          <p class="eyebrow eyebrow--section">Arquitectura</p>
+          <h2 class="section-head__title">9 módulos integrados</h2>
+          <p class="section-head__sub">Modular, escalable y alineado al backend FastAPI del proyecto.</p>
+        </header>
+        <div class="modules__grid">
+          @for (m of modules; track m.title) {
+            <article class="mod-card" [attr.data-accent]="m.accent">
+              <span class="mod-card__badge">{{ m.badge }}</span>
+              <h3>{{ m.title }}</h3>
+              <p>{{ m.desc }}</p>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section id="stack" class="trust trust--alt">
+      <div class="trust__inner trust__inner--stack">
+        @for (t of ['Angular 17', 'FastAPI', 'PostgreSQL', 'Flutter', 'Docker', 'Azure']; track t) {
+          <span class="pill pill--lg">{{ t }}</span>
+        }
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="cta-band__inner">
+        <h2>¿Listo para probar con tu taller?</h2>
+        <p>Registro gratuito en entorno de desarrollo. Los correos de verificación llegan a MailHog.</p>
+        <div class="cta-band__actions">
+          <a routerLink="/taller/registro" class="btn btn--primary">Registrar taller</a>
+          <button type="button" class="btn btn--ghost" (click)="scrollTo('#portales')">Ver accesos</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="contacto" class="contact">
+      <div class="contact__inner">
+        <h2 class="section-head__title">Proyecto académico</h2>
+        <p class="section-head__sub">
+          Prototipo SI2 — sin demo comercial. Documentación viva en <strong>docs/ai/</strong> del repositorio.
+        </p>
       </div>
     </section>
   </main>
 
-  <!-- Footer (Figma Make: Footer.tsx) -->
   <footer class="footer">
     <div class="footer__main">
       <div class="footer__grid">
         <div class="footer__brand">
           <div class="footer__logo-row">
             <span class="nav__logo nav__logo--lg" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" fill="currentColor" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7l3-7z" stroke-linejoin="round" />
               </svg>
             </span>
             <div>
               <div class="footer__logo-title">VEHI<span class="nav__brand-accent">ASSIST</span></div>
-              <div class="footer__logo-sub">Plataforma Inteligente de Emergencias</div>
+              <div class="footer__logo-sub">Plataforma de emergencias vehiculares</div>
             </div>
           </div>
           <p class="footer__desc">
-            Conectamos clientes, talleres y mecánicos a través de una plataforma inteligente web y móvil para atención
-            vehicular en tiempo real.
+            Coordinación entre cliente, taller y técnico con trazabilidad y operación multi-tenant.
           </p>
-          <div class="footer__social" aria-label="Redes (placeholder)">
-            <a href="#" class="footer__soc" aria-label="GitHub">GH</a>
-            <a href="#" class="footer__soc" aria-label="Twitter">X</a>
-            <a href="#" class="footer__soc" aria-label="LinkedIn">in</a>
-            <a href="#" class="footer__soc" aria-label="Email">&#64;</a>
-          </div>
-          <div class="hero__pills">
-            @for (t of ['Angular', 'FastAPI', 'Flutter', 'Docker', 'Azure']; track t) {
-              <span class="hero__pill">{{ t }}</span>
-            }
-          </div>
         </div>
-
         @for (sec of footerSections; track sec.title) {
           <div class="footer__col">
             <div class="footer__col-title">{{ sec.title }}</div>
             @for (link of sec.links; track link.label) {
-              <button type="button" class="footer__link" (click)="scrollTo(link.href)">{{ link.label }}</button>
+              @if (link.href.startsWith('#')) {
+                <button type="button" class="footer__link" (click)="scrollTo(link.href)">{{ link.label }}</button>
+              } @else {
+                <a [routerLink]="link.href" class="footer__link footer__link--a">{{ link.label }}</a>
+              }
             }
           </div>
         }
       </div>
     </div>
     <div class="footer__bar">
-      <p class="footer__copy">© 2026 VehiAssist — Plataforma Inteligente de Atención de Emergencias Vehiculares.</p>
-      <div class="footer__stack">
-        <a routerLink="/admin" class="footer__portal">Administración</a>
-        <span class="footer__sep" aria-hidden="true">·</span>
-        <a routerLink="/taller" class="footer__portal">Portal taller</a>
-        <span class="footer__sep" aria-hidden="true">·</span>
-        <span>Angular</span>
-        <span>FastAPI</span>
-        <span>Flutter</span>
-      </div>
+      <p>© 2026 VehiAssist — Examen SI2</p>
     </div>
   </footer>
+
+  @if (checkoutModalOpen && checkoutPlan) {
+    <div class="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+      <div class="checkout-modal__backdrop" (click)="closeCheckoutModal()" aria-hidden="true"></div>
+      <div class="checkout-modal__panel">
+        <header class="checkout-modal__head">
+          <h3 id="checkout-title">Pagar plan {{ checkoutPlan.name }}</h3>
+          <button type="button" class="checkout-modal__close" (click)="closeCheckoutModal()" aria-label="Cerrar">×</button>
+        </header>
+        <p class="checkout-modal__lead">
+          Serás redirigido a Stripe Checkout para completar la suscripción mensual de forma segura.
+        </p>
+        <form class="checkout-modal__form" (ngSubmit)="submitCheckout()">
+          <label>
+            Correo de facturación
+            <input
+              type="email"
+              [(ngModel)]="checkoutEmail"
+              name="checkoutEmail"
+              required
+              autocomplete="email"
+              placeholder="tu@taller.com"
+            />
+          </label>
+          @if (checkoutError) {
+            <p class="checkout-modal__error" role="alert">{{ checkoutError }}</p>
+          }
+          <footer class="checkout-modal__foot">
+            <button type="button" class="btn btn--ghost" (click)="closeCheckoutModal()" [disabled]="checkoutBusy">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn--primary" [disabled]="checkoutBusy">
+              {{ checkoutBusy ? 'Redirigiendo…' : 'Continuar con Stripe' }}
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
 </div>

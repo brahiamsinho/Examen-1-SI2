@@ -35,15 +35,19 @@
 
       <form class="taller-login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <div class="taller-login__field">
-          <label class="taller-login__label" for="taller-org">Organización (slug)</label>
-          <input
+          <label class="taller-login__label" for="taller-org">Organización</label>
+          <select
             id="taller-org"
-            type="text"
-            class="taller-login__input"
+            class="taller-login__input taller-login__select"
             formControlName="orgSlug"
             autocomplete="organization"
-            placeholder="demo-sc"
-          />
+          >
+            <option *ngIf="loadingTenants" value="" disabled selected>Cargando organizaciones…</option>
+            <option *ngIf="!loadingTenants && tenants.length === 0" value="" disabled selected>
+              No hay organizaciones disponibles
+            </option>
+            <option *ngFor="let t of tenants" [value]="t.slug">{{ tenantLabel(t) }}</option>
+          </select>
         </div>
         <div class="taller-login__field">
           <label class="taller-login__label" for="taller-email">Correo electrónico</label>
@@ -107,7 +111,7 @@
           <a class="taller-login__link" routerLink="/taller/recuperar">¿Olvidaste tu contraseña?</a>
         </div>
 
-        <button class="taller-login__submit" type="submit" [disabled]="submitting">
+        <button class="taller-login__submit" type="submit" [disabled]="submitting || loadingTenants">
           {{ submitting ? 'Entrando…' : 'Iniciar sesión' }}
         </button>
 

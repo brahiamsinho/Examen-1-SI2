@@ -1,0 +1,50 @@
+@startuml sequence-taller-registro-login
+' UML 2.5 — Flujo portal taller: registro público, verificación, login, panel
+' Fuente de verdad narrativa: docs/ai/FLOWS_PORTAL_TALLER.md
+title Flujo — Registro taller, verificación y login (/taller)
+
+actor Responsable as U
+participant "Angular\n/taller/registro" as FE_REG
+participant "Angular\n/taller" as FE_LOGIN
+participant "Angular\n/taller/panel" as FE_PANEL
+participant "API Auth\n/api/auth" as AUTH
+participant "API Taller\n/api/app/taller" as TALLER
+database "PostgreSQL" as DB
+participant "Mail\nMailHog/SMTP" as MAIL
+
+== A. Registro público (sin sesión) ==
+U -> FE_REG : Completar formulario alta
+FE_REG -> TALLER : POST /app/taller/registro
+TALLER -> DB : INSERT usuario (PENDIENTE)
+TALLER -> DB : INSERT rol TALLER_RESPONSABLE
+TALLER -> DB : INSERT taller (PENDIENTE,\nusuario_responsable_id)
+TALLER -> MAIL : Email verificación (72h)
+TALLER --> FE_REG : 201 MiTallerRead
+FE_REG --> U : Revisar correo
+
+== B. Activación ==
+U -> AUTH : GET /auth/verificar-email?token=...
+AUTH -> DB : UPDATE usuario → ACTIVO
+AUTH --> U : Cuenta activa
+
+== C. Login portal ==
+U -> FE_LOGIN : org slug + email + password
+FE_LOGIN -> AUTH : POST /auth/login\nHeader: X-Tenant-Slug
+AUTH -> DB : Validar credenciales y tenant
+AUTH --> FE_LOGIN : access_token + refresh_token
+FE_LOGIN -> AUTH : GET /auth/me (Bearer)
+AUTH --> FE_LOGIN : roles incl. TALLER_RESPONSABLE
+FE_LOGIN -> FE_PANEL : navigate /taller/panel
+
+== D. Operación (sesión) ==
+U -> FE_PANEL : Mi taller / técnicos / bandeja
+FE_PANEL -> TALLER : GET/PUT ... (Bearer)
+TALLER -> DB : SELECT taller\nWHERE usuario_responsable_id = user.id
+TALLER --> FE_PANEL : datos operación
+
+note right of TALLER
+  Login NO crea taller.
+  Un usuario responsable = máximo un taller (UNIQUE FK).
+end note
+
+@enduml

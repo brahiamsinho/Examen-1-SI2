@@ -39,6 +39,31 @@ export class AdminTenantContextService {
     return id != null ? { tenant_id: id } : {};
   }
 
+  /** tenant_id en body POST al crear usuarios/talleres dentro de una organización. */
+  tenantCreateBody(): { tenant_id?: number } {
+    return this.tenantQueryParam();
+  }
+
+  orgScopeLabel(tenants: { id: number; slug: string; nombre: string }[]): string {
+    if (!this.isPlatformSuperadmin()) {
+      return '';
+    }
+    const id = this.selectedTenantId();
+    if (id == null) {
+      return 'Todas (plataforma) — elige una organización para dar de alta personal o talleres.';
+    }
+    const t = tenants.find((x) => x.id === id);
+    return t ? `${t.nombre} · slug: ${t.slug}` : `Organización #${id}`;
+  }
+
+  tenantById(
+    tenants: { id: number; slug: string; nombre: string }[],
+    id: number | null,
+  ): { id: number; slug: string; nombre: string } | null {
+    if (id == null) return null;
+    return tenants.find((x) => x.id === id) ?? null;
+  }
+
   private readStored(): number | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;

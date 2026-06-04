@@ -1,5 +1,4 @@
 import {
-  afterNextRender,
   booleanAttribute,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -13,13 +12,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError, distinctUntilChanged, skip, timeout } from 'rxjs/operators';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import { AdminTenantContextService } from '../../../core/services/admin-tenant-context.service';
 import type {
   AdminComisionSerieFila,
-  AdminFinanzasReportes,
   AdminFinanzasResumen,
   BitacoraDto,
   TallerComisionFila,
@@ -51,7 +49,7 @@ export class AdminDashboardComponent implements OnInit {
   serieComisiones: AdminComisionSerieFila[] = [];
   desde = '';
   hasta = '';
-  loading = true;
+  loadingCounts = true;
   loadingFinanzas = true;
   error: string | null = null;
   finanzasError: string | null = null;
@@ -64,23 +62,19 @@ export class AdminDashboardComponent implements OnInit {
     { path: '/admin/panel/bitacora', label: 'Bitácora' },
   ] as const;
 
-  constructor() {
-    afterNextRender(() => {
-      if (this.finanzasOnly()) {
-        this.loading = false;
-        this.loadFinanzas();
-      } else {
-        this.loadPanel();
-      }
-    });
-  }
-
   ngOnInit(): void {
     const now = new Date();
     const prev = new Date();
     prev.setDate(now.getDate() - 30);
     this.desde = this.toDateInput(prev);
     this.hasta = this.toDateInput(now);
+
+    if (this.finanzasOnly()) {
+      this.loadingCounts = false;
+      this.loadFinanzas();
+    } else {
+      this.loadPanelCounts();
+    }
 
     this.tenantCtx.tenantChanges$
       .pipe(
@@ -92,15 +86,15 @@ export class AdminDashboardComponent implements OnInit {
         if (this.finanzasOnly()) {
           this.loadFinanzas();
         } else {
-          this.loadPanel();
+          this.loadPanelCounts();
         }
       });
 
     setTimeout(() => {
-      if (this.loading) {
-        this.loading = false;
+      if (this.loadingCounts) {
+        this.loadingCounts = false;
         if (!this.error) {
-          this.error = 'La carga tardó demasiado. Revisa Docker y recarga la página.';
+          this.error = 'La carga de conteos tardó demasiado. Revisa Docker y recarga la página.';
         }
         this.cdr.markForCheck();
       }
@@ -144,41 +138,31 @@ export class AdminDashboardComponent implements OnInit {
     return `${this.toNumber(value).toFixed(2)}%`;
   }
 
-  private loadPanel(): void {
-    this.loading = true;
+  /** Conteos primero (rápido); finanzas después para que el usuario vea tarjetas sin esperar SQL pesado. */
+  private loadPanelCounts(): void {
+    this.loadingCounts = true;
     this.error = null;
 
     const tenant = this.tenantCtx.tenantQueryParam();
-
-    forkJoin({
-      usuarios: this.api.listUsuarios(tenant).pipe(
-        timeout(15_000),
-        catchError(() => of([])),
-      ),
-      talleres: this.api.listTalleres(tenant).pipe(
-        timeout(15_000),
-        catchError(() => of([])),
-      ),
-      roles: this.api.listRoles().pipe(timeout(15_000), catchError(() => of([]))),
-      bitacora: this.api
-        .listBitacora({ limit: 8, offset: 0 })
-        .pipe(timeout(15_000), catchError(() => of([]))),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.api
+      .getPanelOverview(tenant)
+      .pipe(timeout(10_000), takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ usuarios, talleres, roles, bitacora }) => {
-          this.totalUsuarios = usuarios?.length ?? 0;
-          this.totalTalleres = talleres?.length ?? 0;
-          this.totalRoles = roles?.length ?? 0;
-          this.actividad = bitacora ?? [];
-          this.loading = false;
+        next: (overview) => {
+          this.totalUsuarios = overview.total_usuarios;
+          this.totalTalleres = overview.total_talleres;
+          this.totalRoles = overview.total_roles;
+          this.actividad = overview.actividad_reciente ?? [];
+          this.loadingCounts = false;
           this.cdr.markForCheck();
           this.loadFinanzas();
         },
         error: () => {
-          this.error = 'No se pudieron cargar los datos del panel.';
-          this.loading = false;
+          this.error =
+            'No se pudieron cargar los conteos. ¿Reconstruiste el backend? (docker compose up -d --build backend)';
+          this.loadingCounts = false;
           this.cdr.markForCheck();
+          this.loadFinanzas();
         },
       });
   }
@@ -188,18 +172,19 @@ export class AdminDashboardComponent implements OnInit {
     this.finanzasError = null;
     const filters = { ...this.dateFilters(), ...this.tenantCtx.tenantQueryParam() };
 
-    forkJoin({
-      resumen: this.api.getFinanzasResumen(filters).pipe(catchError(() => of(null))),
-      reportes: this.api.getFinanzasReportes(filters).pipe(catchError(() => of(null))),
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.api
+      .getFinanzasReportes(filters)
+      .pipe(timeout(20_000), catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ resumen, reportes }) => {
-          const data = this.resolveReportData(resumen, reportes);
-          this.finanzas = data?.resumen ?? resumen;
-          this.topTalleres = data?.top_talleres ?? this.finanzas?.por_taller?.slice(0, 5) ?? [];
-          this.serieComisiones = data?.serie_diaria ?? [];
-          if (!this.finanzas) {
+        next: (reportes) => {
+          if (reportes?.resumen) {
+            this.finanzas = reportes.resumen;
+            this.topTalleres = reportes.top_talleres ?? [];
+            this.serieComisiones = reportes.serie_diaria ?? [];
+          } else {
+            this.finanzas = null;
+            this.topTalleres = [];
+            this.serieComisiones = [];
             this.finanzasError = 'No se pudieron cargar las métricas financieras.';
           }
           this.loadingFinanzas = false;
@@ -211,16 +196,6 @@ export class AdminDashboardComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
-  }
-
-  private resolveReportData(
-    resumen: AdminFinanzasResumen | null,
-    reportes: AdminFinanzasReportes | null,
-  ): AdminFinanzasReportes | null {
-    if (reportes?.resumen) return reportes;
-    if (!resumen) return null;
-    const porTaller = Array.isArray(resumen.por_taller) ? resumen.por_taller : [];
-    return { resumen, top_talleres: porTaller.slice(0, 5), serie_diaria: [] };
   }
 
   private dateFilters(): { desde?: string; hasta?: string } {

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import type {
   PlanTenant,
@@ -8,6 +9,8 @@ import type {
   TenantDto,
   TenantUpdatePayload,
 } from '../../../core/models/admin-api.models';
+
+const TENANT_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 @Component({
   selector: 'app-admin-organizaciones',
@@ -57,22 +60,79 @@ export class AdminOrganizacionesComponent implements OnInit {
     });
   }
 
+  closeModals(): void {
+    this.modalCreate = false;
+    this.modalEdit = false;
+    this.selected = null;
+  }
+
   openCreate(): void {
     this.createForm = { slug: '', nombre: '', plan: 'STARTER' };
+    this.error = null;
     this.modalCreate = true;
   }
 
+  private normalizeSlug(raw: string): string {
+    return raw
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  private apiErrorMessage(err: unknown, fallback: string): string {
+    if (!(err instanceof HttpErrorResponse)) {
+      return fallback;
+    }
+    const detail = err.error?.detail;
+    if (typeof detail === 'string') {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const msgs = detail
+        .map((item: { msg?: string }) => item?.msg)
+        .filter((msg): msg is string => Boolean(msg));
+      if (msgs.length) {
+        return msgs.join(' ');
+      }
+    }
+    if (err.status === 409) {
+      return 'Ese slug ya existe. Elige otro identificador único.';
+    }
+    if (err.status === 422) {
+      return 'Revisa el slug: solo minúsculas, números y guiones (ej. mi-empresa).';
+    }
+    return fallback;
+  }
+
   submitCreate(): void {
+    const slug = this.normalizeSlug(this.createForm.slug);
+    const nombre = this.createForm.nombre.trim();
+    if (!slug || !nombre) {
+      this.error = 'Slug y nombre son obligatorios.';
+      return;
+    }
+    if (!TENANT_SLUG_PATTERN.test(slug)) {
+      this.error = 'Slug inválido: usa minúsculas, números y guiones (ej. mi-empresa).';
+      return;
+    }
     this.busy = true;
-    this.api.createTenant(this.createForm).subscribe({
+    this.error = null;
+    const body: TenantCreatePayload = {
+      slug,
+      nombre,
+      plan: this.createForm.plan,
+    };
+    this.api.createTenant(body).subscribe({
       next: () => {
         this.busy = false;
-        this.modalCreate = false;
+        this.closeModals();
         this.reload();
       },
-      error: () => {
+      error: (err) => {
         this.busy = false;
-        this.error = 'No se pudo crear la organización (¿slug duplicado?).';
+        this.error = this.apiErrorMessage(err, 'No se pudo crear la organización.');
       },
     });
   }
@@ -127,7 +187,7 @@ export class AdminOrganizacionesComponent implements OnInit {
           this.api.linkTenantStripeCustomer(this.selected!.id, this.stripeCustomerId.trim()).subscribe({
             next: () => {
               this.busy = false;
-              this.modalEdit = false;
+              this.closeModals();
               this.reload();
             },
             error: () => {
@@ -139,7 +199,7 @@ export class AdminOrganizacionesComponent implements OnInit {
           return;
         }
         this.busy = false;
-        this.modalEdit = false;
+        this.closeModals();
         this.reload();
       },
       error: () => {

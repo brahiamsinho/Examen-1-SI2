@@ -1,5 +1,5 @@
 # app/modules/usuarios/router.py
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -8,7 +8,7 @@ from app.core.tenant import AuthContext
 from app.core.tenant_context import effective_list_tenant_id
 from app.modules.acceso_y_administracion.usuarios import service
 from app.modules.acceso_y_administracion.roles.schemas import AsignarRolesAUsuario
-from app.modules.clientes_y_vehiculos.clientes.schemas import ClienteCreate, ClienteRead
+from app.modules.clientes_y_vehiculos.clientes.schemas import ClienteCreate, ClienteListRead, ClienteRead
 from app.modules.acceso_y_administracion.usuarios.schemas import (
     UsuarioCreate,
     UsuarioRead,
@@ -48,8 +48,9 @@ async def crear_usuario(
     current_user: Usuario = Depends(get_current_user),
 ):
     payload = body.model_dump()
-    if payload.get("tenant_id") is None and not ctx.is_platform_superadmin:
+    if not ctx.is_platform_superadmin:
         payload["tenant_id"] = ctx.tenant_id
+    # Superadmin: tenant_id null = cuenta de plataforma; con valor = personal de esa organización.
     return await service.create_usuario(payload, db, ejecutor_id=current_user.id)
 
 
@@ -87,9 +88,15 @@ async def asignar_roles_a_usuario(
 # ── Clientes ─────────────────────────────────────────────────
 clientes_router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
-@clientes_router.get("/", response_model=list[ClienteRead])
-async def listar_clientes(db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    return await service.get_clientes(db)
+@clientes_router.get("/", response_model=list[ClienteListRead])
+async def listar_clientes(
+    tenant_id: int | None = Query(default=None, description="Filtro tenant (solo superadmin)"),
+    ctx: AuthContext = Depends(bind_auth_context),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    scope = effective_list_tenant_id(ctx, tenant_id)
+    return await service.get_clientes_admin(db, list_tenant_id=scope)
 
 
 @clientes_router.post("/", response_model=ClienteRead, status_code=status.HTTP_201_CREATED)

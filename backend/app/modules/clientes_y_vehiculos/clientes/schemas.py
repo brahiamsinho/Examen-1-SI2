@@ -20,3 +20,18 @@ class ClienteRead(BaseModel):
     ciudad: Optional[str]
     direccion: Optional[str]
     created_at: Optional[datetime]
+
+
+class ClienteListRead(BaseModel):
+    """Cliente con datos de identidad del usuario (listados admin / portal taller)."""
+
+    id: int
+    usuario_id: int
+    nombres: str
+    apellidos: str
+    email: str
+    telefono: str
+    estado: str
+    ciudad: Optional[str]
+    direccion: Optional[str]
+    created_at: Optional[datetime]

@@ -17,7 +17,9 @@ services:
     environment:
       DEBUG: "true"
       ENVIRONMENT: "development"
-      # Dev local: seeds idempotentes al arrancar (admin + opcional cliente + taller).
+      RUN_MIGRATIONS_ON_START: "true"
+      RUN_SEEDS_IN_LIFESPAN: "false"
+      # Dev local: migraciones + seeds idempotentes vía entrypoint antes de uvicorn.
       SEED_ADMIN_ON_START: "true"
       SEED_CLIENTE_ON_START: "true"
       SEED_TALLER_ON_START: "true"

@@ -13,6 +13,8 @@ class UsuarioCreate(BaseModel):
     password: str
     username: Optional[str] = None
     estado: EstadoUsuarioEnum = EstadoUsuarioEnum.ACTIVO
+    # null = cuenta plataforma; con valor = personal de esa organización SaaS
+    tenant_id: Optional[int] = None
 
 
 class UsuarioRead(BaseModel):

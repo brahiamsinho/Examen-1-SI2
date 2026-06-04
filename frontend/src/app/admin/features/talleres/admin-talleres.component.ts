@@ -8,17 +8,19 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 import { distinctUntilChanged, skip } from 'rxjs/operators';
 import { AdminApiService } from '../../../core/services/admin-api.service';
+import { AdminAuthService } from '../../../core/services/admin-auth.service';
 import { AdminTenantContextService } from '../../../core/services/admin-tenant-context.service';
 import type {
   EstadoTaller,
-  TallerCreatePayload,
+  TenantDto,
   TallerDto,
+  TallerProvisionDto,
+  TallerProvisionPayload,
   TallerUpdatePayload,
-  UsuarioListDto,
 } from '../../../core/models/admin-api.models';
 
 @Component({
@@ -31,12 +33,14 @@ import type {
 })
 export class AdminTalleresComponent implements OnInit {
   private readonly api = inject(AdminApiService);
-  private readonly tenantCtx = inject(AdminTenantContextService);
+  private readonly auth = inject(AdminAuthService);
+  readonly tenantCtx = inject(AdminTenantContextService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
   talleres: TallerDto[] = [];
-  usuarios: UsuarioListDto[] = [];
+  tenants: TenantDto[] = [];
+  createTenantId: number | null = null;
   search = '';
   estado: EstadoTaller | '' = '';
   loading = true;
@@ -46,31 +50,46 @@ export class AdminTalleresComponent implements OnInit {
   detail: TallerDto | null = null;
   modalEdit = false;
   modalCreate = false;
+  provisionResult: TallerProvisionDto | null = null;
   editId: number | null = null;
   editForm: TallerUpdatePayload = {};
-  createForm: TallerCreatePayload = {
-    usuario_responsable_id: 0,
+  provisionForm: TallerProvisionPayload = {
     nombre_comercial: '',
     telefono_contacto: '',
     email_contacto: '',
     direccion: '',
     ciudad: '',
     descripcion: '',
-    estado: 'PENDIENTE',
+    estado: 'ACTIVO',
+    responsable_nombre_completo: '',
+    responsable_email: '',
+    responsable_telefono: '',
+    responsable_password: '',
   };
+  provisionPassword2 = '';
 
   readonly estados: EstadoTaller[] = ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'INACTIVO'];
 
-  /** Usuarios con rol taller (responsable); el desplegable de nuevo taller solo los lista. */
-  get responsablesTaller(): UsuarioListDto[] {
-    return this.usuarios.filter((u) => (u.roles || []).includes('TALLER_RESPONSABLE'));
+  get createTenantSlug(): string | null {
+    const t = this.tenantCtx.tenantById(this.tenants, this.createTenantId);
+    return t?.slug ?? null;
   }
 
   ngOnInit(): void {
+    if (this.tenantCtx.isPlatformSuperadmin()) {
+      this.api
+        .listTenants()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ next: (rows) => (this.tenants = rows) });
+    }
     this.reload();
     this.tenantCtx.tenantChanges$
       .pipe(skip(1), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.reload());
+  }
+
+  onPageTenantFilterChange(id: number | null): void {
+    this.tenantCtx.setSelectedTenantId(id);
   }
 
   reload(): void {
@@ -78,18 +97,12 @@ export class AdminTalleresComponent implements OnInit {
     this.error = null;
     this.cdr.markForCheck();
     const tq = this.tenantCtx.tenantQueryParam();
-    forkJoin({ talleres: this.api.listTalleres(tq), usuarios: this.api.listUsuarios(tq) })
+    this.api
+      .listTalleres(tq)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ talleres, usuarios }) => {
+        next: (talleres) => {
           this.talleres = talleres;
-          this.usuarios = usuarios;
-          const firstResp = this.responsablesTaller[0];
-          if (firstResp) {
-            this.createForm.usuario_responsable_id = firstResp.id;
-          } else {
-            this.createForm.usuario_responsable_id = 0;
-          }
           this.loading = false;
           this.error = null;
           this.cdr.markForCheck();
@@ -100,6 +113,13 @@ export class AdminTalleresComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  private resolveCreateTenantId(): number | null {
+    if (!this.tenantCtx.isPlatformSuperadmin()) {
+      return this.auth.getMe()?.tenant_id ?? null;
+    }
+    return this.createTenantId;
   }
 
   get filtered(): TallerDto[] {
@@ -122,9 +142,87 @@ export class AdminTalleresComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    const first = this.responsablesTaller[0];
-    this.createForm.usuario_responsable_id = first?.id ?? 0;
+    this.error = null;
+    this.provisionResult = null;
+    this.provisionPassword2 = '';
+    this.createTenantId = this.tenantCtx.selectedTenantId();
+    if (this.tenantCtx.isPlatformSuperadmin() && this.createTenantId == null && this.tenants.length === 1) {
+      this.createTenantId = this.tenants[0].id;
+    }
+    this.provisionForm = {
+      nombre_comercial: '',
+      telefono_contacto: '',
+      email_contacto: '',
+      direccion: '',
+      ciudad: '',
+      descripcion: '',
+      estado: 'ACTIVO',
+      responsable_nombre_completo: '',
+      responsable_email: '',
+      responsable_telefono: '',
+      responsable_password: '',
+    };
     this.modalCreate = true;
+    this.cdr.markForCheck();
+  }
+
+  copyContactFromResponsable(): void {
+    if (this.provisionForm.responsable_email) {
+      this.provisionForm.email_contacto = this.provisionForm.responsable_email;
+    }
+    if (this.provisionForm.responsable_telefono) {
+      this.provisionForm.telefono_contacto = this.provisionForm.responsable_telefono;
+    }
+    this.cdr.markForCheck();
+  }
+
+  private apiErrorMessage(err: unknown, fallback: string): string {
+    if (!(err instanceof HttpErrorResponse)) {
+      return fallback;
+    }
+    const detail = err.error?.detail;
+    if (typeof detail === 'string') {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const msgs = detail
+        .map((item: { msg?: string; loc?: (string | number)[] }) => {
+          const field = Array.isArray(item?.loc) ? item.loc[item.loc.length - 1] : null;
+          const label =
+            field === 'telefono_contacto'
+              ? 'Teléfono contacto del taller'
+              : field === 'responsable_telefono'
+                ? 'Teléfono del responsable'
+                : field === 'responsable_email'
+                  ? 'Email del responsable'
+                  : field === 'email_contacto'
+                    ? 'Email contacto del taller'
+                    : null;
+          if (label && item?.msg) {
+            return `${label}: ${item.msg}`;
+          }
+          return item?.msg ?? '';
+        })
+        .filter((msg): msg is string => Boolean(msg));
+      if (msgs.length) {
+        return msgs.join(' ');
+      }
+    }
+    if (err.status === 409) {
+      return 'Ese email o teléfono ya está registrado en la organización. Usa otros datos o edita el usuario existente.';
+    }
+    return fallback;
+  }
+
+  private normalizeProvisionContact(): void {
+    const tel = this.provisionForm.telefono_contacto.trim();
+    const rtel = this.provisionForm.responsable_telefono.trim();
+    if (tel.length < 5 && rtel.length >= 5) {
+      this.provisionForm.telefono_contacto = rtel;
+    }
+    if (!this.provisionForm.email_contacto.trim() && this.provisionForm.responsable_email.trim()) {
+      this.provisionForm.email_contacto = this.provisionForm.responsable_email.trim();
+    }
   }
 
   openEdit(t: TallerDto): void {
@@ -160,32 +258,53 @@ export class AdminTalleresComponent implements OnInit {
     });
   }
 
-  create(): void {
-    if (!this.createForm.usuario_responsable_id) {
-      this.error = 'Elige un usuario responsable con rol TALLER_RESPONSABLE.';
+  provision(): void {
+    const tid = this.resolveCreateTenantId();
+    if (tid == null) {
+      this.error = 'Selecciona la organización en el formulario.';
       return;
     }
+    if (!this.provisionForm.responsable_password || this.provisionForm.responsable_password.length < 4) {
+      this.error = 'La contraseña debe tener al menos 4 caracteres.';
+      return;
+    }
+    if (this.provisionForm.responsable_password !== this.provisionPassword2) {
+      this.error = 'Las contraseñas no coinciden.';
+      return;
+    }
+    if (!this.provisionForm.nombre_comercial.trim() || !this.provisionForm.responsable_nombre_completo.trim()) {
+      this.error = 'Completa nombre del taller y del responsable.';
+      return;
+    }
+    this.normalizeProvisionContact();
+    if (this.provisionForm.telefono_contacto.trim().length < 5) {
+      this.error = 'El teléfono de contacto del taller debe tener al menos 5 caracteres (o usa el del responsable).';
+      return;
+    }
+    if (this.provisionForm.responsable_telefono.trim().length < 5) {
+      this.error = 'El teléfono del responsable debe tener al menos 5 caracteres.';
+      return;
+    }
+    if (!this.provisionForm.responsable_email.trim() || !this.provisionForm.email_contacto.trim()) {
+      this.error = 'Completa el email de contacto y el email de login del responsable.';
+      return;
+    }
+    const payload: TallerProvisionPayload = { ...this.provisionForm, tenant_id: tid };
     this.busy = true;
-    this.api.createTaller(this.createForm).subscribe({
-      next: (t) => {
-        this.talleres = [...this.talleres, t];
-        this.modalCreate = false;
+    this.error = null;
+    this.api.provisionTaller(payload).subscribe({
+      next: (result) => {
+        this.talleres = [...this.talleres, result];
+        this.provisionResult = result;
         this.busy = false;
-        this.createForm = {
-          usuario_responsable_id: this.responsablesTaller[0]?.id ?? 0,
-          nombre_comercial: '',
-          telefono_contacto: '',
-          email_contacto: '',
-          direccion: '',
-          ciudad: '',
-          descripcion: '',
-          estado: 'PENDIENTE',
-        };
         this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
         this.busy = false;
-        this.error = 'No se pudo crear el taller (revisa usuario responsable y datos).';
+        this.error = this.apiErrorMessage(
+          err,
+          'No se pudo crear el taller. Revisa organización, datos obligatorios o email/teléfono duplicados.',
+        );
         this.cdr.markForCheck();
       },
     });
@@ -209,9 +328,14 @@ export class AdminTalleresComponent implements OnInit {
   }
 
   closeModals(): void {
+    const wasCreate = this.modalCreate;
     this.detail = null;
     this.modalEdit = false;
     this.modalCreate = false;
+    this.provisionResult = null;
     this.editId = null;
+    if (wasCreate) {
+      this.reload();
+    }
   }
 }

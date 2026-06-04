@@ -76,6 +76,12 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
 
+    # ── Bootstrap Docker (entrypoint antes de uvicorn) ───
+    RUN_MIGRATIONS_ON_START: bool = True
+    RUN_SEEDS_ON_START: bool = False
+    # False en Docker: seeds en entrypoint; True si arrancás uvicorn sin entrypoint.
+    RUN_SEEDS_IN_LIFESPAN: bool = True
+
     # ── Seed admin (desarrollo; nunca activar en prod sin control explícito) ──
     # Valores por defecto: `app/seeds/identidades_demo_sc.py` (Santa Cruz, BO; dominio *.sc-demo.test).
     SEED_ADMIN_ON_START: bool = False

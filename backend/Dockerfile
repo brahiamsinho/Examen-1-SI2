@@ -31,4 +31,6 @@ USER appuser
 EXPOSE 8000
 
 ENV UVICORN_PORT=8000
+# Bootstrap inline (evita CRLF de docker-entrypoint.sh en bind mount Windows).
+ENTRYPOINT ["sh", "-c", "python -m app.db.docker_bootstrap && exec \"$@\"", "--"]
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${UVICORN_PORT:-8000}"]

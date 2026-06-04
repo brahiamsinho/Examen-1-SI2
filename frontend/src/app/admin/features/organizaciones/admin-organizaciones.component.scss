@@ -1,94 +1,103 @@
-.page {
+@use '../../admin-theme' as t;
+@use '../../admin-ui' as ui;
+
+.org {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: calc(t.$ev-space * 2);
+  color: t.$ev-text;
 }
 
-.page__head {
+.org__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: calc(t.$ev-space * 2);
 }
 
-.page__hint,
-.page__muted {
-  color: #64748b;
-  font-size: 0.9rem;
+.org__h {
+  @include ui.ev-page-title;
 }
 
-.page__error {
-  color: #b91c1c;
+.org__lead {
+  @include ui.ev-page-lead;
+  margin-top: calc(t.$ev-space * 0.5);
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+.org__alert {
+  @include ui.ev-alert-error;
 }
 
-.table th,
-.table td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-}
-
-.btn {
-  border-radius: 8px;
-  padding: 0.45rem 0.85rem;
-  border: 1px solid transparent;
-  cursor: pointer;
+.org__muted {
+  color: t.$ev-muted;
   font-size: 0.875rem;
 }
 
-.btn--primary {
-  background: #0f766e;
-  color: #fff;
+.org__tablewrap {
+  @include ui.ev-card;
+  padding: 0;
+  overflow: auto;
 }
 
-.btn--ghost {
-  background: transparent;
-  border-color: #cbd5e1;
+.org__table {
+  @include ui.ev-table;
 }
 
-.modal {
+.org__code {
+  font-size: 0.8125rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: t.$ev-radius-sm;
+  background: rgba(56, 189, 248, 0.1);
+  color: t.$ev-cyan;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+}
+
+.org__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(t.$ev-space * 0.5);
+}
+
+.org__btn {
+  @include ui.ev-btn-ghost;
+
+  &--primary {
+    @include ui.ev-btn-primary;
+  }
+}
+
+.org__backdrop {
+  @include ui.ev-modal-backdrop;
+}
+
+.org__modal {
+  @include ui.ev-modal;
   position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 40;
-}
-
-.modal__card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.25rem;
-  width: min(420px, 92vw);
+  z-index: 60;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: calc(t.$ev-space * 1.25);
 }
 
-.modal__card label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.85rem;
+.org__lbl {
+  @include ui.ev-form-label;
 }
 
-.modal__card input,
-.modal__card select {
-  padding: 0.4rem 0.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+.org__hint {
+  display: block;
+  margin-top: calc(t.$ev-space * 0.35);
+  font-size: 0.78rem;
+  color: t.$ev-muted;
 }
 
-.modal__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+.org__inp {
+  @include ui.ev-form-field;
+}
+
+.org__modal-actions {
+  @include ui.ev-modal-actions;
 }

@@ -1,0 +1,139 @@
+<div class="pg">
+  <header class="pg__header">
+    <h2 class="pg__title">Usuarios del taller</h2>
+    <p class="pg__lead">
+      Personal de tu organización: responsables de taller y técnicos. Los clientes finales se gestionan en
+      <strong>Cuentas clientes</strong> (registro vía app móvil).
+    </p>
+  </header>
+
+  <div class="pg__alert" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="pg__toolbar" *ngIf="!loading">
+    <input
+      type="search"
+      class="pg__search"
+      [(ngModel)]="search"
+      placeholder="Buscar por nombre o email…"
+      aria-label="Buscar usuarios"
+    />
+    <select class="pg__select" [(ngModel)]="estado" aria-label="Filtrar por estado">
+      <option value="">Todos los estados</option>
+      <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
+    </select>
+    <select class="pg__select" [(ngModel)]="rolFilter" aria-label="Filtrar por rol">
+      <option value="">Todos los roles</option>
+      <option *ngFor="let r of rolesForFilter" [value]="r.nombre">{{ r.nombre }}</option>
+    </select>
+    <button
+      type="button"
+      class="pg__btn pg__btn--primary"
+      *ngIf="puedeCrear"
+      (click)="openCreateModal()"
+    >
+      Crear usuario
+    </button>
+  </div>
+
+  <p class="pg__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="pg__tablewrap" *ngIf="!loading">
+    <table class="pg__table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Nombre</th>
+          <th>Roles</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of filtered">
+          <td>{{ u.email }}</td>
+          <td>{{ u.nombres }} {{ u.apellidos }}</td>
+          <td>{{ (u.roles || []).join(', ') || '—' }}</td>
+          <td><span class="pg__pill">{{ u.estado }}</span></td>
+          <td class="pg__actions">
+            <button type="button" class="pg__mini" (click)="openDetail(u)">Ver</button>
+            <button type="button" class="pg__mini" *ngIf="puedeEditar" (click)="openEdit(u)">Editar</button>
+            <button type="button" class="pg__mini" *ngIf="puedeEditar" (click)="openRoles(u)">Roles</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="pg__empty" *ngIf="!filtered.length">Sin usuarios en tu organización.</p>
+  </div>
+
+  <div class="pg__backdrop" *ngIf="modalCreate || modalEdit || modalDetail || modalRoles" (click)="closeModals()"></div>
+
+  <div class="pg__modal" *ngIf="modalDetail && selected" role="dialog" aria-modal="true">
+    <h3>Usuario</h3>
+    <dl class="pg__dl">
+      <dt>Email</dt>
+      <dd>{{ selected.email }}</dd>
+      <dt>Teléfono</dt>
+      <dd>{{ selected.telefono }}</dd>
+      <dt>Roles</dt>
+      <dd>{{ (selected.roles || []).join(', ') || '—' }}</dd>
+      <dt>Estado</dt>
+      <dd>{{ selected.estado }}</dd>
+    </dl>
+    <button type="button" class="pg__btn pg__btn--primary" (click)="closeModals()">Cerrar</button>
+  </div>
+
+  <div class="pg__modal pg__modal--wide" *ngIf="modalCreate" role="dialog" aria-modal="true">
+    <h3>Crear usuario</h3>
+    <p class="pg__muted">Después de crear, asigna roles TECNICO o TALLER_RESPONSABLE.</p>
+    <div class="pg__grid2">
+      <label class="pg__lbl">Nombres<input class="pg__inp" [(ngModel)]="createForm.nombres" /></label>
+      <label class="pg__lbl">Apellidos<input class="pg__inp" [(ngModel)]="createForm.apellidos" /></label>
+      <label class="pg__lbl">Email<input class="pg__inp" [(ngModel)]="createForm.email" type="email" /></label>
+      <label class="pg__lbl">Teléfono<input class="pg__inp" [(ngModel)]="createForm.telefono" /></label>
+      <label class="pg__lbl">Contraseña<input class="pg__inp" [(ngModel)]="createForm.password" type="password" /></label>
+      <label class="pg__lbl"
+        >Estado
+        <select class="pg__inp" [(ngModel)]="createForm.estado">
+          <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="pg__modal-actions">
+      <button type="button" class="pg__btn" (click)="closeModals()">Cancelar</button>
+      <button type="button" class="pg__btn pg__btn--primary" [disabled]="busy" (click)="create()">Crear</button>
+    </div>
+  </div>
+
+  <div class="pg__modal pg__modal--wide" *ngIf="modalEdit && selected" role="dialog" aria-modal="true">
+    <h3>Editar usuario</h3>
+    <div class="pg__grid2">
+      <label class="pg__lbl">Nombres<input class="pg__inp" [(ngModel)]="editForm.nombres" /></label>
+      <label class="pg__lbl">Apellidos<input class="pg__inp" [(ngModel)]="editForm.apellidos" /></label>
+      <label class="pg__lbl">Teléfono<input class="pg__inp" [(ngModel)]="editForm.telefono" /></label>
+      <label class="pg__lbl"
+        >Estado
+        <select class="pg__inp" [(ngModel)]="editForm.estado">
+          <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="pg__modal-actions">
+      <button type="button" class="pg__btn" (click)="closeModals()">Cancelar</button>
+      <button type="button" class="pg__btn pg__btn--primary" [disabled]="busy" (click)="saveEdit()">Guardar</button>
+    </div>
+  </div>
+
+  <div class="pg__modal pg__modal--wide" *ngIf="modalRoles && selected" role="dialog" aria-modal="true">
+    <h3>Roles — {{ selected.email }}</h3>
+    <label class="pg__check" *ngFor="let r of assignableRoles">
+      <input type="checkbox" [checked]="rolIds.has(r.id)" (change)="toggleRol(r.id)" />
+      <span>{{ r.nombre }}</span>
+    </label>
+    <div class="pg__modal-actions">
+      <button type="button" class="pg__btn" (click)="closeModals()">Cancelar</button>
+      <button type="button" class="pg__btn pg__btn--primary" [disabled]="busy" (click)="saveRoles()">
+        Guardar roles
+      </button>
+    </div>
+  </div>
+</div>

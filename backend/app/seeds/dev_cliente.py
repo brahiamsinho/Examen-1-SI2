@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.security import hash_password, verify_password
 from app.core.timeutil import utc_now_naive
 from app.modules.acceso_y_administracion.roles.models import Rol, UsuarioRol
-from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario
+from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario_seed
 from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
 from app.modules.clientes_y_vehiculos.clientes.models import Cliente
 from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
@@ -85,7 +85,7 @@ async def ensure_dev_cliente(
                 cliente.tenant_id = tenant_id
             cliente.updated_at = now
 
-        await asignar_roles_usuario(user.id, [rol_id], db)
+        await asignar_roles_usuario_seed(user.id, [rol_id], db)
         logger.info("Seed cliente: rol CLIENTE asegurado para %s", email)
         return
 
@@ -112,5 +112,5 @@ async def ensure_dev_cliente(
         },
         db,
     )
-    await asignar_roles_usuario(u.id, [rol_id], db)
+    await asignar_roles_usuario_seed(u.id, [rol_id], db)
     logger.info("Usuario cliente demo creado (seed): %s", email)

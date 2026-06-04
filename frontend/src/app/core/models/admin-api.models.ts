@@ -31,6 +31,19 @@ export interface PermisoDto {
   descripcion: string | null;
 }
 
+export interface ClienteListDto {
+  id: number;
+  usuario_id: number;
+  nombres: string;
+  apellidos: string;
+  email: string;
+  telefono: string;
+  estado: EstadoUsuario;
+  ciudad: string | null;
+  direccion: string | null;
+  created_at: string | null;
+}
+
 export interface UsuarioListDto {
   id: number;
   nombres: string;
@@ -53,6 +66,8 @@ export interface UsuarioCreatePayload {
   password: string;
   username?: string | null;
   estado?: EstadoUsuario;
+  /** Organización SaaS (superadmin con filtro activo). Omitir = cuenta de plataforma. */
+  tenant_id?: number | null;
 }
 
 export interface UsuarioUpdatePayload {
@@ -77,6 +92,7 @@ export interface BitacoraDto {
 
 export interface TallerDto {
   id: number;
+  tenant_id?: number | null;
   usuario_responsable_id: number;
   nombre_comercial: string;
   telefono_contacto: string;
@@ -89,6 +105,7 @@ export interface TallerDto {
 }
 
 export interface TallerCreatePayload {
+  tenant_id?: number | null;
   usuario_responsable_id: number;
   nombre_comercial: string;
   telefono_contacto: string;
@@ -107,6 +124,27 @@ export interface TallerUpdatePayload {
   ciudad?: string;
   descripcion?: string | null;
   estado?: EstadoTaller;
+}
+
+/** Alta admin atómica: taller + cuenta responsable (login /taller). */
+export interface TallerProvisionPayload {
+  tenant_id?: number | null;
+  nombre_comercial: string;
+  telefono_contacto: string;
+  email_contacto: string;
+  direccion: string;
+  ciudad: string;
+  descripcion?: string | null;
+  estado?: EstadoTaller;
+  responsable_nombre_completo: string;
+  responsable_email: string;
+  responsable_telefono: string;
+  responsable_password: string;
+}
+
+export interface TallerProvisionDto extends TallerDto {
+  responsable_email: string;
+  tenant_slug: string;
 }
 
 /** Resumen financiero global (solo ADMIN) — decimales como string (JSON). */
@@ -149,6 +187,60 @@ export interface AdminFinanzasReportes {
   resumen: AdminFinanzasResumen;
   top_talleres: TallerComisionFila[];
   serie_diaria: AdminComisionSerieFila[];
+}
+
+/** Conteos + bitácora reciente (una sola petición para el resumen admin). */
+export interface AdminPanelOverview {
+  total_usuarios: number;
+  total_talleres: number;
+  total_roles: number;
+  actividad_reciente: BitacoraDto[];
+}
+
+export interface PricingPlanDto {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  price_monthly_bob: number;
+  currency: string;
+  benefits: string[];
+  featured: boolean;
+  badge: string | null;
+  cta_label: string;
+  cta_router_link: string | null;
+  cta_href: string | null;
+  stripe_price_id: string | null;
+  sort_order: number;
+  active: boolean;
+}
+
+export interface PricingPlanUpdatePayload {
+  name?: string;
+  description?: string | null;
+  price_monthly_bob?: number;
+  currency?: string;
+  benefits?: string[];
+  featured?: boolean;
+  badge?: string | null;
+  cta_label?: string;
+  cta_router_link?: string | null;
+  cta_href?: string | null;
+  stripe_price_id?: string | null;
+  sort_order?: number;
+  active?: boolean;
+}
+
+export interface StripePublicConfigDto {
+  enabled: boolean;
+  publishable_key: string | null;
+}
+
+export interface PublicCheckoutPayload {
+  plan_slug: string;
+  email: string;
+  success_url: string;
+  cancel_url: string;
 }
 
 export type EstadoTenant = 'ACTIVO' | 'INACTIVO' | 'SUSPENDIDO' | 'PENDIENTE';

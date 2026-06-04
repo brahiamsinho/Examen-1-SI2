@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { adminAuthGuard } from '../core/guards/admin-auth.guard';
 import { adminGuestGuard } from '../core/guards/admin-guest.guard';
 import { AdminLoginComponent } from './features/auth/admin-login/admin-login.component';
+import { AdminDashboardComponent } from './features/dashboard/admin-dashboard.component';
 import { AdminShellComponent } from './shell/admin-shell.component';
 
 /**
@@ -28,10 +29,7 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        loadComponent: () =>
-          import('./features/dashboard/admin-dashboard.component').then(
-            (m) => m.AdminDashboardComponent,
-          ),
+        component: AdminDashboardComponent,
       },
       {
         path: 'usuarios',
@@ -68,6 +66,13 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () =>
           import('./features/organizaciones/admin-organizaciones.component').then(
             (m) => m.AdminOrganizacionesComponent,
+          ),
+      },
+      {
+        path: 'planes-precios',
+        loadComponent: () =>
+          import('./features/planes-precios/admin-planes-precios.component').then(
+            (m) => m.AdminPlanesPreciosComponent,
           ),
       },
     ],

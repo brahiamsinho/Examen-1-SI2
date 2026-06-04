@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-05-28 — Ciclo 4 CU36–CU40 memoria sincronizada ✅
+# Última actualización: 2026-06-04 — Admin planes/precios + Stripe landing ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
@@ -20,7 +20,12 @@
 - [x] `TenantSlugMiddleware`, contexto auth en `get_db`, login con `X-Tenant-Slug` + bypass RLS.
 - [x] `/auth/me` expone `tenant_id`, `is_platform_superadmin`; `POST .../stripe-customer` por tenant.
 - [x] Listados admin `usuarios` / `talleres` / finanzas con `?tenant_id=`; vehículos heredan `tenant_id` del cliente.
+- [x] **Admin SaaS — usuarios/talleres (2026-05-28):** listado admin excluye rol `CLIENTE`; no se asigna `CLIENTE` desde panel; alta usuario/taller con `tenant_id` según organización seleccionada; clientes finales vía app móvil + `X-Tenant-Slug`.
+- [x] **Admin SaaS — provision taller (2026-06-04):** `POST /api/talleres/provision` (usuario ACTIVO + rol + taller atómico); formulario único en admin Talleres; menú Usuarios retirado del sidebar; login inmediato en `/taller` con slug de la org.
+- [x] **Admin SaaS — crear organización (2026-06-04):** fix 422 al crear tenant: `normalize_tenant_slug()` en schema (`field_validator` antes del pattern Pydantic) + mensajes UI distintos para 422 vs 409; probado `POST /api/admin/tenants` con slug `Nueva-Org-Test` → 201 `nueva-org-test`.
+- [x] **Admin SaaS — login panel (2026-06-04):** fix seeds CLIENTE en arranque (`asignar_roles_usuario_seed`); startup rápido sin 502; login demo admin `patricio.mendez@sc-demo.test` / `scdemo1`.
 - [x] Angular: selector organización (superadmin), `/admin/panel/organizaciones`, APIs tenants en `AdminApiService`.
+- [x] **Admin SaaS — planes y precios (2026-06-04):** sidebar Comercial → `/admin/panel/planes-precios`; tabla `pricing_plans` (migración 0019); landing consume API pública; checkout Stripe desde landing con `stripe_price_id` configurado en admin.
 - [x] Fase 3 (2026-05-24): API pública tenants, billing Stripe SaaS (checkout/webhook), subdominio Host, tests unitarios, mobile/taller login por org, bloqueo escritura por suscripción vencida.
 
 ### SaaS multi-tenant — fase 1 (2026-05-24) ✅
@@ -30,6 +35,19 @@
 - [x] API `GET/POST/PATCH /api/admin/tenants`, `GET /api/admin/tenants/context/me`.
 - [x] Finanzas admin y bandeja de taller filtran por tenant (superadmin ve global o `?tenant_id=`).
 - [x] Skills instaladas: `multitenancy`, `multi-tenant-safety-checker`.
+
+### Documentación de flujos — portal taller (2026-05-28) ✅
+- [x] **`docs/ai/FLOWS_PORTAL_TALLER.md`** — registro `/taller/registro`, login `/taller`, panel, contraste admin, SaaS slug, pruebas de escritorio.
+- [x] PlantUML **`docs/diagrams/uml/sequence-taller-registro-login.puml`** (UML 2.5).
+- [x] Sesión consolidada: `docs/ai/sessions/2026-05-28-agent-documentacion-flujos-landing.md`, DEC-029.
+
+### Landing pública — Paleta A Dark Pro Soft (2026-05-28) ✅
+- [x] Sección `#precios`: tarjetas **Free**, **Pro**, **Max** (precio BOB referencial, beneficios, CTA).
+- [x] **Rediseño fases 1–3** (`LANDING_REDESIGN_PLAN.md`): fondo `#0B1020`, superficies `#141B2D`, primary `#38BDF8`, CTA ámbar `#F59E0B`.
+- [x] Hero con **product frame** (preview filas EN RUTA/ACTIVO/LISTO), sin tarjetas flotantes.
+- [x] **Bento** `#producto`, banda stack, flujo 3 pasos, accesos, módulos 3×3, CTA final.
+- [x] Tipografía **Outfit + Inter** en `frontend/src/index.html`.
+- [ ] QA visual: `docker compose up -d --build frontend` + Ctrl+Shift+R en `http://localhost/`.
 
 ### Diagramas UML/C4/PUDS (2026-05-28) ✅
 - [x] Subagente **`diagrams-modeling`** (PlantUML, **UML 2.5+**, C4 4 capas, MCP EA, draw.io).
@@ -171,6 +189,7 @@
 
 ### Docker ✅
 - [x] `docker-compose.yml` + override; `.env` raíz como fuente principal
+- [x] **Entrypoint backend (2026-06-04):** `Dockerfile` ENTRYPOINT ejecuta migraciones Alembic + SQL (`app_sql_migrations`) y seeds (`SEED_*`) antes de uvicorn. Vars `RUN_MIGRATIONS_ON_START`, `RUN_SEEDS_ON_START`, `RUN_SEEDS_IN_LIFESPAN`. Dev override: seeds on, lifespan seeds off.
 - [x] **Build estable en Windows:** `backend/Dockerfile` y `frontend/Dockerfile` sin `# syntax=docker/dockerfile:1` ni `RUN --mount=type=cache` (mitiga `frontend grpc server closed unexpectedly` con BuildKit/Docker Desktop). Workarounds extra: `docker buildx prune`, reiniciar Docker, o `DOCKER_BUILDKIT=0` + `COMPOSE_DOCKER_CLI_BUILD=0`.
 - [x] **Servicio `ai-inference`** (perfil Compose `ai`): imagen en `services/ai-inference/` — STT (Whisper), visión YOLO **detect** (COCO) o **classify** (modelo `.pt` propio). Sin `--profile ai` el worker **no** se levanta; el backend puede quedar con IA deshabilitada o en stub según variables.
 - [x] **Modelo de clasificación propio (`incidentes_emergencias_v1.pt`):** hace falta **montar** el `.pt` en el contenedor vía **`docker-compose.ai-custom-model.yml`** (`./backend/incidentes_emergencias_v1.pt` → `/models/...`) **y** el **`.env` raíz** con `YOLO_TASK=classify`, `YOLO_MODEL=/models/incidentes_emergencias_v1.pt`, `YOLO_IMGSZ=224`. Si en `.env` quedan `YOLO_TASK=detect` y `YOLO_MODEL=yolov8n.pt`, el worker solo aplica **COCO** (persona/coche) y no las clases de Colab — suele confundirse con “el modelo dejó de reconocer”. Comando: `docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml --profile ai up -d --build` (mismos `-f` en `down` / `exec`).

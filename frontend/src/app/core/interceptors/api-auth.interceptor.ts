@@ -1,8 +1,11 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { AdminAuthService } from '../services/admin-auth.service';
 import { TallerAuthService } from '../services/taller-auth.service';
 import { environment } from '../../../environments/environment';
+
+const SHARED_ACCESO_SEGMENTS = ['/usuarios', '/clientes', '/roles', '/permisos', '/especialidades'];
 
 /** Bearer: app taller responsable (`/api/app/taller/*`) vs resto del panel admin. */
 export const apiAuthInterceptor: HttpInterceptorFn = (req, next) => {
@@ -34,9 +37,21 @@ export const apiAuthInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const token = isTallerApp
-    ? inject(TallerAuthService).getAccessToken()
-    : inject(AdminAuthService).getAccessToken();
+  const router = inject(Router);
+  const tallerAuth = inject(TallerAuthService);
+  const adminAuth = inject(AdminAuthService);
+  const inTallerPanel = router.url.startsWith('/taller/panel');
+  const isSharedAcceso = SHARED_ACCESO_SEGMENTS.some((seg) => req.url.includes(`${api}${seg}`));
+
+  let token: string | null = null;
+  if (isTallerApp || (inTallerPanel && isSharedAcceso)) {
+    token = tallerAuth.getAccessToken();
+  } else {
+    token = adminAuth.getAccessToken();
+  }
+  if (!token) {
+    token = tallerAuth.getAccessToken() ?? adminAuth.getAccessToken();
+  }
 
   if (!token) {
     return next(req);

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
@@ -10,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.atencion.taller_emergencias.models import ComisionTaller
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.pagos_y_comisiones.pagos.models import EstadoPagoEnum, Pago
+from app.core.database import AsyncSessionLocal
+from app.core.tenant_context import apply_postgres_tenant_session
 from app.modules.talleres_y_tecnicos.talleres.models import Taller
 
 PORCENTAJE_PLATAFORMA = Decimal("10.00")
@@ -67,7 +70,6 @@ async def get_finanzas_resumen(
     ).join(Taller, Taller.id == ComisionTaller.taller_id)
     if c_filters:
         com_q = com_q.where(*c_filters)
-    com_row = (await db.execute(com_q)).mappings().one()
 
     pagos_q = (
         select(
@@ -77,10 +79,10 @@ async def get_finanzas_resumen(
         .join(SolicitudEmergencia, SolicitudEmergencia.id == Pago.solicitud_id)
         .where(*p_filters)
     )
-    pagos_row = (await db.execute(pagos_q)).mappings().one()
 
-    solicitudes_q = select(func.count(SolicitudEmergencia.id).label("n_solicitudes_finalizadas")).where(*s_filters)
-    solicitudes_row = (await db.execute(solicitudes_q)).mappings().one()
+    solicitudes_q = select(func.count(SolicitudEmergencia.id).label("n_solicitudes_finalizadas")).where(
+        *s_filters
+    )
 
     por_taller_q = (
         select(
@@ -97,7 +99,11 @@ async def get_finanzas_resumen(
     )
     if c_filters:
         por_taller_q = por_taller_q.where(*c_filters)
-    por_taller = [(dict(r)) for r in (await db.execute(por_taller_q)).mappings().all()]
+
+    com_row = (await db.execute(com_q)).mappings().one()
+    pagos_row = (await db.execute(pagos_q)).mappings().one()
+    solicitudes_row = (await db.execute(solicitudes_q)).mappings().one()
+    por_taller = [dict(r) for r in (await db.execute(por_taller_q)).mappings().all()]
 
     n_pagos_pagados = int(pagos_row["n_pagos_pagados"] or 0)
     total_monto_pagos = _d(pagos_row["total_monto_pagos"])
@@ -131,15 +137,13 @@ async def get_finanzas_resumen(
     }
 
 
-async def get_finanzas_reportes(
+async def _serie_diaria_rows(
     db: AsyncSession,
     *,
     desde: datetime | None,
     hasta: datetime | None,
-    tenant_id: int | None = None,
-) -> dict[str, Any]:
-    resumen = await get_finanzas_resumen(db, desde=desde, hasta=hasta, tenant_id=tenant_id)
-
+    tenant_id: int | None,
+) -> list[dict[str, Any]]:
     filters = []
     if tenant_id is not None:
         filters.append(Taller.tenant_id == tenant_id)
@@ -163,8 +167,7 @@ async def get_finanzas_reportes(
     if filters:
         serie_q = serie_q.where(*filters)
     serie_rows = (await db.execute(serie_q)).mappings().all()
-
-    serie_diaria = [
+    return [
         {
             "fecha": row["fecha"],
             "n_comisiones": int(row["n_comisiones"] or 0),
@@ -174,6 +177,30 @@ async def get_finanzas_reportes(
         }
         for row in serie_rows
     ]
+
+
+async def get_finanzas_reportes(
+    db: AsyncSession,
+    *,
+    desde: datetime | None,
+    hasta: datetime | None,
+    tenant_id: int | None = None,
+) -> dict[str, Any]:
+    async def _resumen_task() -> dict[str, Any]:
+        async with AsyncSessionLocal() as session:
+            await apply_postgres_tenant_session(session)
+            return await get_finanzas_resumen(
+                session, desde=desde, hasta=hasta, tenant_id=tenant_id
+            )
+
+    async def _serie_task() -> list[dict[str, Any]]:
+        async with AsyncSessionLocal() as session:
+            await apply_postgres_tenant_session(session)
+            return await _serie_diaria_rows(
+                session, desde=desde, hasta=hasta, tenant_id=tenant_id
+            )
+
+    resumen, serie_diaria = await asyncio.gather(_resumen_task(), _serie_task())
 
     return {
         "resumen": resumen,

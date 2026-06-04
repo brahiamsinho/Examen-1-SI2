@@ -1,10 +1,40 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { take } from 'rxjs';
 import { TallerAuthService } from '../../core/services/taller-auth.service';
+import type { MeResponse } from '../../core/models/auth.models';
 
-type NavItem = { path: string; label: string; exact: boolean; permiso?: string };
+export type TallerNavIcon =
+  | 'home'
+  | 'chart'
+  | 'clipboard'
+  | 'wrench'
+  | 'users'
+  | 'shield'
+  | 'key'
+  | 'inbox';
+
+export interface TallerNavItem {
+  path: string;
+  label: string;
+  exact: boolean;
+  icon: TallerNavIcon;
+  permiso?: string;
+}
+
+export interface TallerNavGroup {
+  label: string;
+  items: TallerNavItem[];
+}
 
 @Component({
   selector: 'app-taller-shell',
@@ -15,60 +45,186 @@ type NavItem = { path: string; label: string; exact: boolean; permiso?: string }
 })
 export class TallerShellComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  me: MeResponse | null = null;
+  pageTitle = 'Resumen';
+  sidebarCollapsed = false;
+  mobileNavOpen = false;
+  navGroups: TallerNavGroup[] = [];
+
+  private readonly navGroupsBase: TallerNavGroup[] = [
+    {
+      label: 'General',
+      items: [{ path: '/taller/panel', label: 'Resumen', exact: true, icon: 'home' }],
+    },
+    {
+      label: 'Emergencias',
+      items: [
+        {
+          path: '/taller/panel/emergencias/solicitudes',
+          label: 'Solicitudes',
+          exact: false,
+          icon: 'inbox',
+          permiso: 'solicitudes_taller:leer',
+        },
+        {
+          path: '/taller/panel/emergencias/mis-solicitudes',
+          label: 'Mis solicitudes',
+          exact: true,
+          icon: 'clipboard',
+          permiso: 'historial_atenciones:leer',
+        },
+        {
+          path: '/taller/panel/emergencias/historial',
+          label: 'Historial',
+          exact: true,
+          icon: 'clipboard',
+          permiso: 'historial_atenciones:leer',
+        },
+        {
+          path: '/taller/panel/emergencias/servicios-asignados',
+          label: 'Servicios asignados',
+          exact: true,
+          icon: 'clipboard',
+          permiso: 'historial_atenciones:leer',
+        },
+        {
+          path: '/taller/panel/emergencias/comisiones',
+          label: 'Comisiones',
+          exact: true,
+          icon: 'chart',
+          permiso: 'comisiones:leer',
+        },
+        {
+          path: '/taller/panel/emergencias/disponibilidad',
+          label: 'Disponibilidad',
+          exact: true,
+          icon: 'chart',
+          permiso: 'disponibilidad:gestionar',
+        },
+      ],
+    },
+    {
+      label: 'Equipo y taller',
+      items: [
+        { path: '/taller/panel/mi-taller', label: 'Mi taller', exact: false, icon: 'wrench' },
+        { path: '/taller/panel/tecnicos', label: 'Técnicos', exact: false, icon: 'wrench' },
+      ],
+    },
+    {
+      label: 'Accesos y cuentas',
+      items: [
+        {
+          path: '/taller/panel/accesos/usuarios',
+          label: 'Usuarios del taller',
+          exact: true,
+          icon: 'users',
+          permiso: 'usuarios:leer',
+        },
+        {
+          path: '/taller/panel/accesos/clientes',
+          label: 'Cuentas clientes',
+          exact: true,
+          icon: 'users',
+          permiso: 'clientes:leer',
+        },
+        {
+          path: '/taller/panel/accesos/roles',
+          label: 'Roles',
+          exact: true,
+          icon: 'shield',
+          permiso: 'roles:gestionar',
+        },
+        {
+          path: '/taller/panel/accesos/permisos',
+          label: 'Permisos',
+          exact: true,
+          icon: 'key',
+          permiso: 'roles:gestionar',
+        },
+      ],
+    },
+  ];
 
   ngOnInit(): void {
     this.auth
       .refreshMeSiHaySesion()
       .pipe(take(1))
-      .subscribe();
+      .subscribe(() => {
+        this.me = this.auth.getMe();
+        this.rebuildNavGroups();
+        this.cdr.markForCheck();
+      });
+
+    this.me = this.auth.getMe();
+    this.rebuildNavGroups();
+
+    this.syncPageTitle(this.router.url);
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((e) => {
+        this.syncPageTitle(e.urlAfterRedirects);
+        this.mobileNavOpen = false;
+        this.cdr.markForCheck();
+      });
   }
 
-  private readonly navAll: NavItem[] = [
-    { path: '/taller/panel', label: 'Resumen', exact: true },
-    {
-      path: '/taller/panel/emergencias/solicitudes',
-      label: 'Solicitudes',
-      exact: false,
-      permiso: 'solicitudes_taller:leer',
-    },
-    {
-      path: '/taller/panel/emergencias/mis-solicitudes',
-      label: 'Mis solicitudes',
-      exact: true,
-      permiso: 'historial_atenciones:leer',
-    },
-    {
-      path: '/taller/panel/emergencias/historial',
-      label: 'Historial de atenciones',
-      exact: true,
-      permiso: 'historial_atenciones:leer',
-    },
-    {
-      path: '/taller/panel/emergencias/servicios-asignados',
-      label: 'Servicios asignados',
-      exact: true,
-      permiso: 'historial_atenciones:leer',
-    },
-    {
-      path: '/taller/panel/emergencias/comisiones',
-      label: 'Comisiones',
-      exact: true,
-      permiso: 'comisiones:leer',
-    },
-    {
-      path: '/taller/panel/emergencias/disponibilidad',
-      label: 'Disponibilidad',
-      exact: true,
-      permiso: 'disponibilidad:gestionar',
-    },
-    { path: '/taller/panel/mi-taller', label: 'Mi taller', exact: false },
-    { path: '/taller/panel/tecnicos', label: 'Técnicos', exact: false },
-  ];
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    this.cdr.markForCheck();
+  }
 
-  /** Oculta entradas de emergencias si el JWT no trae el permiso (backend FastAPI). */
-  get nav(): NavItem[] {
-    const permisos = this.auth.getMe()?.permisos;
-    if (!permisos?.length) return [...this.navAll];
-    return this.navAll.filter((item) => !item.permiso || permisos.includes(item.permiso));
+  toggleMobileNav(): void {
+    this.mobileNavOpen = !this.mobileNavOpen;
+    this.cdr.markForCheck();
+  }
+
+  closeMobileNav(): void {
+    this.mobileNavOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  userInitials(email: string | undefined): string {
+    if (!email) return 'TL';
+    const part = email.split('@')[0]?.slice(0, 2) ?? 'TL';
+    return part.toUpperCase();
+  }
+
+  private rebuildNavGroups(): void {
+    this.navGroups = this.navGroupsBase
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !item.permiso || this.auth.tienePermiso(item.permiso)),
+      }))
+      .filter((group) => group.items.length > 0);
+  }
+
+  private syncPageTitle(url: string): void {
+    const path = url.split('?')[0];
+    const titles: Record<string, string> = {
+      '/taller/panel': 'Resumen',
+      '/taller/panel/mi-taller': 'Mi taller',
+      '/taller/panel/tecnicos': 'Técnicos',
+      '/taller/panel/emergencias/solicitudes': 'Solicitudes',
+      '/taller/panel/emergencias/mis-solicitudes': 'Mis solicitudes',
+      '/taller/panel/emergencias/historial': 'Historial',
+      '/taller/panel/emergencias/servicios-asignados': 'Servicios asignados',
+      '/taller/panel/emergencias/comisiones': 'Comisiones',
+      '/taller/panel/emergencias/disponibilidad': 'Disponibilidad',
+      '/taller/panel/accesos/usuarios': 'Usuarios del taller',
+      '/taller/panel/accesos/clientes': 'Cuentas clientes',
+      '/taller/panel/accesos/roles': 'Roles',
+      '/taller/panel/accesos/permisos': 'Permisos',
+    };
+    const match = Object.keys(titles)
+      .sort((a, b) => b.length - a.length)
+      .find((p) => path === p || path.startsWith(p + '/'));
+    this.pageTitle = match ? titles[match] : 'Panel taller';
   }
 }

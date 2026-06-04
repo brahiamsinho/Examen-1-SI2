@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.modules.acceso_y_administracion.roles.models import Rol
-from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario
+from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario_seed
 from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
 from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
 from app.seeds.dev_catalogos_vehiculo import ensure_catalogos_vehiculo_stress_extra
@@ -85,7 +85,7 @@ async def ensure_stress_visual_seed(
             },
             db,
         )
-        await asignar_roles_usuario(u.id, [rol_id], db)
+        await asignar_roles_usuario_seed(u.id, [rol_id], db)
         created += 1
 
     if created:

@@ -5,8 +5,17 @@ from fastapi import HTTPException
 
 from app.core.timeutil import utc_now_naive
 from app.modules.talleres_y_tecnicos.talleres.models import Taller, Tecnico, EspecialidadTecnico
+from app.modules.talleres_y_tecnicos.talleres.schemas import TallerProvisionIn, TallerProvisionRead, TallerRead
 from app.modules.acceso_y_administracion.bitacora.service import registrar_accion
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
+from app.modules.acceso_y_administracion.usuarios.models import Usuario, EstadoUsuarioEnum
+from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
+from app.modules.acceso_y_administracion.tenants import service as tenants_service
+from app.modules.acceso_y_administracion.roles.service import asignar_roles_usuario
+from app.modules.talleres_y_tecnicos.taller_responsable.service import (
+    _rol_id_by_nombre,
+    _split_nombre_completo,
+)
 
 
 async def get_talleres(db: AsyncSession, list_tenant_id: int | None = None):
@@ -23,6 +32,22 @@ async def get_taller_by_id(taller_id: int, db: AsyncSession) -> Taller:
         raise HTTPException(status_code=404, detail="Taller no encontrado")
     return t
 
+async def validate_responsable_tenant(
+    db: AsyncSession, *, usuario_id: int, tenant_id: int | None
+) -> None:
+    if tenant_id is None:
+        return
+    result = await db.execute(select(Usuario).where(Usuario.id == usuario_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario responsable no encontrado")
+    if user.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=400,
+            detail="El responsable pertenece a otra organización (tenant).",
+        )
+
+
 async def create_taller(data: dict, db: AsyncSession, ejecutor_id: int | None = None) -> Taller:
     t = Taller(**data, created_at=utc_now_naive(), updated_at=utc_now_naive())
     db.add(t)
@@ -30,6 +55,56 @@ async def create_taller(data: dict, db: AsyncSession, ejecutor_id: int | None = 
     await registrar_accion(db=db, usuario_id=ejecutor_id, modulo="talleres", entidad="talleres",
         entidad_id=t.id, accion=AccionBitacoraEnum.CREAR, descripcion=f"Taller creado: {t.nombre_comercial}")
     return t
+
+
+async def provision_taller_con_responsable(
+    body: TallerProvisionIn,
+    db: AsyncSession,
+    *,
+    tenant_id: int,
+    ejecutor_id: int,
+) -> TallerProvisionRead:
+    """Crea usuario ACTIVO + rol TALLER_RESPONSABLE + taller (admin SaaS, sin verificación email)."""
+    await tenants_service.get_tenant_by_id(db, tenant_id)
+    nombres, apellidos = _split_nombre_completo(body.responsable_nombre_completo)
+    user = await usuarios_service.create_usuario(
+        {
+            "nombres": nombres,
+            "apellidos": apellidos,
+            "email": str(body.responsable_email),
+            "telefono": body.responsable_telefono,
+            "password": body.responsable_password,
+            "username": None,
+            "estado": EstadoUsuarioEnum.ACTIVO,
+            "tenant_id": tenant_id,
+        },
+        db,
+        ejecutor_id=ejecutor_id,
+    )
+    rid = await _rol_id_by_nombre(db, "TALLER_RESPONSABLE")
+    await asignar_roles_usuario(user.id, [rid], db)
+    taller = await create_taller(
+        {
+            "tenant_id": tenant_id,
+            "usuario_responsable_id": user.id,
+            "nombre_comercial": body.nombre_comercial,
+            "telefono_contacto": body.telefono_contacto,
+            "email_contacto": str(body.email_contacto),
+            "direccion": body.direccion,
+            "ciudad": body.ciudad,
+            "descripcion": body.descripcion,
+            "estado": body.estado,
+        },
+        db,
+        ejecutor_id=ejecutor_id,
+    )
+    tenant = await tenants_service.get_tenant_by_id(db, tenant_id)
+    base = TallerRead.model_validate(taller)
+    return TallerProvisionRead(
+        **base.model_dump(),
+        responsable_email=user.email,
+        tenant_slug=tenant.slug,
+    )
 
 async def update_taller(taller_id: int, data: dict, db: AsyncSession, ejecutor_id: int | None = None) -> Taller:
     t = await get_taller_by_id(taller_id, db)

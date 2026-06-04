@@ -36,10 +36,70 @@
   &--primary {
     @include ui.ev-btn-primary;
   }
+
+  &--ghost {
+    @include ui.ev-btn-ghost;
+    margin: 0.5rem 0 0.75rem;
+    font-size: 0.8125rem;
+  }
 }
 
 .tal__muted {
   color: t.$ev-muted;
+  font-size: 0.8125rem;
+}
+
+.tal__filterbar {
+  @include ui.ev-filter-bar;
+}
+
+.tal__filter-field {
+  @include ui.ev-filter-field;
+}
+
+.tal__filter-label {
+  @include ui.ev-filter-label;
+}
+
+.tal__filter-hint {
+  flex: 1;
+  min-width: 200px;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: t.$ev-muted;
+  line-height: 1.45;
+  align-self: center;
+}
+
+.tal__select--filter {
+  width: 100%;
+}
+
+.tal__req {
+  color: #f87171;
+}
+
+.tal__row-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.tal__grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tal__inp option {
+  background: t.$ev-surface;
+  color: t.$ev-text;
 }
 
 .tal__tablewrap {
@@ -92,12 +152,36 @@
   transform: translate(-50%, -50%);
 
   &--wide {
-    max-width: 520px;
+    max-width: 560px;
+    max-height: min(92vh, 900px);
+    overflow-y: auto;
   }
 
   h3 {
     margin: 0 0 0.75rem;
   }
+}
+
+.tal__section-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: t.$ev-text;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  padding-top: 1rem;
+}
+
+.tal__success-lead {
+  margin: 0 0 1rem;
+  color: #86efac;
+  font-size: 0.9375rem;
+}
+
+.tal__dl--success code {
+  font-size: 0.8125rem;
+  color: #bae6fd;
 }
 
 .tal__lbl {

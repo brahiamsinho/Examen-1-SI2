@@ -1,0 +1,55 @@
+@startuml identificacion-paquetes-casos-uso
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Sección PUDS: 4.2.1 Identificación de paquetes (análisis)
+' Estilo: plantilla académica (paquete UML + nota + dependencia discontinua)
+' ID: D-004 | EA: paquete 11, diagramID 27
+
+title IDENTIFICAR PAQUETES — Casos de Uso (Ciclos 4 y 5)
+
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFFFFE
+skinparam noteBorderColor #333333
+skinparam linetype ortho
+
+package "Seguimiento y atencion del\nservicio en tiempo real" as P1
+note right of P1
+  Este modulo contiene los casos de uso de
+  seguimiento en tiempo real y operacion del servicio:
+  **CU36** Consultar ubicacion del tecnico,
+  **CU39** Actualizar estado de atencion del servicio,
+  **CU41** Recibir notificaciones inmediatas (Ciclo 5).
+end note
+
+package "Seleccion de taller y\npagos del servicio" as P2
+note right of P2
+  Este modulo contiene los casos de uso del flujo
+  comercial del servicio:
+  **CU37** Seleccionar taller para realizar el servicio,
+  **CU38** Procesar pago mediante pasarela,
+  **CU42** Registrar cotizacion del servicio (C5),
+  **CU44** Consultar tiempo estimado de reparacion (C5).
+end note
+
+package "Continuidad offline y\nsincronizacion" as P3
+note right of P3
+  Este modulo contiene los casos de uso de continuidad
+  sin conexion a internet:
+  **CU43** Enviar emergencia pendiente al recuperar conexion,
+  **CU45** Registrar emergencia sin conexion (Ciclo 5).
+end note
+
+package "Analitica operacional y KPIs" as P4
+note right of P4
+  Este modulo contiene el caso de uso
+  **CU46** Visualizar dashboard de KPIs para
+  administradores y talleres (Ciclo 5).
+end note
+
+package "Administracion multi-tenant SaaS" as P5
+note right of P5
+  Este modulo contiene el caso de uso
+  **CU40** Gestionar tenant o red de talleres para
+  la administracion SaaS multi-organizacion (Ciclo 4).
+end note
+
+@enduml

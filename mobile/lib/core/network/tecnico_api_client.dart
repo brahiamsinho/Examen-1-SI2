@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../constants/api_constants.dart';
+import '../tenant/tenant_slug_storage.dart';
 
 class TecnicoApiClient {
   static final TecnicoApiClient _instance = TecnicoApiClient._internal();
@@ -10,6 +11,7 @@ class TecnicoApiClient {
 
   late final Dio _dio;
   final _storage = const FlutterSecureStorage();
+  final _tenantSlug = TenantSlugStorage();
 
   static const _accessKey = 'tecnico_access_token';
   static const _refreshKey = 'tecnico_refresh_token';
@@ -27,6 +29,10 @@ class TecnicoApiClient {
         final token = await _storage.read(key: _accessKey);
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
+        }
+        final slug = await _tenantSlug.read();
+        if (slug != null && slug.isNotEmpty) {
+          options.headers['X-Tenant-Slug'] = slug;
         }
         return handler.next(options);
       },

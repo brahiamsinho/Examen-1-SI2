@@ -1,0 +1,63 @@
+%% D-008 — Diagrama componente principal del sistema (puente draw.io MCP)
+%% Fuente: docs/diagrams/uml/componente-principal-sistema.puml
+
+flowchart TB
+  classDef mod fill:#fff4cc,stroke:#333,stroke-width:1px
+  classDef layer fill:#d6eaf8,stroke:#333,stroke-width:1px
+  classDef infra fill:#d5f5e3,stroke:#333,stroke-width:1px
+  classDef sec fill:#e8d4ff,stroke:#333,stroke-width:1px
+  classDef http fill:#ffe0e0,stroke:#333,stroke-width:1px
+  classDef core fill:#ffffff,stroke:#000,stroke-width:2px
+
+  HTTP["HTTP / REST Requests"]:::http
+  AUTH["Autenticacion / Autorizacion JWT + X-Tenant-Slug"]:::sec
+  API["Backend API FastAPI"]:::core
+
+  subgraph MODS["Modulos funcionales"]
+    direction TB
+    M1["Acceso, Roles y Permisos"]:::mod
+    M2["Usuarios"]:::mod
+    M3["Clientes y Vehiculos"]:::mod
+    M4["Incidentes Emergencias"]:::mod
+    M5["Gestion Talleres y Tecnicos"]:::mod
+    M6["Inteligencia del Incidente"]:::mod
+    M7["Priorizacion y Asignacion"]:::mod
+    M8["Atencion de Solicitudes"]:::mod
+    M9["Finanzas y Pagos SaaS"]:::mod
+    M10["Notificaciones y Comunicaciones"]:::mod
+    M11["Historial y Trazabilidad"]:::mod
+  end
+
+  subgraph LAYERS["Capas internas FastAPI"]
+    direction TB
+    L1["Routers"]:::layer
+    L2["URLs / Endpoints"]:::layer
+    L3["Schemas Pydantic"]:::layer
+    L4["Services"]:::layer
+    L5["Permissions / Security"]:::layer
+    L6["Repositories"]:::layer
+    L7["Models SQLAlchemy"]:::layer
+    L8["Migrations SQL"]:::layer
+    L9["Middleware Tenant + CORS"]:::layer
+    L10["Static / Media evidencias"]:::layer
+  end
+
+  STORE["Almacenamiento medios Imagenes / Audios"]:::infra
+  EXT["Servicios externos Mapas / IA / Push / Pagos"]:::infra
+  DB["Base de datos PostgreSQL"]:::infra
+
+  HTTP -->|HTTPS| API
+  AUTH -->|JWT| API
+
+  M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M10 & M11 --> API
+
+  API --> L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8 & L9 & L10
+  L1 -.->|invoca| L4
+  L4 -.->|usa| L6
+  L6 -.->|persiste| L7
+  L7 -.->|ORM async| DB
+
+  API -->|uploads| STORE
+  API -->|API externa| EXT
+  API -->|SQLAlchemy| DB
+  STORE -.->|metadatos| DB

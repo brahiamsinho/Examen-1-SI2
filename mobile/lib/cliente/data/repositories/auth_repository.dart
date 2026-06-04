@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/constants/api_constants.dart';
+import '../../../core/tenant/tenant_slug_storage.dart';
 import '../../domain/models/cliente_mi_perfil.dart';
 import '../../../core/network/api_error.dart';
 
@@ -13,11 +14,24 @@ final class AuthRepository {
   final Dio _dio;
   final FlutterSecureStorage _storage;
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    String? tenantSlug,
+  }) async {
     try {
+      if (tenantSlug != null && tenantSlug.trim().isNotEmpty) {
+        await TenantSlugStorage().write(tenantSlug);
+      }
+      final slug = await TenantSlugStorage().read();
+      final headers = <String, String>{};
+      if (slug != null && slug.isNotEmpty) {
+        headers['X-Tenant-Slug'] = slug;
+      }
       final res = await _dio.post<Map<String, dynamic>>(
         ApiConstants.login,
         data: {'email': email.trim(), 'password': password},
+        options: Options(headers: headers),
       );
       final data = res.data;
       if (data == null) throw Exception('Respuesta inválida del servidor.');

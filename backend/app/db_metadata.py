@@ -1,5 +1,6 @@
 # ImportaciĂłn lateral: registra todas las tablas en Base.metadata (Alembic autogenerate).
 # Orden: dependencias FK (Usuario antes que mĂłdulos que la referencian).
+from app.modules.acceso_y_administracion.tenants import models as _tenants_models  # noqa: F401
 from app.modules.acceso_y_administracion.usuarios import models as _usuarios_models  # noqa: F401
 from app.modules.clientes_y_vehiculos.clientes import models as _clientes_models  # noqa: F401
 from app.modules.acceso_y_administracion.permisos import models as _permisos_models  # noqa: F401

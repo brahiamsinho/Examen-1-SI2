@@ -1,0 +1,18 @@
+@startuml CU37-seleccionar-taller-servicio
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+
+left to right direction
+
+actor "Cliente" as cliente
+
+rectangle "Plataforma Emergencias\nVehiculares (móvil cliente)" {
+  usecase "CU37\nSeleccionar taller para\nrealizar el servicio" as CU37
+}
+
+cliente --> CU37
+
+@enduml

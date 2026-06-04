@@ -1,8 +1,18 @@
 import { Routes } from '@angular/router';
 import { adminAuthGuard } from '../core/guards/admin-auth.guard';
+import { adminGuestGuard } from '../core/guards/admin-guest.guard';
+import { AdminLoginComponent } from './features/auth/admin-login/admin-login.component';
+import { AdminShellComponent } from './shell/admin-shell.component';
 
-/** Rutas bajo `/admin` (login, recuperar, panel). */
+/**
+ * Shell eager; dashboard lazy (si el dashboard falla, el shell y la barra lateral siguen visibles).
+ */
 export const ADMIN_ROUTES: Routes = [
+  {
+    path: 'login',
+    component: AdminLoginComponent,
+    canActivate: [adminGuestGuard],
+  },
   {
     path: 'recuperar',
     loadComponent: () =>
@@ -12,14 +22,16 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'panel',
-    loadComponent: () => import('./shell/admin-shell.component').then((m) => m.AdminShellComponent),
+    component: AdminShellComponent,
     canActivate: [adminAuthGuard],
     children: [
       {
         path: '',
         pathMatch: 'full',
         loadComponent: () =>
-          import('./features/dashboard/admin-dashboard.component').then((m) => m.AdminDashboardComponent),
+          import('./features/dashboard/admin-dashboard.component').then(
+            (m) => m.AdminDashboardComponent,
+          ),
       },
       {
         path: 'usuarios',
@@ -51,11 +63,18 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () =>
           import('./features/finanzas/admin-finanzas.component').then((m) => m.AdminFinanzasComponent),
       },
+      {
+        path: 'organizaciones',
+        loadComponent: () =>
+          import('./features/organizaciones/admin-organizaciones.component').then(
+            (m) => m.AdminOrganizacionesComponent,
+          ),
+      },
     ],
   },
   {
     path: '',
-    loadComponent: () =>
-      import('./features/auth/admin-login/admin-login.component').then((m) => m.AdminLoginComponent),
+    pathMatch: 'full',
+    redirectTo: 'login',
   },
 ];

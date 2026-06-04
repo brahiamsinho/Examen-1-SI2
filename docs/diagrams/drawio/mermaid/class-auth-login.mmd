@@ -1,0 +1,61 @@
+%% D-010 — Puente draw.io (derivado de class-auth-login.puml)
+%% Abrir con MCP drawio
+
+classDiagram
+  direction TB
+
+  class LoginRequest {
+    +email: str
+    +password: str
+  }
+
+  class TokenResponse {
+    +access_token: str
+    +refresh_token: str
+    +token_type: str
+    +expires_in: int
+  }
+
+  class AuthRouter {
+    +login()
+  }
+
+  class AuthService {
+    +login()
+  }
+
+  class Usuario {
+    +id: int
+    +email: str
+    +password_hash: str
+    +estado: EstadoUsuarioEnum
+    +tenant_id: int?
+  }
+
+  class Sesion {
+    +token_jti: str
+    +estado: EstadoSesionEnum
+  }
+
+  class Tenant {
+    +slug: str
+    +nombre: str
+  }
+
+  class Rol {
+    +nombre: str
+  }
+
+  class UsuarioRol
+
+  AuthRouter --> LoginRequest
+  AuthRouter --> TokenResponse
+  AuthRouter --> AuthService
+  AuthService --> Usuario
+  AuthService --> Sesion
+  AuthService --> Tenant
+  AuthService --> TokenResponse
+  Usuario "1" --> "*" Sesion
+  Usuario "*" --> "0..1" Tenant
+  Usuario "1" --> "*" UsuarioRol
+  UsuarioRol "*" --> Rol

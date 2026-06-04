@@ -1,0 +1,49 @@
+%% D-006 — 4.3.1.1 Diseño físico — Diagrama de despliegue UML 2.5
+%% Fuente CANONICA: docs/diagrams/uml/deployment-docker-azure.puml
+
+flowchart LR
+  subgraph web["«device» Web"]
+    nav["«artifact»\nNavegador Angular\nadmin / taller"]
+  end
+
+  subgraph mobile["«device» Dispositivo movil"]
+    app["«artifact»\nAplicacion movil Flutter\ncliente + tecnico"]
+  end
+
+  inet["Node\nInternet"]
+
+  subgraph azure["Microsoft Azure"]
+    subgraph vm["«executionEnvironment»\nVM Azure Ubuntu Server"]
+      subgraph docker["«executionEnvironment»\nDocker / Docker Compose"]
+        subgraph fe["«executionEnvironment» Frontend"]
+          spa["«artifact»\nnginx + Angular SPA"]
+        end
+        subgraph be["«executionEnvironment» Backend"]
+          api["«artifact»\nFastAPI uvicorn"]
+        end
+        subgraph ai["«executionEnvironment» Microservicio IA"]
+          aiworker["«artifact»\nFastAPI YOLO/Whisper"]
+        end
+        subgraph dbenv["«executionEnvironment» Base de datos"]
+          pg["«artifact»\nPostgreSQL 15"]
+        end
+        subgraph mail["«executionEnvironment» Mailhog dev"]
+          mailhog["«artifact»\nSMTP pruebas"]
+        end
+      end
+    end
+  end
+
+  stripe["«external» Stripe"]
+  fcm["«external» Firebase FCM"]
+
+  web -->|HTTPS| inet
+  mobile -->|HTTPS| inet
+  inet -->|HTTPS :80| fe
+  inet -->|HTTPS :8000| be
+  fe -->|REST/HTTP| be
+  be -->|PostgreSQL| dbenv
+  be -->|REST/HTTP| ai
+  be -->|SMTP dev| mail
+  be -->|HTTPS API| stripe
+  be -->|HTTPS| fcm

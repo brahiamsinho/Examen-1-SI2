@@ -1,0 +1,229 @@
+@startuml class-database-conceptual
+' PUDS 4.3.3.1.1 — Diseño conceptual BD COMPLETO (alineado backend)
+' ID: D-020 | EA diagramID 24 | Paquete 9
+' Nucleo (11) + seguridad RBAC + catalogos + detalle emergencia + comms + auditoria
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor #F8F8F8
+  BorderColor #333333
+}
+
+title DISEÑO CONCEPTUAL DE LA BASE DE DATOS
+
+frame "Multi-tenant y actores" {
+  class Tenant {
+    id: int
+    slug: string
+    nombre: string
+    estado: string
+    plan: string
+  }
+  class Usuario {
+    id: int
+    email: string
+    password_hash: string
+    estado: string
+    tenant_id: int
+  }
+  class Cliente {
+    id: int
+    usuario_id: int
+    tenant_id: int
+    ciudad: string
+    direccion: string
+  }
+  class Tecnico {
+    id: int
+    usuario_id: int
+    taller_id: int
+    estado: string
+  }
+  class Taller {
+    id: int
+    nombre_comercial: string
+    direccion: string
+    latitud: float
+    longitud: float
+    tenant_id: int
+    estado: string
+  }
+}
+
+frame "Seguridad RBAC" {
+  class Rol {
+    id: int
+    nombre: string
+    descripcion: string
+  }
+  class Permiso {
+    id: int
+    codigo: string
+    nombre: string
+    modulo: string
+  }
+  class UsuarioRol {
+    id: int
+    usuario_id: int
+    rol_id: int
+    asignado_at: datetime
+  }
+  class RolPermiso {
+    id: int
+    rol_id: int
+    permiso_id: int
+  }
+  class Sesion {
+    id: int
+    usuario_id: int
+    token_jti: string
+    estado: string
+    expira_at: datetime
+  }
+}
+
+frame "Vehiculos" {
+  class MarcaVehiculo {
+    id: int
+    nombre: string
+  }
+  class ModeloVehiculo {
+    id: int
+    marca_id: int
+    nombre: string
+  }
+  class TipoVehiculo {
+    id: int
+    nombre: string
+  }
+  class Vehiculo {
+    id: int
+    placa: string
+    anio: int
+    color: string
+    tenant_id: int
+  }
+}
+
+frame "Emergencias y pagos" {
+  class SolicitudEmergencia {
+    id: int
+    descripcion_texto: string
+    estado: string
+    tenant_id: int
+  }
+  class SolicitudUbicacion {
+    id: int
+    solicitud_id: int
+    latitud: float
+    longitud: float
+    es_actual: bool
+  }
+  class SolicitudEvidencia {
+    id: int
+    solicitud_id: int
+    tipo: string
+    archivo_url: string
+  }
+  class SolicitudHistorialEstado {
+    id: int
+    solicitud_id: int
+    estado_anterior: string
+    estado_nuevo: string
+  }
+  class Pago {
+    id: int
+    monto: float
+    moneda: string
+    estado: string
+    metodo: string
+    referencia_externa: string
+  }
+  class ComisionTaller {
+    id: int
+    solicitud_id: int
+    taller_id: int
+    monto_comision: float
+    estado: string
+  }
+}
+
+frame "Comunicacion y auditoria" {
+  class Notificacion {
+    id: int
+    usuario_id: int
+    solicitud_id: int
+    tipo: string
+    titulo: string
+    leida: bool
+  }
+  class SolicitudMensaje {
+    id: int
+    solicitud_id: int
+    emisor_usuario_id: int
+    receptor_usuario_id: int
+    mensaje: string
+  }
+  class UsuarioFcmToken {
+    id: int
+    usuario_id: int
+    token: string
+    platform: string
+  }
+  class Bitacora {
+    id: int
+    usuario_id: int
+    modulo: string
+    entidad: string
+    accion: string
+    ip_address: string
+  }
+}
+
+' --- Multi-tenant ---
+Tenant "1" -- "0..*" Usuario : agrupa
+Tenant "1" -- "0..*" Cliente : agrupa
+Tenant "1" -- "0..*" Taller : agrupa
+
+' --- Actores ---
+Usuario "1" -- "0..1" Cliente : es
+Usuario "1" -- "0..1" Tecnico : es
+Taller "1" -- "0..*" Tecnico : emplea
+
+' --- RBAC ---
+Usuario "1" -- "0..*" UsuarioRol : tiene
+Rol "1" -- "0..*" UsuarioRol : define
+Rol "1" -- "0..*" RolPermiso : otorga
+Permiso "1" -- "0..*" RolPermiso : autoriza
+Usuario "1" -- "0..*" Sesion : inicia
+
+' --- Vehiculos ---
+MarcaVehiculo "1" -- "0..*" ModeloVehiculo : contiene
+ModeloVehiculo "1" -- "0..*" Vehiculo : referencia
+TipoVehiculo "1" -- "0..*" Vehiculo : clasifica
+MarcaVehiculo "1" -- "0..*" Vehiculo : marca
+Cliente "1" -- "0..*" Vehiculo : posee
+
+' --- Emergencias ---
+Cliente "1" -- "0..*" SolicitudEmergencia : solicita
+Vehiculo "1" -- "0..*" SolicitudEmergencia : involucra
+Taller "0..1" -- "0..*" SolicitudEmergencia : atiende
+Tecnico "0..1" -- "0..*" SolicitudEmergencia : asigna
+SolicitudEmergencia "1" -- "0..*" SolicitudUbicacion : ubica
+SolicitudEmergencia "1" -- "0..*" SolicitudEvidencia : adjunta
+SolicitudEmergencia "1" -- "0..*" SolicitudHistorialEstado : audita
+SolicitudEmergencia "1" -- "0..*" Pago : genera
+SolicitudEmergencia "1" -- "0..1" ComisionTaller : comisiona
+Taller "1" -- "0..*" ComisionTaller : recibe
+Pago "0..1" -- "0..1" ComisionTaller : origina
+
+' --- Comunicacion ---
+Usuario "1" -- "0..*" Notificacion : recibe
+SolicitudEmergencia "0..1" -- "0..*" Notificacion : dispara
+SolicitudEmergencia "1" -- "0..*" SolicitudMensaje : contiene
+Usuario "1" -- "0..*" SolicitudMensaje : envia
+Usuario "1" -- "0..*" UsuarioFcmToken : registra
+Usuario "0..1" -- "0..*" Bitacora : registra
+
+@enduml

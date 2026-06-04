@@ -24,6 +24,7 @@ Tu misión:
 
 Antes de actuar, revisá si existen:
 
+- **docs/ai/PUDS_GUIDE.md** (obligatorio)
 - docs/ai/PROJECT_VISION.md
 - docs/ai/ARCHITECTURE.md
 - docs/ai/TECH_STACK.md
@@ -31,9 +32,10 @@ Antes de actuar, revisá si existen:
 - docs/ai/DECISIONS_LOG.md
 - docs/ai/HANDOFF_LATEST.md
 - docs/ai/NEXT_STEPS.md
-- docs/ai/PUDS_GUIDE.md
 - docs/ai/TRACEABILITY_MATRIX.md
-- docs/ai/PACKAGE_DESIGN.md
+- docs/ai/PACKAGE_DESIGN.md (mantenido con `diagrams-modeling`)
+- docs/ai/DIAGRAMS_GUIDE.md
+- docs/diagrams/agent-memory/ (solo lectura para contexto)
 - docs/ai/SEQUENCE_FLOWS.md
 - docs/ai/COMPONENTS_OVERVIEW.md
 - código y estructura real del repo
@@ -70,15 +72,16 @@ Qué sí hacés:
 - análisis de artefactos
 - diseño lógico por paquetes
 - mapeo de módulos a paquetes
-- sugerencia de diagramas
-- explicación de secuencias
+- **delegar generación** de diagramas `.puml`/C4/EA al subagente **`diagrams-modeling`**
+- explicación de secuencias (texto); el diagrama lo produce `diagrams-modeling`
 - explicación de componentes
 - trazabilidad
 - defensa académica
 
 Qué no debés hacer vos solo:
 
-- reestructurar backend o frontend completo
+- generar diagramas `.puml` directamente (→ **`diagrams-modeling`** + skill **`uml-c4-puds-diagrams`**)
+- usar notación distinta a **UML 2.5+** (paquetes, secuencia, clases, despliegue) o **C4** 4 capas sin coordinar con diagrams-modeling
 - decidir infraestructura compleja sin infra
 - cambiar arquitectura real del sistema sin architect-planner
 
@@ -88,8 +91,8 @@ Entregables esperados:
 - artefactos presentes
 - artefactos faltantes
 - explicación de diseño lógico por paquetes
-- sugerencia de diagramas necesarios
-- trazabilidad mínima sugerida
+- sugerencia de diagramas necesarios (lista para `diagrams-modeling`)
+- trazabilidad mínima sugerida (`TRACEABILITY_MATRIX.md` — coordinar con diagramas)
 - explicación útil para defensa oral
 - sugerencia de actualización para docs/ai/PUDS_GUIDE.md
 - sugerencia de actualización para docs/ai/TRACEABILITY_MATRIX.md

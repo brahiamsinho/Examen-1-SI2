@@ -1,0 +1,46 @@
+---
+title: sd Login - Iniciar sesion (BCE)
+---
+sequenceDiagram
+  autonumber
+  actor Usuario
+  participant V.Login as V.Login<br/>(Boundary)
+  participant AuthController as AuthController<br/>(Control)
+  participant M.Usuario as M.Usuario<br/>(Entity)
+  participant M.Sesion as M.Sesion<br/>(Entity)
+  participant M.Tenant as M.Tenant<br/>(Entity)
+
+  rect rgb(230, 245, 255)
+    Note over Usuario,M.Tenant: alt login exitoso
+    Usuario->>AuthController: login()
+    AuthController->>V.Login: show()
+    V.Login->>AuthController: store(email, password [, slug])
+    AuthController->>M.Usuario: get()
+    M.Usuario-->>AuthController: return()
+    AuthController->>M.Tenant: get(slug)
+    Note right of M.Tenant: si X-Tenant-Slug
+    M.Tenant-->>AuthController: return()
+    AuthController->>M.Sesion: create()
+    AuthController->>AuthController: create_access_token()
+    AuthController-->>V.Login: TokenResponse
+    V.Login-->>Usuario: sesion iniciada
+  end
+
+  rect rgb(255, 235, 235)
+    Note over Usuario,M.Usuario: alt credenciales invalidas
+    Usuario->>AuthController: login()
+    AuthController->>V.Login: show()
+    V.Login->>AuthController: store(email, password)
+    AuthController->>M.Usuario: get()
+    M.Usuario-->>AuthController: return()
+    AuthController-->>V.Login: 401 Unauthorized
+    V.Login-->>Usuario: mensaje error
+  end
+
+  rect rgb(255, 245, 230)
+    Note over Usuario,M.Usuario: alt cuenta pendiente o bloqueada
+    Usuario->>AuthController: login()
+    AuthController->>M.Usuario: get()
+    M.Usuario-->>AuthController: return()
+    AuthController-->>Usuario: 403 Forbidden
+  end

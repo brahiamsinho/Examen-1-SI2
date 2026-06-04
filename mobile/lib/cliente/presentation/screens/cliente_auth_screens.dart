@@ -17,6 +17,7 @@ class ClienteLoginScreen extends ConsumerStatefulWidget {
 }
 
 class _ClienteLoginScreenState extends ConsumerState<ClienteLoginScreen> {
+  final _orgSlug = TextEditingController(text: AppEnv.tenantSlugDefault);
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _emailFocus = FocusNode();
@@ -36,6 +37,7 @@ class _ClienteLoginScreenState extends ConsumerState<ClienteLoginScreen> {
 
   @override
   void dispose() {
+    _orgSlug.dispose();
     _email.dispose();
     _password.dispose();
     _emailFocus.dispose();
@@ -57,6 +59,7 @@ class _ClienteLoginScreenState extends ConsumerState<ClienteLoginScreen> {
     ref.read(clientAuthNotifierProvider.notifier).login(
           email: _email.text,
           password: _password.text,
+          tenantSlug: _orgSlug.text,
         );
   }
 
@@ -165,6 +168,25 @@ class _ClienteLoginScreenState extends ConsumerState<ClienteLoginScreen> {
                                   ),
                                 ],
                                 const SizedBox(height: 22),
+                                Text(
+                                  'Código de organización',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ShadInput(
+                                  controller: _orgSlug,
+                                  placeholder: const Text('demo-sc'),
+                                  textInputAction: TextInputAction.next,
+                                  autocorrect: false,
+                                  leading: Icon(
+                                    Icons.apartment_rounded,
+                                    size: 20,
+                                    color: cs.onSurface.withValues(alpha: 0.55),
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
                                 Text(
                                   'Correo electrónico',
                                   style: theme.textTheme.labelLarge?.copyWith(

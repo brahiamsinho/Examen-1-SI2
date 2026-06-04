@@ -142,6 +142,10 @@ async def ensure_dev_admin(
             user.estado = EstadoUsuarioEnum.ACTIVO
             user.updated_at = now
             logger.info("Seed admin: estado ACTIVO para %s", email)
+        if user.tenant_id is not None:
+            user.tenant_id = None
+            user.updated_at = now
+            logger.info("Seed admin: tenant_id=NULL (superadmin plataforma) para %s", email)
 
         link = await db.execute(
             select(UsuarioRol).where(
@@ -170,6 +174,7 @@ async def ensure_dev_admin(
         telefono=telefono,
         password_hash=hash_password(password),
         estado=EstadoUsuarioEnum.ACTIVO,
+        tenant_id=None,
         created_at=now,
         updated_at=now,
     )

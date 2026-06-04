@@ -150,3 +150,41 @@ export interface AdminFinanzasReportes {
   top_talleres: TallerComisionFila[];
   serie_diaria: AdminComisionSerieFila[];
 }
+
+export type EstadoTenant = 'ACTIVO' | 'INACTIVO' | 'SUSPENDIDO' | 'PENDIENTE';
+export type PlanTenant = 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
+export type EstadoSuscripcionTenant =
+  | 'TRIAL'
+  | 'ACTIVA'
+  | 'PAST_DUE'
+  | 'CANCELADA'
+  | 'SUSPENDIDA';
+
+export interface TenantDto {
+  id: number;
+  slug: string;
+  nombre: string;
+  estado: EstadoTenant;
+  plan: PlanTenant;
+  dominio_custom: string | null;
+  stripe_customer_id?: string | null;
+  subscription_status?: EstadoSuscripcionTenant;
+  subscription_ends_at?: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface TenantCreatePayload {
+  slug: string;
+  nombre: string;
+  plan?: PlanTenant;
+  dominio_custom?: string | null;
+}
+
+export interface TenantUpdatePayload {
+  nombre?: string;
+  estado?: EstadoTenant;
+  plan?: PlanTenant;
+  dominio_custom?: string | null;
+  subscription_status?: EstadoSuscripcionTenant;
+}

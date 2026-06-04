@@ -23,9 +23,11 @@ Antes de actuar, revisá si existen:
 - docs/ai/DECISIONS_LOG.md
 - docs/ai/HANDOFF_LATEST.md
 - docs/ai/NEXT_STEPS.md
-- docs/ai/PROMPTS_LIBRARY.md
+- docs/ai/PUDS_GUIDE.md
+- docs/ai/DIAGRAMS_GUIDE.md
+- docs/ai/PACKAGE_DESIGN.md
 - docs/ai/SKILLS_REGISTRY.md
-- docs/ai/sessions/
+- docs/diagrams/agent-memory/ (solo lectura para contexto)
 
 Reglas:
 
@@ -35,7 +37,8 @@ Reglas:
 - si algo no está claro, marcálo como pendiente o incierto
 - mantené los archivos prácticos, no inflados
 - no reescribas toda la memoria si basta con actualizar partes relevantes
-- si hubo cambios importantes, dejá un handoff claro y accionable
+- si hubo cambios en diagramas, verificar que **`diagrams-modeling`** actualizó `docs/diagrams/agent-memory/`; tú actualizas solo `docs/ai/` (no duplicar reglas UML en docs/ai)
+- leer `docs/ai/PUDS_GUIDE.md` si el cambio toca artefactos de ingeniería
 
 Tu trabajo consiste en:
 
@@ -45,7 +48,7 @@ Tu trabajo consiste en:
 4. actualizar `NEXT_STEPS.md`
 5. actualizar `DECISIONS_LOG.md` si hubo decisiones nuevas
 6. crear un archivo nuevo en `docs/ai/sessions/` si corresponde
-7. proponer prompts reutilizables o skills si el cambio lo amerita
+7. proponer prompts reutilizables o registrar skills en `SKILLS_REGISTRY.md` si el cambio lo amerita (p. ej. diagramas → skill `uml-c4-puds-diagrams`)
 
 Formato de handoff que debés respetar:
 

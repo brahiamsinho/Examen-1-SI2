@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
+from app.core.tenant_middleware import TenantSlugMiddleware
 
 _log = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ async def lifespan(app: FastAPI):
         from app.seeds.dev_demo_media_prioridad import ensure_demo_media_prioridad
         from app.seeds.dev_demo_santa_cruz import ensure_demo_santa_cruz_datos
         from app.seeds.dev_stress_visual import ensure_stress_visual_seed
+        from app.seeds.dev_tenant import ensure_default_tenant
 
         async with _startup_seed_lock:
             # Tras `docker compose up`, Postgres puede reiniciarse al terminar init.sql;
@@ -47,16 +49,23 @@ async def lifespan(app: FastAPI):
             for attempt in range(1, 9):
                 try:
                     async with AsyncSessionLocal() as session:
+                        tenant_id = await ensure_default_tenant(session)
                         await ensure_baseline_rol_permisos(session)
                         await ensure_catalogos_vehiculo_demo(session)
                         if settings.SEED_ADMIN_ON_START:
                             await ensure_dev_admin(session, require_enabled_flag=False)
                         if settings.SEED_CLIENTE_ON_START:
-                            await ensure_dev_cliente(session, require_enabled_flag=False)
+                            await ensure_dev_cliente(
+                                session, tenant_id=tenant_id, require_enabled_flag=False
+                            )
                         if settings.SEED_TALLER_ON_START:
-                            await ensure_dev_taller(session, require_enabled_flag=False)
+                            await ensure_dev_taller(
+                                session, tenant_id=tenant_id, require_enabled_flag=False
+                            )
                         if settings.SEED_TECNICO_ON_START:
-                            await ensure_dev_tecnico(session, require_enabled_flag=False)
+                            await ensure_dev_tecnico(
+                                session, tenant_id=tenant_id, require_enabled_flag=False
+                            )
                         if settings.SEED_DEMO_SANTA_CRUZ_ON_START:
                             await ensure_demo_santa_cruz_datos(session, require_enabled_flag=False)
                         if settings.SEED_DEMO_MEDIA_PRIORIDAD_ON_START:
@@ -92,6 +101,9 @@ from app.modules.acceso_y_administracion.bitacora.router import router as bitaco
 from app.modules.acceso_y_administracion.admin_finanzas.router import (
     router as admin_finanzas_router,
 )
+from app.modules.acceso_y_administracion.tenants.router import router as tenants_router
+from app.modules.acceso_y_administracion.public_tenants.router import router as public_tenants_router
+from app.modules.acceso_y_administracion.billing.router import router as billing_webhooks_router
 from app.modules.talleres_y_tecnicos.taller_responsable.router import router as taller_responsable_router
 from app.modules.atencion.taller_emergencias.router import router as taller_emergencias_router
 from app.modules.clientes_y_vehiculos.clientes.router import router as clientes_app_router
@@ -116,6 +128,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# ── Tenant slug (X-Tenant-Slug) antes de CORS ─────────────────
+app.add_middleware(TenantSlugMiddleware)
+
 # ── CORS ──────────────────────────────────────────────────────
 # En producción, CORS_ORIGINS debe ser solo el dominio del frontend
 app.add_middleware(
@@ -124,6 +139,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Tenant-Slug"],
 )
 
 # ── Registrar routers bajo el prefijo /api ─────────────────
@@ -141,6 +157,9 @@ app.include_router(especialidades_router, prefix=PREFIX)
 app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
 app.include_router(admin_finanzas_router, prefix=PREFIX)
+app.include_router(tenants_router, prefix=PREFIX)
+app.include_router(public_tenants_router, prefix=PREFIX)
+app.include_router(billing_webhooks_router, prefix=PREFIX)
 app.include_router(taller_responsable_router, prefix=PREFIX)
 app.include_router(taller_emergencias_router, prefix=PREFIX)
 app.include_router(clientes_app_router, prefix=PREFIX)

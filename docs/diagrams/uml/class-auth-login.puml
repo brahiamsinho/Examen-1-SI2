@@ -1,0 +1,148 @@
+@startuml class-auth-login
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: UML diagrama de clases — Login (POST /api/auth/login)
+' Fuente: backend/app/modules/acceso_y_administracion/auth|usuarios|roles|tenants
+' ID: D-010 | Agente: diagrams-modeling | 2026-05-28
+' Trazabilidad: POST /api/auth/login + header X-Tenant-Slug
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+title Diagrama de clases — Login (autenticación)
+
+package "API (FastAPI)" <<Frame>> #E8F4FC {
+  class AuthRouter <<router>> {
+    +login(body, request, db, x_tenant_slug): TokenResponse
+  }
+
+  class LoginRequest <<Pydantic>> {
+    +email: str
+    +password: str
+  }
+
+  class TokenResponse <<Pydantic>> {
+    +access_token: str
+    +refresh_token: str
+    +token_type: str
+    +expires_in: int
+  }
+}
+
+package "Lógica de negocio" <<Frame>> #F5F5E8 {
+  class AuthService <<service>> {
+    +login(email, password, db, request, tenant_slug): dict
+    -_login_rls_bypass(db): void
+  }
+}
+
+package "Persistencia (SQLAlchemy)" <<Frame>> #EDE8F4 {
+  class Usuario <<ORM>> {
+    +id: int
+    +nombres: str
+    +apellidos: str
+    +username: str?
+    +email: str
+    +telefono: str
+    +password_hash: str
+    +estado: EstadoUsuarioEnum
+    +tenant_id: int?
+    +ultimo_acceso_at: datetime?
+  }
+
+  class Sesion <<ORM>> {
+    +id: int
+    +usuario_id: int
+    +token_jti: str
+    +ip_address: str?
+    +user_agent: str?
+    +dispositivo: str?
+    +plataforma: str?
+    +iniciado_at: datetime
+    +cerrado_at: datetime?
+    +expira_at: datetime?
+    +estado: EstadoSesionEnum
+  }
+
+  class Rol <<ORM>> {
+    +id: int
+    +nombre: str
+    +descripcion: str?
+  }
+
+  class UsuarioRol <<ORM>> {
+    +id: int
+    +usuario_id: int
+    +rol_id: int
+    +asignado_at: datetime?
+  }
+
+  class Tenant <<ORM>> {
+    +id: int
+    +slug: str
+    +nombre: str
+    +estado: EstadoTenantEnum
+    +plan: PlanTenantEnum
+  }
+
+  enum EstadoUsuarioEnum {
+    ACTIVO
+    INACTIVO
+    BLOQUEADO
+    PENDIENTE
+  }
+
+  enum EstadoSesionEnum {
+    ACTIVA
+    CERRADA
+    EXPIRADA
+    REVOCADA
+  }
+}
+
+package "Seguridad (core)" <<Frame>> #F0F0F0 {
+  class SecurityUtils <<utility>> {
+    {static} +verify_password(plain, hash): bool
+    {static} +create_access_token(subject, extra_claims): str
+    {static} +create_refresh_token(subject, jti): str
+  }
+}
+
+' --- Relaciones API ---
+AuthRouter ..> LoginRequest : recibe
+AuthRouter ..> TokenResponse : devuelve
+AuthRouter ..> AuthService : delega
+
+LoginRequest ..> AuthService : credenciales
+
+' --- Servicio ---
+AuthService ..> Usuario : busca por email
+AuthService ..> Tenant : resuelve por slug\n(opcional)
+AuthService ..> SecurityUtils : verify + JWT
+AuthService ..> Sesion : crea registro
+AuthService ..> UsuarioRol : consulta roles
+AuthService ..> TokenResponse : arma respuesta
+
+' --- Asociaciones persistencia ---
+Usuario "1" -- "0..*" Sesion : inicia >
+Usuario "0..*" -- "0..1" Tenant : pertenece >
+Usuario "1" -- "0..*" UsuarioRol
+UsuarioRol "0..*" -- "1" Rol
+Usuario --> EstadoUsuarioEnum
+Sesion --> EstadoSesionEnum
+
+note right of AuthService
+  Flujo resumido:
+  1. bypass RLS (login)
+  2. validar email/password
+  3. validar tenant_slug vs tenant_id
+  4. estado == ACTIVO
+  5. cargar roles → JWT (tenant_id, jti, roles)
+  6. INSERT sesiones + bitácora
+end note
+
+note bottom of Tenant
+  Header HTTP: X-Tenant-Slug
+  Superadmin: tenant_id NULL
+end note
+
+@enduml

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import {
   Observable,
@@ -82,9 +82,18 @@ export class TallerAuthService {
       });
   }
 
-  login(email: string, password: string, remember: boolean): Observable<void> {
+  login(
+    email: string,
+    password: string,
+    remember: boolean,
+    tenantSlug?: string | null,
+  ): Observable<void> {
     const url = `${environment.apiUrl}/auth/login`;
-    return this.http.post<TokenResponse>(url, { email, password }).pipe(
+    let headers = new HttpHeaders();
+    if (tenantSlug?.trim()) {
+      headers = headers.set('X-Tenant-Slug', tenantSlug.trim().toLowerCase());
+    }
+    return this.http.post<TokenResponse>(url, { email, password }, { headers }).pipe(
       switchMap((tokens) =>
         this.fetchMe(tokens.access_token).pipe(
           mergeMap((me) => {

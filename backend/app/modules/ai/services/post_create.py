@@ -130,7 +130,9 @@ async def _enrich_solicitud_ai_after_create_impl(
 
     asignacion = None
     if ubic:
-        taller_rows = await ai_repository.list_talleres_for_assignment(db)
+        taller_rows = await ai_repository.list_talleres_for_assignment(
+            db, tenant_id=s.tenant_id
+        )
         if taller_rows:
             asignacion = rank_talleres(
                 AssignmentRankIn(

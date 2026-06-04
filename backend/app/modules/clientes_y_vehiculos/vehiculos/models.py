@@ -73,6 +73,9 @@ class Vehiculo(Base):
     __tablename__ = "vehiculos"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=True
+    )
     cliente_id: Mapped[int] = mapped_column(
         ForeignKey("clientes.id", ondelete="RESTRICT"), nullable=False
     )

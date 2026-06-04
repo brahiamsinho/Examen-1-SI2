@@ -1,0 +1,36 @@
+---
+title: D-002 C4 Container — Despliegue lógico Docker dev
+---
+C4Container
+  Person(cliente, "Cliente", "Flutter")
+  Person(tecnico, "Técnico", "Flutter")
+  Person(taller, "Taller", "Angular taller")
+  Person(admin, "Admin plataforma", "Angular admin")
+
+  System_Boundary(plataforma, "Plataforma") {
+    Container(mobile, "App móvil", "Flutter", "cliente + técnico; JWT + X-Tenant-Slug")
+    Container(web_taller, "Portal taller", "Angular", "/taller/panel")
+    Container(web_admin, "Panel admin", "Angular", "/admin/panel; tenants y finanzas")
+    Container(api, "API backend", "FastAPI", "REST /api; middleware tenant; módulos por dominio")
+    ContainerDb(db, "PostgreSQL", "SQL", "Datos + RLS por tenant_id")
+    Container(ai, "ai-inference", "Python worker", "YOLO/Whisper; perfil Compose ai")
+    Container(mail, "Mailhog", "SMTP dev", "Correos de verificación")
+  }
+
+  System_Ext(stripe, "Stripe", "Pagos y billing SaaS")
+  System_Ext(fcm, "FCM", "Push")
+
+  Rel(cliente, mobile, "Usa")
+  Rel(tecnico, mobile, "Usa")
+  Rel(taller, web_taller, "Usa")
+  Rel(admin, web_admin, "Usa")
+
+  Rel(mobile, api, "HTTPS + Bearer JWT", "JSON")
+  Rel(web_taller, api, "HTTPS + Bearer JWT", "JSON")
+  Rel(web_admin, api, "HTTPS + Bearer JWT", "JSON")
+
+  Rel(api, db, "SQLAlchemy async")
+  Rel(api, ai, "HTTP AI_INFERENCE_BASE_URL", "interno Docker")
+  Rel(api, mail, "SMTP dev")
+  Rel(api, stripe, "API + webhooks")
+  Rel(api, fcm, "firebase-admin")

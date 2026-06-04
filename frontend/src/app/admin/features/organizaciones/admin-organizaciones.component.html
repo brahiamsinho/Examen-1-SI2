@@ -1,0 +1,88 @@
+<section class="page">
+  <header class="page__head">
+    <div>
+      <h2>Organizaciones (SaaS)</h2>
+      <p class="page__hint">Clientes B2B de la plataforma. Solo superadmin de plataforma.</p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">Nueva organización</button>
+  </header>
+
+  <p *ngIf="error" class="page__error">{{ error }}</p>
+  <p *ngIf="loading" class="page__muted">Cargando…</p>
+
+  <table *ngIf="!loading && tenants.length" class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Slug</th>
+        <th>Nombre</th>
+        <th>Plan</th>
+        <th>Estado</th>
+        <th>Suscripción</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of tenants">
+        <td>{{ t.id }}</td>
+        <td><code>{{ t.slug }}</code></td>
+        <td>{{ t.nombre }}</td>
+        <td>{{ t.plan }}</td>
+        <td>{{ t.estado }}</td>
+        <td>{{ t.subscription_status || 'TRIAL' }}</td>
+        <td class="table__actions">
+          <button type="button" class="btn btn--ghost" (click)="openEdit(t)">Editar</button>
+          <button type="button" class="btn btn--ghost" (click)="openCheckout(t)">Suscribir</button>
+          <button type="button" class="btn btn--ghost" (click)="openBillingPortal(t)">Facturación</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p *ngIf="!loading && !tenants.length" class="page__muted">No hay organizaciones registradas.</p>
+</section>
+
+<div *ngIf="modalCreate" class="modal" role="dialog" aria-modal="true">
+  <div class="modal__card">
+    <h3>Nueva organización</h3>
+    <label>Slug <input [(ngModel)]="createForm.slug" placeholder="mi-empresa" /></label>
+    <label>Nombre <input [(ngModel)]="createForm.nombre" /></label>
+    <label>
+      Plan
+      <select [(ngModel)]="createForm.plan">
+        <option *ngFor="let p of plans" [value]="p">{{ p }}</option>
+      </select>
+    </label>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--ghost" (click)="modalCreate = false">Cancelar</button>
+      <button type="button" class="btn btn--primary" [disabled]="busy" (click)="submitCreate()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="modalEdit && selected" class="modal" role="dialog" aria-modal="true">
+  <div class="modal__card">
+    <h3>Editar {{ selected.slug }}</h3>
+    <label>Nombre <input [(ngModel)]="editForm.nombre" /></label>
+    <label>
+      Plan
+      <select [(ngModel)]="editForm.plan">
+        <option *ngFor="let p of plans" [value]="p">{{ p }}</option>
+      </select>
+    </label>
+    <label>
+      Estado
+      <select [(ngModel)]="editForm.estado">
+        <option value="ACTIVO">ACTIVO</option>
+        <option value="INACTIVO">INACTIVO</option>
+        <option value="SUSPENDIDO">SUSPENDIDO</option>
+        <option value="PENDIENTE">PENDIENTE</option>
+      </select>
+    </label>
+    <label>Stripe customer id <input [(ngModel)]="stripeCustomerId" placeholder="cus_…" /></label>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--ghost" (click)="modalEdit = false">Cancelar</button>
+      <button type="button" class="btn btn--primary" [disabled]="busy" (click)="submitEdit()">Guardar</button>
+    </div>
+  </div>
+</div>

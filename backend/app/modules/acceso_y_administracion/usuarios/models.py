@@ -7,7 +7,7 @@ from __future__ import annotations
 # =========================================================
 import enum
 from datetime import datetime
-from sqlalchemy import Integer, String, DateTime, Enum as SAEnum
+from sqlalchemy import Integer, String, DateTime, Enum as SAEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
@@ -41,6 +41,9 @@ class Usuario(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     estado: Mapped[EstadoUsuarioEnum] = mapped_column(
         SAEnum(EstadoUsuarioEnum, name="estado_usuario"), nullable=False
+    )
+    tenant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=True
     )
     ultimo_acceso_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime | None] = mapped_column(DateTime)

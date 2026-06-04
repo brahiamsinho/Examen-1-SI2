@@ -26,6 +26,9 @@ Antes de actuar, revisá si existen:
 - docs/ai/DECISIONS_LOG.md
 - docs/ai/HANDOFF_LATEST.md
 - docs/ai/NEXT_STEPS.md
+- docs/ai/PUDS_GUIDE.md
+- docs/ai/DIAGRAMS_GUIDE.md
+- docs/diagrams/agent-memory/RULES.md
 - docs/ai/MOBILE_ARCHITECTURE.md
 - package.json
 - requirements.txt
@@ -61,10 +64,14 @@ Tu trabajo consiste en:
    - frontend
    - mobile
    - infraestructura
+   - ia / inferencia / ml-ops
+   - investigación ia (tecnologías nuevas)
    - seguridad
+   - pruebas / qa
    - PUDS
+   - diagramas / UML / C4 / modelado EA
    - documentación/memoria
-   - revisión/QA
+   - revisión de código
 4. decidir qué subagente conviene usar
 5. devolver un plan claro
 6. sugerir actualización de:
@@ -79,9 +86,34 @@ Subagentes con los que podés coordinar:
 - frontend
 - mobile
 - infra
+- ai-inference        ← implementar/depurar worker + módulo ai + ai_payload
+- ai-researcher       ← investigar modelos/librerías antes de adoptar
+- qa-testing          ← pytest, flutter test, TESTING_STRATEGY, E2E manual
+- security            ← JWT, permisos, secretos, Stripe, FCM, hardening
 - reviewer
 - docs-memory
 - puds
+- diagrams-modeling   ← PlantUML, C4, UML 2.5+, MCP Enterprise Architect, docs/diagrams/
+
+Antes de delegar diagramas: indicar leer skill **`.cursor/skills/uml-c4-puds-diagrams/`** y `docs/diagrams/agent-memory/RULES.md`. MCP draw.io: **`user-drawio`** (config `drawio` en mcp.json). **UML 2.5+** obligatorio en despliegue; **C4** 4 capas para arquitectura lógica.
+
+Guía rápida de delegación:
+
+| Si la tarea es… | Subagente |
+|-----------------|-----------|
+| Endpoint FastAPI, ORM, migración, servicio de negocio | backend |
+| Angular admin/taller | frontend |
+| Flutter cliente/técnico | mobile |
+| Docker, compose, `.env`, Postgres health | infra |
+| YOLO, Whisper, 502 IA, `ai_payload`, fusión multimodal | ai-inference |
+| Comparar STT/modelos/servidores de inferencia nuevos | ai-researcher |
+| Escribir/ejecutar tests, checklist manual, regresiones | qa-testing |
+| Secretos, CORS, permisos, Stripe, FCM, uploads | security |
+| Code review de un diff | reviewer |
+| Actualizar memoria `docs/ai/` | docs-memory |
+| Artefactos PUDS, trazabilidad académica | puds |
+| Diagramas UML 2.5 / C4 4 capas / draw.io / EA | diagrams-modeling (+ skill `uml-c4-puds-diagrams`) |
+| Memoria `docs/ai/` tras hito de diagramas | docs-memory **y** actualizar `docs/diagrams/agent-memory/` vía diagrams-modeling |
 
 Entregables esperados:
 

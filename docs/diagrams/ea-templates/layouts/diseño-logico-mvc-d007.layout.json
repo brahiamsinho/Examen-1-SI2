@@ -1,0 +1,39 @@
+{
+  "$schema": "examen-si2-ea-layout-v1",
+  "diagramID": 39,
+  "diagramName": "4.3.1.2 Diseño logico arquitectura MVC",
+  "packageID": 12,
+  "description": "Franjas Vista | controlador | Modelo con líneas separadoras (plantilla académica)",
+  "placements": [
+    { "elementID": 217, "x": 55, "y": 62, "width": 920, "height": 115, "comment": "Boundary Franja Vista — Send to Back" },
+    { "elementID": 218, "x": 55, "y": 182, "width": 920, "height": 115, "comment": "Boundary Franja controlador" },
+    { "elementID": 219, "x": 55, "y": 302, "width": 920, "height": 145, "comment": "Boundary Franja Modelo" },
+    { "elementID": 213, "x": 30, "y": 25, "width": 980, "height": 500, "comment": "Marco exterior — Send to Back" },
+    { "elementID": 214, "x": 60, "y": 58, "width": 900, "height": 28, "comment": "Etiqueta franja Vista" },
+    { "elementID": 215, "x": 60, "y": 178, "width": 900, "height": 28, "comment": "Etiqueta franja controlador" },
+    { "elementID": 216, "x": 60, "y": 298, "width": 900, "height": 28, "comment": "Etiqueta franja Modelo" },
+    { "elementID": 197, "x": 80, "y": 95, "width": 150, "height": 48 },
+    { "elementID": 198, "x": 250, "y": 95, "width": 150, "height": 48 },
+    { "elementID": 199, "x": 420, "y": 95, "width": 150, "height": 48 },
+    { "elementID": 200, "x": 590, "y": 95, "width": 150, "height": 48 },
+    { "elementID": 201, "x": 760, "y": 95, "width": 150, "height": 48 },
+    { "elementID": 202, "x": 80, "y": 215, "width": 150, "height": 48 },
+    { "elementID": 203, "x": 250, "y": 215, "width": 150, "height": 48 },
+    { "elementID": 204, "x": 420, "y": 215, "width": 150, "height": 48 },
+    { "elementID": 205, "x": 590, "y": 215, "width": 150, "height": 48 },
+    { "elementID": 206, "x": 760, "y": 215, "width": 150, "height": 48 },
+    { "elementID": 207, "x": 80, "y": 335, "width": 150, "height": 48 },
+    { "elementID": 208, "x": 250, "y": 335, "width": 150, "height": 48 },
+    { "elementID": 209, "x": 420, "y": 335, "width": 150, "height": 48 },
+    { "elementID": 210, "x": 590, "y": 335, "width": 150, "height": 48 },
+    { "elementID": 211, "x": 760, "y": 335, "width": 150, "height": 48 },
+    { "elementID": 212, "x": 400, "y": 430, "width": 200, "height": 42 }
+  ],
+  "manualSteps": [
+    "1. Seleccionar boundaries 217-219 y nota 213 → Format → Send to Back",
+    "2. Seleccionar paquetes 197-212 → Format → Bring to Front",
+    "3. Renombrar boundaries: título Vista / controlador / Modelo (doble clic)",
+    "4. Notas 214-216 opcionales a la izquierda si faltan etiquetas",
+    "5. View → Zoom → Fit in Window; Ctrl+S"
+  ]
+}

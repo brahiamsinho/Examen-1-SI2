@@ -1,7 +1,7 @@
 # app/modules/auth/service.py
 import uuid
 from fastapi import HTTPException, Request, status
-from sqlalchemy import select, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -11,7 +11,13 @@ from app.modules.acceso_y_administracion.auth.models import EstadoSesionEnum, Se
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
 from app.modules.acceso_y_administracion.bitacora.service import registrar_accion
 from app.modules.acceso_y_administracion.roles.models import Rol, UsuarioRol
+from app.modules.acceso_y_administracion.tenants import service as tenants_service
 from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
+
+
+async def _login_rls_bypass(db: AsyncSession) -> None:
+    """Login debe ver usuarios de cualquier tenant; solo dura la transacción."""
+    await db.execute(text("SELECT set_config('app.bypass_rls', 'on', true)"))
 
 
 async def login(
@@ -19,10 +25,13 @@ async def login(
     password: str,
     db: AsyncSession,
     request: Request,
+    tenant_slug: str | None = None,
 ) -> dict:
     """
     Autentica al usuario con email + password.
+    Si viene X-Tenant-Slug, el usuario debe pertenecer a ese tenant (salvo superadmin sin tenant).
     """
+    await _login_rls_bypass(db)
     result = await db.execute(select(Usuario).where(Usuario.email == email))
     user = result.scalar_one_or_none()
 
@@ -31,6 +40,16 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
         )
+
+    if tenant_slug:
+        tenant = await tenants_service.get_tenant_by_slug(db, tenant_slug.strip().lower())
+        if tenant is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organización no encontrada")
+        if user.tenant_id is not None and user.tenant_id != tenant.id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales incorrectas",
+            )
 
     if user.estado == EstadoUsuarioEnum.PENDIENTE:
         raise HTTPException(
@@ -84,7 +103,11 @@ async def login(
 
     access_token = create_access_token(
         subject=user.id,
-        extra_claims={"jti": jti, "roles": roles},
+        extra_claims={
+            "jti": jti,
+            "roles": roles,
+            "tenant_id": user.tenant_id,
+        },
     )
     refresh_token = create_refresh_token(subject=user.id, jti=jti)
 

@@ -1,0 +1,18 @@
+@startuml CU39-actualizar-estado-atencion
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+
+left to right direction
+
+actor "Técnico /\nMecánico" as tecnico
+
+rectangle "Plataforma de Emergencias\nVehiculares (móvil técnico)" {
+  usecase "CU39\nActualizar estado de\natención del servicio" as CU39
+}
+
+tecnico --> CU39
+
+@enduml

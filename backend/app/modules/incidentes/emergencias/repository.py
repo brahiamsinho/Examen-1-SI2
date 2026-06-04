@@ -31,6 +31,7 @@ async def get_vehiculo_if_cliente(
 async def insert_solicitud(
     db: AsyncSession,
     *,
+    tenant_id: int | None,
     cliente_id: int,
     vehiculo_id: int,
     descripcion_texto: str | None,
@@ -39,6 +40,7 @@ async def insert_solicitud(
     updated_at,
 ) -> SolicitudEmergencia:
     row = SolicitudEmergencia(
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=vehiculo_id,
         descripcion_texto=descripcion_texto,

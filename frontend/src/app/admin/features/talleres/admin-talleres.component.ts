@@ -1,8 +1,18 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { distinctUntilChanged, skip } from 'rxjs/operators';
 import { AdminApiService } from '../../../core/services/admin-api.service';
+import { AdminTenantContextService } from '../../../core/services/admin-tenant-context.service';
 import type {
   EstadoTaller,
   TallerCreatePayload,
@@ -17,9 +27,13 @@ import type {
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-talleres.component.html',
   styleUrl: './admin-talleres.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminTalleresComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly tenantCtx = inject(AdminTenantContextService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   talleres: TallerDto[] = [];
   usuarios: UsuarioListDto[] = [];
@@ -54,28 +68,38 @@ export class AdminTalleresComponent implements OnInit {
 
   ngOnInit(): void {
     this.reload();
+    this.tenantCtx.tenantChanges$
+      .pipe(skip(1), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.reload());
   }
 
   reload(): void {
     this.loading = true;
-    forkJoin({ talleres: this.api.listTalleres(), usuarios: this.api.listUsuarios() }).subscribe({
-      next: ({ talleres, usuarios }) => {
-        this.talleres = talleres;
-        this.usuarios = usuarios;
-        const firstResp = this.responsablesTaller[0];
-        if (firstResp) {
-          this.createForm.usuario_responsable_id = firstResp.id;
-        } else {
-          this.createForm.usuario_responsable_id = 0;
-        }
-        this.loading = false;
-        this.error = null;
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudieron cargar los talleres.';
-      },
-    });
+    this.error = null;
+    this.cdr.markForCheck();
+    const tq = this.tenantCtx.tenantQueryParam();
+    forkJoin({ talleres: this.api.listTalleres(tq), usuarios: this.api.listUsuarios(tq) })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ talleres, usuarios }) => {
+          this.talleres = talleres;
+          this.usuarios = usuarios;
+          const firstResp = this.responsablesTaller[0];
+          if (firstResp) {
+            this.createForm.usuario_responsable_id = firstResp.id;
+          } else {
+            this.createForm.usuario_responsable_id = 0;
+          }
+          this.loading = false;
+          this.error = null;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.loading = false;
+          this.error = 'No se pudieron cargar los talleres.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   get filtered(): TallerDto[] {
@@ -126,10 +150,12 @@ export class AdminTalleresComponent implements OnInit {
         this.modalEdit = false;
         this.busy = false;
         this.detail = null;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;
         this.error = 'No se pudo actualizar el taller.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -155,10 +181,12 @@ export class AdminTalleresComponent implements OnInit {
           descripcion: '',
           estado: 'PENDIENTE',
         };
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;
         this.error = 'No se pudo crear el taller (revisa usuario responsable y datos).';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -170,10 +198,12 @@ export class AdminTalleresComponent implements OnInit {
         this.talleres = this.talleres.map((x) => (x.id === u.id ? u : x));
         this.busy = false;
         if (this.detail?.id === u.id) this.detail = u;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;
         this.error = 'No se pudo cambiar el estado.';
+        this.cdr.markForCheck();
       },
     });
   }

@@ -9,8 +9,11 @@ from app.modules.acceso_y_administracion.bitacora.service import registrar_accio
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
 
 
-async def get_talleres(db: AsyncSession):
-    result = await db.execute(select(Taller).order_by(Taller.nombre_comercial))
+async def get_talleres(db: AsyncSession, list_tenant_id: int | None = None):
+    stmt = select(Taller).order_by(Taller.nombre_comercial)
+    if list_tenant_id is not None:
+        stmt = stmt.where(Taller.tenant_id == list_tenant_id)
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 async def get_taller_by_id(taller_id: int, db: AsyncSession) -> Taller:

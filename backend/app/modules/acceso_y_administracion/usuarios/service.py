@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from fastapi import HTTPException, status
 
 from app.core.security import hash_password
@@ -15,13 +15,18 @@ from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEn
 from app.modules.acceso_y_administracion.roles.models import Rol, UsuarioRol
 
 
-async def get_usuarios(db: AsyncSession) -> list[Usuario]:
-    result = await db.execute(select(Usuario).order_by(Usuario.apellidos))
+async def get_usuarios(db: AsyncSession, list_tenant_id: int | None = None) -> list[Usuario]:
+    stmt = select(Usuario).order_by(Usuario.apellidos)
+    if list_tenant_id is not None:
+        stmt = stmt.where(Usuario.tenant_id == list_tenant_id)
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
-async def get_usuarios_admin(db: AsyncSession) -> list[UsuarioListRead]:
-    users = await get_usuarios(db)
+async def get_usuarios_admin(
+    db: AsyncSession, list_tenant_id: int | None = None
+) -> list[UsuarioListRead]:
+    users = await get_usuarios(db, list_tenant_id=list_tenant_id)
     res = await db.execute(
         select(UsuarioRol.usuario_id, Rol.nombre).join(Rol, Rol.id == UsuarioRol.rol_id)
     )
@@ -55,14 +60,33 @@ async def get_usuario_list_read(usuario_id: int, db: AsyncSession) -> UsuarioLis
     return UsuarioListRead(**base.model_dump(), roles=roles)
 
 
+async def _email_taken(db: AsyncSession, email: str, tenant_id: int | None) -> bool:
+    em = email.strip().lower()
+    stmt = select(Usuario.id).where(func.lower(Usuario.email) == em)
+    if tenant_id is None:
+        stmt = stmt.where(Usuario.tenant_id.is_(None))
+    else:
+        stmt = stmt.where(Usuario.tenant_id == tenant_id)
+    r = await db.execute(stmt.limit(1))
+    return r.scalar_one_or_none() is not None
+
+
+async def _telefono_taken(db: AsyncSession, telefono: str, tenant_id: int | None) -> bool:
+    stmt = select(Usuario.id).where(Usuario.telefono == telefono)
+    if tenant_id is None:
+        stmt = stmt.where(Usuario.tenant_id.is_(None))
+    else:
+        stmt = stmt.where(Usuario.tenant_id == tenant_id)
+    r = await db.execute(stmt.limit(1))
+    return r.scalar_one_or_none() is not None
+
+
 async def create_usuario(data: dict, db: AsyncSession, ejecutor_id: int | None = None) -> Usuario:
-    # Verificar duplicados
-    existing = await db.execute(select(Usuario).where(Usuario.email == data["email"]))
-    if existing.scalar_one_or_none():
+    tenant_id = data.get("tenant_id")
+    if await _email_taken(db, data["email"], tenant_id):
         raise HTTPException(status_code=409, detail="El email ya está registrado")
 
-    existing_phone = await db.execute(select(Usuario).where(Usuario.telefono == data["telefono"]))
-    if existing_phone.scalar_one_or_none():
+    if await _telefono_taken(db, data["telefono"], tenant_id):
         raise HTTPException(status_code=409, detail="El teléfono ya está registrado")
 
     user = Usuario(
@@ -73,6 +97,7 @@ async def create_usuario(data: dict, db: AsyncSession, ejecutor_id: int | None =
         username=data.get("username"),
         password_hash=hash_password(data["password"]),
         estado=data.get("estado", EstadoUsuarioEnum.ACTIVO),
+        tenant_id=data.get("tenant_id"),
         created_at=utc_now_naive(),
         updated_at=utc_now_naive(),
     )
@@ -95,6 +120,30 @@ async def update_usuario(
     usuario_id: int, data: dict, db: AsyncSession, ejecutor_id: int | None = None
 ) -> Usuario:
     user = await get_usuario_by_id(usuario_id, db)
+    if "email" in data and data["email"] is not None:
+        stmt = (
+            select(Usuario.id)
+            .where(func.lower(Usuario.email) == data["email"].strip().lower())
+            .where(Usuario.id != usuario_id)
+        )
+        if user.tenant_id is None:
+            stmt = stmt.where(Usuario.tenant_id.is_(None))
+        else:
+            stmt = stmt.where(Usuario.tenant_id == user.tenant_id)
+        if (await db.execute(stmt.limit(1))).scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="El email ya está registrado")
+    if "telefono" in data and data["telefono"] is not None:
+        stmt = (
+            select(Usuario.id)
+            .where(Usuario.telefono == data["telefono"])
+            .where(Usuario.id != usuario_id)
+        )
+        if user.tenant_id is None:
+            stmt = stmt.where(Usuario.tenant_id.is_(None))
+        else:
+            stmt = stmt.where(Usuario.tenant_id == user.tenant_id)
+        if (await db.execute(stmt.limit(1))).scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="El teléfono ya está registrado")
     for field, value in data.items():
         if value is not None:
             setattr(user, field, value)
@@ -157,6 +206,7 @@ async def get_clientes(db: AsyncSession) -> list[Cliente]:
 async def create_cliente(data: dict, db: AsyncSession) -> Cliente:
     cliente = Cliente(
         usuario_id=data["usuario_id"],
+        tenant_id=data.get("tenant_id"),
         ciudad=data.get("ciudad"),
         direccion=data.get("direccion"),
         created_at=utc_now_naive(),

@@ -1,0 +1,18 @@
+@startuml CU38-procesar-pago-pasarela
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+
+left to right direction
+
+actor "Cliente" as cliente
+
+rectangle "Plataforma Emergencias\nVehiculares (móvil cliente)" {
+  usecase "CU38\nProcesar pago\nmediante pasarela" as CU38
+}
+
+cliente --> CU38
+
+@enduml

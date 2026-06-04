@@ -1,0 +1,28 @@
+@startuml diagrama-general-paquetes-analizar
+' 4.2.4 Analizar paquete — Diagrama general de paquetes
+' EA package 11 | diagramID 38 | D-004b
+
+title DIAGRAMA GENERAL DE PAQUETES
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+package "Plataforma Inteligente de Atencion de\nEmergencias Vehiculares" as SISTEMA {
+
+  package "Administracion multi-tenant SaaS" as P5
+  package "Continuidad offline y\nsincronizacion" as P3
+  package "Seleccion de taller y pagos\ndel servicio" as P2
+  package "Seguimiento y atencion del\nservicio en tiempo real" as P1
+  package "Analitica operacional y KPIs" as P4
+
+  ' Flujo operativo principal (como Tramite -> Organismo -> Reportes)
+  P3 ..> P2 : usa
+  P2 ..> P1 : usa
+  P1 ..> P4 : usa
+
+  ' Infraestructura multi-tenant
+  P2 ..> P5 : usa
+  P1 ..> P5 : usa
+}
+
+@enduml

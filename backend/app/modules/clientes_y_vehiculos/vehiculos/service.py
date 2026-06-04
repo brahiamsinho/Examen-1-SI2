@@ -4,6 +4,7 @@ from sqlalchemy import select
 from fastapi import HTTPException
 
 from app.core.timeutil import utc_now_naive
+from app.modules.clientes_y_vehiculos.clientes.models import Cliente
 from app.modules.clientes_y_vehiculos.vehiculos.models import MarcaVehiculo, ModeloVehiculo, TipoVehiculo, Vehiculo
 from app.modules.acceso_y_administracion.bitacora.service import registrar_accion
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
@@ -60,10 +61,18 @@ async def get_vehiculo_by_id(vehiculo_id: int, db: AsyncSession) -> Vehiculo:
     return v
 
 async def create_vehiculo(data: dict, db: AsyncSession, ejecutor_id: int | None = None):
+    tenant_id = data.get("tenant_id")
+    if tenant_id is None:
+        cr = await db.execute(select(Cliente).where(Cliente.id == data["cliente_id"]))
+        cliente = cr.scalar_one_or_none()
+        if cliente is None:
+            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        tenant_id = cliente.tenant_id
     v = Vehiculo(
         **{k: data[k] for k in ["cliente_id", "placa", "marca_id", "modelo_id", "tipo_vehiculo_id"]},
         anio=data.get("anio"),
         color=data.get("color"),
+        tenant_id=tenant_id,
         created_at=utc_now_naive(),
         updated_at=utc_now_naive(),
     )

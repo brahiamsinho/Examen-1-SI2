@@ -1,0 +1,40 @@
+@startuml
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: UML secuencia
+' Fuente: app.modules.incidentes.emergencias (2026-05-28)
+' Agente: diagrams-modeling
+' Trazabilidad: alta solicitud emergencia → POST /api/app/cliente/emergencias
+
+title Secuencia — Cliente registra emergencia (simplificado)
+
+actor Cliente as c
+participant "App Flutter\n(cliente)" as m
+participant "API FastAPI\nrouter emergencias" as r
+participant "Service\nsolicitudes" as s
+database "PostgreSQL" as db
+participant "Módulo AI\nenrich" as ai
+participant "ai-inference\n(opcional)" as w
+
+c -> m : Completa wizard emergencia
+m -> r : POST /api/app/cliente/emergencias\nAuthorization + X-Tenant-Slug
+r -> s : crear_solicitud(...)
+s -> db : INSERT solicitudes_emergencia\n(tenant_id)
+s -> ai : enrich_solicitud_ai_after_create
+ai -> w : analyze imagen/audio\n(si AI_ENABLED)
+w --> ai : labels / prioridad
+ai -> db : UPDATE ai_payload
+s --> r : SolicitudEmergenciaRead
+r --> m : 201 Created
+m --> c : Pantalla seguimiento
+
+note over r
+  require_writable_tenant_subscription
+  si suscripción SaaS vencida
+end note
+
+note over m, r
+  Evidencias/ubicación posteriores
+  pueden re-disparar enrich
+end note
+
+@enduml

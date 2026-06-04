@@ -1,0 +1,33 @@
+@startuml
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: C4 Context (nivel 1)
+' Fuente: docs/ai/PROJECT_VISION.md (2026-05-28)
+' Agente: diagrams-modeling
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Diagrama de contexto — Plataforma de emergencias vehiculares
+
+Person(cliente, "Cliente", "Propietario de vehículo; app Flutter")
+Person(tecnico, "Técnico", "Mecánico asignado; app Flutter")
+Person(taller, "Taller responsable", "Gestiona bandeja y equipo; portal Angular")
+Person(admin, "Administrador plataforma", "Superadmin SaaS; panel Angular")
+
+System(plataforma, "Plataforma de emergencias", "Coordina solicitudes, pagos, comisiones y auditoría multi-tenant")
+
+System_Ext(stripe, "Stripe", "Pagos emergencia y suscripción SaaS B2B")
+System_Ext(fcm, "Firebase Cloud Messaging", "Push a dispositivos móviles")
+System_Ext(ia_worker, "Worker IA (opcional)", "Visión y audio; contenedor ai-inference")
+
+Rel(cliente, plataforma, "Reporta emergencia, paga, chatea")
+Rel(tecnico, plataforma, "Atiende, presupuesto, evidencias")
+Rel(taller, plataforma, "Bandeja, asignación, comisiones")
+Rel(admin, plataforma, "Tenants, finanzas, usuarios globales")
+
+Rel(plataforma, stripe, "Checkout / webhooks")
+Rel(plataforma, fcm, "Notificaciones push")
+Rel(plataforma, ia_worker, "Análisis imagen/audio vía API interna")
+
+@enduml

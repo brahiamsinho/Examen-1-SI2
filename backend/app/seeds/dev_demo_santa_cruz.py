@@ -330,6 +330,8 @@ async def ensure_demo_santa_cruz_datos(
     if ctx is None:
         return
     cliente_id, taller_id, tecnico_id, uid_cliente, uid_resp, vids = ctx
+    tr = await db.execute(select(Cliente.tenant_id).where(Cliente.id == cliente_id))
+    tenant_id = tr.scalar_one_or_none()
     if tecnico_id == 0:
         logger.warning("Demo SC: omitido bloque solicitudes (falta técnico seed).")
         return
@@ -345,6 +347,7 @@ async def ensure_demo_santa_cruz_datos(
     t1 = now - timedelta(days=2)
     s1 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v0,
         descripcion_texto=_desc(
@@ -355,7 +358,7 @@ async def ensure_demo_santa_cruz_datos(
         updated_at=t1,
     )
     await _hist(db, solicitud_id=s1.id, ant=None, nuevo=EstadoSolicitudSeguimientoEnum.REGISTRADA, when=t1, usuario_id=uid_cliente, obs="Alta desde app (demo).")
-    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s1.id, creado_at=t1)
+    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s1.id, creado_at=t1, tenant_id=tenant_id)
     await em_repo.insert_ubicacion(
         db,
         solicitud_id=s1.id,
@@ -371,6 +374,7 @@ async def ensure_demo_santa_cruz_datos(
     t2 = now - timedelta(days=5)
     s2 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v1,
         descripcion_texto=_desc("Batería descargada en Av. Monseñor Rivero, equipetrol. Sin arranque."),
@@ -379,7 +383,7 @@ async def ensure_demo_santa_cruz_datos(
         updated_at=t2,
     )
     await _hist(db, solicitud_id=s2.id, ant=None, nuevo=EstadoSolicitudSeguimientoEnum.REGISTRADA, when=t2, usuario_id=uid_cliente, obs=None)
-    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s2.id, creado_at=t2)
+    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s2.id, creado_at=t2, tenant_id=tenant_id)
     b2 = (
         await db.execute(
             select(SolicitudTallerBandeja).where(
@@ -397,6 +401,7 @@ async def ensure_demo_santa_cruz_datos(
     t3 = now - timedelta(days=8)
     s3 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v2,
         descripcion_texto=_desc("Choque leve en 3er anillo interno; abolladura puerta delantera."),
@@ -429,6 +434,7 @@ async def ensure_demo_santa_cruz_datos(
     t4 = now - timedelta(days=11)
     s4 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v3,
         descripcion_texto=_desc("Sobre calor en Perú y Paraguay (centro). Revisión en sitio."),
@@ -466,6 +472,7 @@ async def ensure_demo_santa_cruz_datos(
     t5 = now - timedelta(days=14)
     s5 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v0,
         descripcion_texto=_desc("Pinchazo en doble vía La Guardia, sentido Warnes. Rueda de repuesto ok."),
@@ -497,6 +504,7 @@ async def ensure_demo_santa_cruz_datos(
     t6 = now - timedelta(days=18)
     s6 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v1,
         descripcion_texto=_desc("Falla eléctrica: luces tablero intermitentes. Barrio Urbarí."),
@@ -532,6 +540,7 @@ async def ensure_demo_santa_cruz_datos(
     m7 = Decimal("890.00")
     s7 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v2,
         descripcion_texto=_desc("Cambio de aceite y revisión frenos — Av. San Martín, Santa Cruz."),
@@ -579,6 +588,7 @@ async def ensure_demo_santa_cruz_datos(
     m8 = Decimal("1245.50")
     s8 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v3,
         descripcion_texto=_desc("Grúa liviana — traslado desde Urubó hasta taller zona norte."),
@@ -613,6 +623,7 @@ async def ensure_demo_santa_cruz_datos(
     t9 = now - timedelta(days=40)
     s9 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v0,
         descripcion_texto=_desc("Pedido duplicado por error — cancelar asistencia."),
@@ -622,7 +633,7 @@ async def ensure_demo_santa_cruz_datos(
     )
     await _hist(db, solicitud_id=s9.id, ant=None, nuevo=EstadoSolicitudSeguimientoEnum.REGISTRADA, when=t9, usuario_id=uid_cliente, obs=None)
     await _hist(db, solicitud_id=s9.id, ant=EstadoSolicitudSeguimientoEnum.REGISTRADA, nuevo=EstadoSolicitudSeguimientoEnum.CANCELADA, when=t9 + timedelta(minutes=5), usuario_id=uid_cliente, obs="Cancelado por el cliente (demo).")
-    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s9.id, creado_at=t9)
+    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s9.id, creado_at=t9, tenant_id=tenant_id)
     b9 = (
         await db.execute(
             select(SolicitudTallerBandeja).where(
@@ -639,6 +650,7 @@ async def ensure_demo_santa_cruz_datos(
     t10 = now - timedelta(days=48)
     s10 = await em_repo.insert_solicitud(
         db,
+        tenant_id=tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=v1,
         descripcion_texto=_desc("Consulta preventiva motor — ya resolvió solo; sin taller."),
@@ -647,7 +659,7 @@ async def ensure_demo_santa_cruz_datos(
         updated_at=t10,
     )
     await _hist(db, solicitud_id=s10.id, ant=None, nuevo=EstadoSolicitudSeguimientoEnum.REGISTRADA, when=t10, usuario_id=uid_cliente, obs=None)
-    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s10.id, creado_at=t10)
+    await pt_repo.insert_bandeja_pendiente_por_cada_taller(db, solicitud_id=s10.id, creado_at=t10, tenant_id=tenant_id)
     b10 = (
         await db.execute(
             select(SolicitudTallerBandeja).where(

@@ -1,0 +1,80 @@
+@startuml
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: C4 Component (nivel 3) — zoom contenedor API
+' Fuente: backend/app/main.py, app/modules/* (2026-05-28)
+' Agente: diagrams-modeling
+' Trazabilidad: D-003 packages-backend-logical.puml
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Diagrama de componentes — API Backend (FastAPI)
+
+Container(mobile, "App móvil", "Flutter", "Cliente + técnico")
+Container(web_taller, "Portal taller", "Angular", "/taller/panel")
+Container(web_admin, "Panel admin", "Angular", "/admin/panel")
+ContainerDb(db, "PostgreSQL", "SQL", "RLS tenant_id")
+Container(ai, "ai-inference", "Python", "YOLO / Whisper (opcional)")
+System_Ext(stripe, "Stripe", "Pagos + billing SaaS")
+System_Ext(fcm, "FCM", "Push")
+
+Container_Boundary(api, "API Backend — FastAPI /api") {
+
+  Component(core, "Core transversal", "Python", "config, database, security, tenant middleware, dependencies")
+
+  Component(acceso, "Acceso y administración", "FastAPI routers", "auth, usuarios, roles, permisos, bitácora, tenants, billing, finanzas admin")
+
+  Component(clientes, "Clientes y vehículos", "FastAPI routers", "/app/cliente, /vehiculos, catálogos")
+
+  Component(talleres, "Talleres y técnicos", "FastAPI routers", "talleres, especialidades, /app/tecnico, taller responsable")
+
+  Component(emergencias, "Incidentes — emergencias", "FastAPI router + service", "CU11–CU18; /app/cliente/emergencias")
+
+  Component(atencion, "Atención taller", "FastAPI router + service", "Bandeja, asignación, comisiones; /app/taller/emergencias")
+
+  Component(comunicaciones, "Comunicaciones", "FastAPI routers", "FCM tokens, chat, notificaciones in-app")
+
+  Component(pagos, "Pagos y comisiones", "FastAPI router", "Checkout emergencia, comisiones")
+
+  Component(ai_mod, "Módulo IA", "FastAPI router + services", "Proxy a ai-inference; enrich post-create")
+}
+
+Rel(mobile, emergencias, "HTTPS JSON", "Bearer JWT + X-Tenant-Slug")
+Rel(mobile, clientes, "HTTPS JSON")
+Rel(mobile, talleres, "HTTPS JSON")
+Rel(mobile, comunicaciones, "HTTPS JSON")
+Rel(mobile, pagos, "HTTPS JSON")
+Rel(web_taller, atencion, "HTTPS JSON")
+Rel(web_taller, acceso, "HTTPS JSON")
+Rel(web_admin, acceso, "HTTPS JSON", "Tenants, finanzas, usuarios")
+
+Rel(acceso, core, "JWT, permisos, tenant context")
+Rel(clientes, core, "Sesión async, RLS")
+Rel(talleres, core, "Sesión async, RLS")
+Rel(emergencias, core, "Sesión async, RLS")
+Rel(atencion, core, "Sesión async, RLS")
+Rel(comunicaciones, core, "Sesión async")
+Rel(pagos, core, "Sesión async")
+Rel(ai_mod, core, "Config AI_INFERENCE_BASE_URL")
+
+Rel(acceso, db, "Lee/escribe", "SQLAlchemy async")
+Rel(clientes, db, "Lee/escribe")
+Rel(talleres, db, "Lee/escribe")
+Rel(emergencias, db, "Lee/escribe")
+Rel(atencion, db, "Lee/escribe")
+Rel(comunicaciones, db, "Lee/escribe")
+Rel(pagos, db, "Lee/escribe")
+
+Rel(emergencias, ai_mod, "Enriquecimiento IA", "post-create")
+Rel(ai_mod, ai, "HTTP interno", "visión / audio")
+Rel(acceso, stripe, "Checkout + webhooks SaaS")
+Rel(pagos, stripe, "Pagos emergencia")
+Rel(comunicaciones, fcm, "firebase-admin")
+
+Rel(emergencias, atencion, "Bandeja pendiente", "insert tras alta")
+Rel(emergencias, acceso, "Bitácora", "registrar_accion")
+Rel(atencion, emergencias, "Actualiza estado solicitud")
+Rel(pagos, emergencias, "Estado pago vinculado")
+
+@enduml

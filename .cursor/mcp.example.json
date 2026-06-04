@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "drawio": {
+      "command": "npx",
+      "args": ["-y", "@drawio/mcp"],
+      "env": {
+        "DRAWIO_BASE_URL": "https://app.diagrams.net"
+      }
+    },
+    "drawio-remote-app": {
+      "url": "https://mcp.draw.io/mcp"
+    },
+    "Enterprise Architect": {
+      "command": "C:\\Program Files\\Sparx Systems\\EA\\MCP_Server\\MCP3.exe",
+      "args": ["-enableEdit", "-setTimeout", "30"]
+    }
+  }
+}

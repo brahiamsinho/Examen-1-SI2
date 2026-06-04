@@ -1,0 +1,41 @@
+---
+title: D-003c C4 Component — API Backend FastAPI
+---
+C4Component
+  Container(mobile, "App móvil", "Flutter", "Cliente + técnico")
+  Container(web_taller, "Portal taller", "Angular", "/taller/panel")
+  Container(web_admin, "Panel admin", "Angular", "/admin/panel")
+  ContainerDb(db, "PostgreSQL", "SQL", "RLS tenant_id")
+  Container(ai, "ai-inference", "Python", "YOLO / Whisper")
+  System_Ext(stripe, "Stripe", "Pagos + billing SaaS")
+  System_Ext(fcm, "FCM", "Push")
+
+  Container_Boundary(api, "API Backend — FastAPI /api") {
+    Component(core, "Core transversal", "Python", "config, database, security, tenant middleware")
+    Component(acceso, "Acceso y administración", "FastAPI routers", "auth, usuarios, tenants, billing, finanzas")
+    Component(clientes, "Clientes y vehículos", "FastAPI routers", "/app/cliente, /vehiculos")
+    Component(talleres, "Talleres y técnicos", "FastAPI routers", "talleres, /app/tecnico")
+    Component(emergencias, "Incidentes — emergencias", "Router + service", "CU11–CU18")
+    Component(atencion, "Atención taller", "Router + service", "Bandeja, asignación, comisiones")
+    Component(comunicaciones, "Comunicaciones", "FastAPI routers", "FCM, chat, notificaciones")
+    Component(pagos, "Pagos y comisiones", "FastAPI router", "Checkout emergencia")
+    Component(ai_mod, "Módulo IA", "FastAPI router", "Proxy ai-inference; enrich post-create")
+  }
+
+  Rel(mobile, emergencias, "HTTPS JSON", "JWT + X-Tenant-Slug")
+  Rel(mobile, clientes, "HTTPS JSON")
+  Rel(mobile, pagos, "HTTPS JSON")
+  Rel(web_taller, atencion, "HTTPS JSON")
+  Rel(web_admin, acceso, "HTTPS JSON", "Tenants, finanzas")
+
+  Rel(emergencias, core, "Sesión async, RLS")
+  Rel(acceso, core, "JWT, permisos, tenant")
+  Rel(emergencias, db, "Lee/escribe")
+  Rel(acceso, db, "Lee/escribe")
+  Rel(pagos, db, "Lee/escribe")
+  Rel(emergencias, ai_mod, "Enriquecimiento IA")
+  Rel(ai_mod, ai, "HTTP interno")
+  Rel(acceso, stripe, "Checkout + webhooks")
+  Rel(pagos, stripe, "Pagos emergencia")
+  Rel(comunicaciones, fcm, "firebase-admin")
+  Rel(emergencias, atencion, "Bandeja pendiente")

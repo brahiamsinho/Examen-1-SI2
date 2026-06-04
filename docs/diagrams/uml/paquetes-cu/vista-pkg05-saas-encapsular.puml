@@ -1,0 +1,18 @@
+@startuml vista-pkg05-saas-encapsular
+' 4.2.1.3 Vista de paquetes — Paquete 5
+' EA package 11 | diagramID 36 (VISTA-PKG05)
+
+title Vista de paquete — Administracion multi-tenant SaaS
+
+left to right direction
+
+actor Administrador as admin
+
+rectangle "Administracion multi-tenant SaaS" as PKG5 {
+
+  usecase "CU40\nGestionar tenant o red\nde talleres" as CU40
+}
+
+admin --> CU40
+
+@enduml

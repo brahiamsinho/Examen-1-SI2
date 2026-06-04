@@ -1,0 +1,15 @@
+{
+  "$schema": "examen-si2-ea-layout-v1",
+  "diagramID": 40,
+  "diagramName": "Diagrama componente principal del sistema",
+  "packageID": 13,
+  "description": "D-008 Component diagram - hub FastAPI. Creado via scripts/ea-create-componente-principal.ps1",
+  "script": "scripts/ea-create-componente-principal.ps1",
+  "manualSteps": [
+    "View -> Zoom -> Fit in Window",
+    "Diagram -> Layout Diagram si flechas cruzan",
+    "Line Style -> Direct en conectores doblados",
+    "Ctrl+S en .eapx",
+    "Export PNG para Word"
+  ]
+}

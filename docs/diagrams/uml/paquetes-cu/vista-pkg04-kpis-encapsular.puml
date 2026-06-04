@@ -1,0 +1,20 @@
+@startuml vista-pkg04-kpis-encapsular
+' 4.2.1.3 Vista de paquetes — Paquete 4
+' EA package 11 | diagramID 35 (VISTA-PKG04)
+
+title Vista de paquete — Analitica operacional y KPIs
+
+left to right direction
+
+actor Administrador as admin
+actor "Taller mecanico" as taller
+
+rectangle "Analitica operacional y KPIs" as PKG4 {
+
+  usecase "CU46\nVisualizar dashboard de KPIs" as CU46
+}
+
+admin --> CU46
+taller --> CU46
+
+@enduml

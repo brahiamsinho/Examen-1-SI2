@@ -9,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../cliente/presentation/router/cliente_go_router.dart';
+import 'firebase_bootstrap.dart';
 
 /// [GoRouter] vive bajo [ShadApp.router]; este widget lo envuelve, así que
 /// [GoRouter.of] del [context] aquí falla. Usamos [goRouterProvider] (misma instancia
@@ -29,7 +30,7 @@ class _FcmMessageListenerState extends ConsumerState<FcmMessageListener> {
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) return;
+    if (kIsWeb || !firebaseReady) return;
     unawaited(
       _SystemLocalNotifier.instance.initialize(
         onTapPayload: _onLocalNotificationTap,

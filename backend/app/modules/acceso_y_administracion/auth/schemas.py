@@ -59,3 +59,5 @@ class MeResponse(BaseModel):
     username: Optional[str] = None
     roles: list[str] = []
     permisos: list[str] = []
+    tenant_id: Optional[int] = None
+    is_platform_superadmin: bool = False

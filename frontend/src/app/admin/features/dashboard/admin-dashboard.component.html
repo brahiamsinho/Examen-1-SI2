@@ -1,36 +1,62 @@
 <div class="dash">
-  <h2 class="dash__h">Resumen</h2>
-  <p class="dash__lead">Vista general del sistema</p>
+  <header class="dash__header">
+    <div class="dash__header-text">
+      <h2 class="dash__h">{{ finanzasOnly() ? 'Reporte financiero' : 'Resumen operativo' }}</h2>
+      <p class="dash__lead">
+        {{
+          finanzasOnly()
+            ? 'Comisiones de plataforma, conversión y serie diaria'
+            : 'Métricas del sistema, finanzas y actividad reciente'
+        }}
+      </p>
+    </div>
+    <span class="dash__status" *ngIf="finanzasOnly() ? !loadingFinanzas : !loading">
+      <span class="dash__status-dot" aria-hidden="true"></span>
+      Sistema en línea
+    </span>
+  </header>
 
   <div class="dash__alert" *ngIf="error" role="alert">{{ error }}</div>
-  <p class="dash__muted" *ngIf="loading">Cargando métricas…</p>
+  <p class="dash__muted dash__loading" *ngIf="!finanzasOnly() && loading">Cargando métricas…</p>
 
-  <div class="dash__grid" *ngIf="!loading">
-    <article class="dash__card">
+  <div class="dash__grid" *ngIf="!finanzasOnly() && !loading">
+    <article class="dash__stat">
+      <div class="dash__stat-icon dash__stat-icon--blue" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.75"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+      </div>
       <h3 class="dash__card-title">Usuarios</h3>
       <p class="dash__metric">{{ totalUsuarios }}</p>
-      <a routerLink="/admin/panel/usuarios" class="dash__link">Gestionar →</a>
+      <a routerLink="/admin/panel/usuarios" class="dash__link">Gestionar</a>
     </article>
-    <article class="dash__card">
+    <article class="dash__stat">
+      <div class="dash__stat-icon dash__stat-icon--amber" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M14 4a5 5 0 0 1 1.6 9.7L8 21l-3-3 7.7-7.6A5 5 0 0 1 14 4Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>
+      </div>
       <h3 class="dash__card-title">Talleres</h3>
       <p class="dash__metric">{{ totalTalleres }}</p>
-      <a routerLink="/admin/panel/talleres" class="dash__link">Gestionar →</a>
+      <a routerLink="/admin/panel/talleres" class="dash__link">Gestionar</a>
     </article>
-    <article class="dash__card">
+    <article class="dash__stat">
+      <div class="dash__stat-icon dash__stat-icon--purple" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-3Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>
+      </div>
       <h3 class="dash__card-title">Roles</h3>
       <p class="dash__metric">{{ totalRoles }}</p>
-      <a routerLink="/admin/panel/roles" class="dash__link">Gestionar →</a>
+      <a routerLink="/admin/panel/roles" class="dash__link">Gestionar</a>
     </article>
-    <article class="dash__card">
+    <article class="dash__stat">
+      <div class="dash__stat-icon dash__stat-icon--cyan" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="6" y="5" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+      </div>
       <h3 class="dash__card-title">Actividad</h3>
       <p class="dash__metric">{{ actividad.length }}</p>
-      <span class="dash__hint">Últimos registros en bitácora</span>
+      <span class="dash__hint">Registros en bitácora</span>
     </article>
   </div>
 
-  <section class="dash__section" *ngIf="!loading">
+  <section class="dash__section" *ngIf="finanzasOnly() || !loading">
     <div class="dash__headrow">
-      <h3 class="dash__section-title">Reporte financiero (comisión plataforma)</h3>
+      <h3 class="dash__section-title" *ngIf="!finanzasOnly()">Reporte financiero (comisión plataforma)</h3>
       <div class="dash__filters">
         <label class="dash__label">
           Desde
@@ -47,36 +73,38 @@
     <p class="dash__muted" *ngIf="loadingFinanzas">Cargando métricas financieras…</p>
     <div class="dash__alert" *ngIf="finanzasError" role="alert">{{ finanzasError }}</div>
 
-    <div class="dash__grid dash__grid--fin" *ngIf="!loadingFinanzas && finanzas">
-      <article class="dash__card">
-        <h3 class="dash__card-title">Ganancia plataforma</h3>
-        <p class="dash__metric dash__metric--money">{{ money(finanzas.total_comision_plataforma) }}</p>
-        <span class="dash__hint">Comisión aplicada: {{ pct(finanzas.porcentaje_plataforma) }}</span>
-      </article>
-      <article class="dash__card">
-        <h3 class="dash__card-title">Ticket promedio</h3>
-        <p class="dash__metric dash__metric--money">{{ money(finanzas.ticket_promedio_pagado) }}</p>
-        <span class="dash__hint">Por pago confirmado</span>
-      </article>
-      <article class="dash__card">
-        <h3 class="dash__card-title">Conversión a pago</h3>
-        <p class="dash__metric">{{ pct(finanzas.tasa_conversion_pago_pct) }}</p>
-        <span class="dash__hint">{{ finanzas.n_solicitudes_finalizadas }} solicitudes finalizadas</span>
-      </article>
-      <article class="dash__card">
-        <h3 class="dash__card-title">Talleres con comisión</h3>
-        <p class="dash__metric">{{ finanzas.n_talleres_con_comision }}</p>
-        <span class="dash__hint">Con ingresos en el rango</span>
-      </article>
-      <article class="dash__card">
-        <h3 class="dash__card-title">Servicios comisionados</h3>
-        <p class="dash__metric">{{ finanzas.n_comisiones }}</p>
-        <span class="dash__hint">Con comisión en el rango</span>
-      </article>
-    </div>
+    <ng-container *ngIf="!loadingFinanzas && finanzas as fin">
+      <div class="dash__grid dash__grid--fin">
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Ganancia plataforma</h3>
+          <p class="dash__metric dash__metric--money">{{ money(fin.total_comision_plataforma) }}</p>
+          <span class="dash__hint">Comisión aplicada: {{ pct(fin.porcentaje_plataforma) }}</span>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Ticket promedio</h3>
+          <p class="dash__metric dash__metric--money">{{ money(fin.ticket_promedio_pagado) }}</p>
+          <span class="dash__hint">Por pago confirmado</span>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Conversión a pago</h3>
+          <p class="dash__metric">{{ pct(fin.tasa_conversion_pago_pct) }}</p>
+          <span class="dash__hint">{{ fin.n_solicitudes_finalizadas }} solicitudes finalizadas</span>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Talleres con comisión</h3>
+          <p class="dash__metric">{{ fin.n_talleres_con_comision }}</p>
+          <span class="dash__hint">Con ingresos en el rango</span>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Servicios comisionados</h3>
+          <p class="dash__metric">{{ fin.n_comisiones }}</p>
+          <span class="dash__hint">Con comisión en el rango</span>
+        </article>
+      </div>
+    </ng-container>
   </section>
 
-  <section class="dash__section" *ngIf="!loading && !loadingFinanzas">
+  <section class="dash__section" *ngIf="(finanzasOnly() || !loading) && !loadingFinanzas">
     <h3 class="dash__section-title">Top talleres por comisión</h3>
     <p class="dash__subtle">
       Monto servicio: referencia de lo facturado al cliente por taller (la plataforma solo retiene comisión).
@@ -108,7 +136,7 @@
     </ng-template>
   </section>
 
-  <section class="dash__section" *ngIf="!loading && !loadingFinanzas">
+  <section class="dash__section" *ngIf="(finanzasOnly() || !loading) && !loadingFinanzas">
     <h3 class="dash__section-title">Serie diaria de comisión plataforma</h3>
     <div class="dash__chart" *ngIf="serieComisiones.length; else emptySerie">
       <div class="dash__barrow" *ngFor="let row of serieComisiones">
@@ -127,14 +155,14 @@
     </ng-template>
   </section>
 
-  <section class="dash__section" *ngIf="!loading">
+  <section class="dash__section" *ngIf="!finanzasOnly() && !loading">
     <h3 class="dash__section-title">Accesos rápidos</h3>
     <div class="dash__chips">
       <a *ngFor="let q of quick" [routerLink]="q.path" class="dash__chip">{{ q.label }}</a>
     </div>
   </section>
 
-  <section class="dash__section" *ngIf="!loading">
+  <section class="dash__section" *ngIf="!finanzasOnly() && !loading">
     <h3 class="dash__section-title">Actividad reciente</h3>
     <div class="dash__tablewrap" *ngIf="actividad.length; else emptyAct">
       <table class="dash__table">

@@ -1,0 +1,52 @@
+---
+title: D-004c C4 Code — Alta emergencia CU11
+---
+classDiagram
+  class EmergenciasRouter {
+    +crear_solicitud_emergencia()
+    +listar_mis_solicitudes()
+    +seguimiento_solicitud()
+  }
+  class SolicitudesService {
+    +crear_solicitud()
+    +listar_solicitudes()
+    +obtener_detalle()
+  }
+  class EmergenciasRepository {
+    +get_vehiculo_if_cliente()
+    +insert_solicitud()
+    +insert_historial_estado()
+  }
+  class SolicitudEmergenciaCreateIn {
+    +vehiculo_id: int
+    +descripcion_texto: str?
+  }
+  class SolicitudEmergenciaDetailRead {
+    +id: int
+    +estado: enum
+  }
+  class SolicitudEmergencia {
+    +tenant_id: int?
+    +cliente_id: int
+    +vehiculo_id: int
+    +estado: enum
+    +ai_payload: JSONB?
+  }
+  class BitacoraService {
+    +registrar_accion()
+  }
+  class AiEnrichService {
+    +enrich_solicitud_ai_after_create()
+  }
+  class BandejaRepository {
+    +insert_bandeja_pendiente_por_cada_taller()
+  }
+
+  EmergenciasRouter ..> SolicitudEmergenciaCreateIn : recibe
+  EmergenciasRouter ..> SolicitudesService : delega
+  EmergenciasRouter ..> SolicitudEmergenciaDetailRead : devuelve
+  SolicitudesService ..> EmergenciasRepository : persiste
+  SolicitudesService ..> BitacoraService : auditoría
+  SolicitudesService ..> AiEnrichService : IA opcional
+  SolicitudesService ..> BandejaRepository : bandeja taller
+  EmergenciasRepository ..> SolicitudEmergencia : INSERT

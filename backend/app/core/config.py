@@ -36,6 +36,10 @@ class Settings(BaseSettings):
         "AI_INFERENCE_BASE_URL",
         "STRIPE_SECRET_KEY",
         "STRIPE_PUBLISHABLE_KEY",
+        "STRIPE_SAAS_WEBHOOK_SECRET",
+        "STRIPE_SAAS_PRICE_STARTER",
+        "STRIPE_SAAS_PRICE_PRO",
+        "SAAS_PLATFORM_BASE_DOMAIN",
         "SMTP_USER",
         "SMTP_PASSWORD",
         mode="before",
@@ -140,10 +144,20 @@ class Settings(BaseSettings):
     # Stripe (opcional). Nunca reutilices el nombre SECRET_KEY aquí: en FastAPI es el JWT.
     STRIPE_SECRET_KEY: str | None = None
     STRIPE_PUBLISHABLE_KEY: str | None = None
+    # Suscripción SaaS (Billing) — distinto de pagos de emergencias
+    STRIPE_SAAS_WEBHOOK_SECRET: str | None = None
+    STRIPE_SAAS_PRICE_STARTER: str | None = None
+    STRIPE_SAAS_PRICE_PRO: str | None = None
+    # Subdominio: demo-sc.<SAAS_PLATFORM_BASE_DOMAIN>
+    SAAS_PLATFORM_BASE_DOMAIN: str | None = None
 
     @property
     def stripe_enabled(self) -> bool:
         return bool(self.STRIPE_SECRET_KEY and self.STRIPE_SECRET_KEY.strip())
+
+    @property
+    def stripe_saas_price_id(self) -> str | None:
+        return (self.STRIPE_SAAS_PRICE_STARTER or "").strip() or None
 
     # ── Firebase Cloud Messaging (CU19) — opcional; ruta al JSON de cuenta de servicio ──
     FCM_ENABLED: bool = False

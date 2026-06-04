@@ -1,10 +1,49 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-04-26 — TESTING_STRATEGY: mapeo Word (Prueba 2 `POST /servicios`) al dominio real ✅
+# Última actualización: 2026-05-28 — Ciclo 4 CU36–CU40 memoria sincronizada ✅
 # =========================================================
 
-## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA completo ✅
+## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
+
+### Ciclo 4 — CU36–CU40 (examen SI2; código 2026-06-02) ✅
+- [x] **CU37 Seleccionar taller (cliente):** `GET .../talleres-candidatos`, `POST .../seleccionar-taller`; servicio `incidentes/emergencias/service/seleccion_taller.py`; mobile `emergencia_seleccion_taller_screen.dart`, ruta `.../seleccionar-taller`; `crear_solicitud` ya no reparte bandeja a todos los talleres.
+- [x] **CU36 Ubicación técnico:** `GET .../ubicacion-tecnico`; mobile `emergencia_ubicacion_tecnico_screen.dart` con **polling 12 s** + refresh manual (sin WebSocket).
+- [x] **CU38 Pago pasarela:** Stripe PaymentIntent + PaymentSheet si `settings.stripe_enabled`; si no hay `STRIPE_*` en contenedor → `proveedor: SIMULADO`. Efectivo/transferencia/QR siempre simulado. Ver `docs/puds/casos-uso/CICLO4_DETALLE_CASOS_USO.md`.
+- [x] **CU39 Estado atención técnico:** PATCH estado + presupuesto BOB (ya documentado Ciclo 2/3).
+- [x] **CU40 Tenant SaaS:** fases 1–3 (tenants, RLS, billing, admin organizaciones, mobile/taller `X-Tenant-Slug`).
+- [x] **PUDS:** matriz y detalle actualizados en `docs/puds/casos-uso/CICLO4_*`; sesión técnica `docs/ai/sessions/2026-06-02-agent-cu37-cu36-mobile.md`.
+- [ ] Opcional: WebSocket ubicación (CU36); tests pytest integración CU37; `TRACEABILITY_MATRIX.md` con filas CU36–40.
+
+### SaaS multi-tenant — fase 2 (2026-05-24) ✅
+- [x] Migración `0016_multitenancy_phase2.sql` (Docker `16_`): RLS, email/tel/placa únicos por tenant, Stripe en `tenants`.
+- [x] `TenantSlugMiddleware`, contexto auth en `get_db`, login con `X-Tenant-Slug` + bypass RLS.
+- [x] `/auth/me` expone `tenant_id`, `is_platform_superadmin`; `POST .../stripe-customer` por tenant.
+- [x] Listados admin `usuarios` / `talleres` / finanzas con `?tenant_id=`; vehículos heredan `tenant_id` del cliente.
+- [x] Angular: selector organización (superadmin), `/admin/panel/organizaciones`, APIs tenants en `AdminApiService`.
+- [x] Fase 3 (2026-05-24): API pública tenants, billing Stripe SaaS (checkout/webhook), subdominio Host, tests unitarios, mobile/taller login por org, bloqueo escritura por suscripción vencida.
+
+### SaaS multi-tenant — fase 1 (2026-05-24) ✅
+- [x] Tabla `tenants` + tenant demo `demo-sc` (migración `0015_multitenancy_saas.sql`, Docker `15_`).
+- [x] `tenant_id` en `usuarios`, `talleres`, `clientes`, `vehiculos`, `solicitudes_emergencia`.
+- [x] JWT con claim `tenant_id`; `AuthContext` + superadmin plataforma (`ADMIN` + `tenant_id` NULL).
+- [x] API `GET/POST/PATCH /api/admin/tenants`, `GET /api/admin/tenants/context/me`.
+- [x] Finanzas admin y bandeja de taller filtran por tenant (superadmin ve global o `?tenant_id=`).
+- [x] Skills instaladas: `multitenancy`, `multi-tenant-safety-checker`.
+
+### Diagramas UML/C4/PUDS (2026-05-28) ✅
+- [x] Subagente **`diagrams-modeling`** (PlantUML, **UML 2.5+**, C4 4 capas, MCP EA, draw.io).
+- [x] **`docs/diagrams/`** — C4 D-001…D-004c, UML paquetes/secuencia/clases/despliegue D-006.
+- [x] Memoria **`docs/diagrams/agent-memory/`** + **`docs/ai/PUDS_GUIDE.md`**.
+- [x] draw.io MCP **`user-drawio`**; Mermaid C4 nativo en `drawio/mermaid/`.
+- [x] **`docs/diagrams/drawio/d008-componente-principal-sistema.drawio`** — 4.4.1.1.1 componente principal (layout referencia académica).
+- [ ] Pendiente: reset/recreate EA D-006; `TRACEABILITY_MATRIX.md`.
+
+### Subagentes Cursor (2026-05-24) ✅
+- [x] **`.cursor/agents/ai-inference.md`** — implementación/depuración del worker `ai-inference`, módulo `backend/app/modules/ai/`, fusión multimodal, YOLO/Whisper, `ai_payload`, Docker perfil `ai`.
+- [x] **`.cursor/agents/qa-testing.md`** — pytest, Flutter test, `TESTING_STRATEGY.md`, checklist manual de `NEXT_STEPS.md`.
+- [x] **`.cursor/agents/security.md`** — JWT, RBAC, secretos, CORS, Stripe, FCM, uploads, hardening pre-prod.
+- [x] **`orchestrator.md`** actualizado con tabla de delegación y distinción `ai-inference` vs `ai-researcher`.
 
 ### Documentación de pruebas API (2026-04-26) ✅
 - [x] Se agregó `docs/ai/TESTING_STRATEGY.md` con 10 casos de prueba para `GET /servicios/{id}` y `GET /servicios`, incluyendo entradas, resultados esperados y criterios de aceptación.
@@ -104,7 +143,7 @@
 - [x] `modules/acceso_y_administracion/` — auth, roles, permisos, usuarios, bitácora
 - [x] `modules/clientes_y_vehiculos/clientes/` — ORM `Cliente`; admin en `usuarios` router `/clientes`; app móvil `/api/app/cliente`
 - [x] `modules/clientes_y_vehiculos/vehiculos/` — catálogos + CRUD vehículos `/api/vehiculos`
-- [x] `modules/incidentes/emergencias/` — solicitudes, seguimiento, ubicaciones, evidencias (cliente); `/api/app/cliente/emergencias`
+- [x] `modules/incidentes/emergencias/` — solicitudes, seguimiento, ubicaciones, evidencias (cliente); `/api/app/cliente/emergencias`; **CU37** `talleres-candidatos` + `seleccionar-taller`; **CU36** `ubicacion-tecnico`
 - [x] `modules/talleres_y_tecnicos/talleres/` — CRUD talleres, especialidades, técnicos (`/api/talleres`, `/api/especialidades`, `/api/tecnicos`)
 - [x] `modules/talleres_y_tecnicos/taller_responsable/` — registro taller, mi-taller, técnicos (responsable); `/api/app/taller`
 - [x] `modules/talleres_y_tecnicos/tecnico/` — app técnico emergencias; `/api/app/tecnico/emergencias`
@@ -201,6 +240,7 @@ Todos los endpoints del módulo `ai/` probados en Swagger (`http://localhost:800
 ### Docs ✅
 - [x] `AGENTS.md` (raíz)
 - [x] `docs/ai/*` — visión, arquitectura, estado, handoff, próximos pasos, decisiones
+- [x] `.cursor/agents/` — orchestrator, backend, frontend, mobile, infra, ai-inference, ai-researcher, qa-testing, security, reviewer, docs-memory, puds, architect-planner, **diagrams-modeling**
 - [x] `mobile/README.md` — `.env`, estructura `lib/cliente` / `lib/tecnico`, usuarios demo
 
 ## Lo que falta (priorizado)

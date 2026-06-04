@@ -1,0 +1,77 @@
+@startuml
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: UML paquetes (diseño lógico backend)
+' Fuente: docs/ai/ARCHITECTURE.md (2026-05-28)
+' Agente: diagrams-modeling
+
+title Diseño lógico por paquetes — Backend FastAPI
+
+package "app.core" {
+  [config]
+  [database]
+  [security]
+  [dependencies]
+  [tenant / tenant_middleware]
+}
+
+package "app.modules.acceso_y_administracion" {
+  [auth]
+  [usuarios]
+  [roles]
+  [permisos]
+  [bitacora]
+  [tenants]
+  [billing]
+  [admin_finanzas]
+}
+
+package "app.modules.clientes_y_vehiculos" {
+  [clientes]
+  [vehiculos]
+}
+
+package "app.modules.talleres_y_tecnicos" {
+  [talleres]
+  [taller_responsable]
+  [tecnico]
+}
+
+package "app.modules.incidentes" {
+  [emergencias]
+}
+
+package "app.modules.atencion" {
+  [taller_emergencias]
+}
+
+package "app.modules.comunicacion_y_notificaciones" {
+  [notificaciones]
+  [dispositivos_push]
+  [mensajes_solicitud]
+  [comunicaciones]
+}
+
+package "app.modules.pagos_y_comisiones" #LightBlue {
+  [pagos]
+}
+
+package "app.modules.ai" {
+  [ai router / enrich]
+}
+
+app.core --> app.modules.acceso_y_administracion
+app.modules.acceso_y_administracion --> app.modules.clientes_y_vehiculos
+app.modules.incidentes --> app.modules.clientes_y_vehiculos
+app.modules.incidentes --> app.modules.ai
+app.modules.atencion --> app.modules.incidentes
+app.modules.atencion --> app.modules.talleres_y_tecnicos
+app.modules.pagos_y_comisiones --> app.modules.incidentes
+app.modules.comunicacion_y_notificaciones --> app.modules.incidentes
+
+note right of app.modules.acceso_y_administracion
+  JWT tenant_id,
+  superadmin plataforma,
+  Stripe SaaS fase 3
+end note
+
+@enduml

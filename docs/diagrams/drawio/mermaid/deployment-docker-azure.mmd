@@ -1,0 +1,41 @@
+%% D-006 — OBSOLETO para entrega: usar deployment-docker-azure-uml.mmd (UML 2.5+)
+%% Fuente canonica: uml/deployment-docker-azure.puml
+flowchart TB
+  subgraph clients["Clientes"]
+    WEB["Taller / Admin\n(navegador)"]
+    MOB_C["Cliente Flutter"]
+    MOB_T["Técnico Flutter"]
+  end
+
+  subgraph azure["Microsoft Azure"]
+    PIP["IP pública elástica"]
+    NSG["NSG :80 :443 :8000"]
+    subgraph vm["VM Linux — Docker host"]
+      subgraph net["emergencias_network"]
+        FE["frontend\nnginx + Angular :80"]
+        BE["backend\nFastAPI :8000"]
+        DB[("PostgreSQL 15\ndb :5432")]
+        MH["mailhog\n(dev)"]
+        AI["ai-inference\n(profile ai)"]
+      end
+    end
+  end
+
+  subgraph ext["Externos"]
+    STRIPE["Stripe"]
+    FCM["Firebase FCM"]
+    SMTP["SMTP prod"]
+  end
+
+  WEB --> PIP
+  MOB_C --> PIP
+  MOB_T --> PIP
+  PIP --> NSG --> FE
+  PIP --> BE
+  FE -->|proxy /api| BE
+  BE --> DB
+  BE --> MH
+  BE --> AI
+  BE --> STRIPE
+  BE --> FCM
+  BE -.-> SMTP

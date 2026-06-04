@@ -1,0 +1,12 @@
+@startuml rel-pkg04-kpis-trace
+' EA diagramID 30 | D-004d
+
+title Paquete 4 — Analitica operacional y KPIs
+
+package "Analitica operacional y KPIs" as PKG4
+
+usecase "CU46\nVisualizar dashboard de KPIs" as CU46
+
+PKG4 ..> CU46 : <<trace>>
+
+@enduml

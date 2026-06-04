@@ -46,6 +46,13 @@ final class AppEnv {
 
   /// Opcional — subida previa a un CDN propio (JSON `{"url":"https://..."}`). El flujo normal
   /// sube foto/audio al propio API (`POST .../evidencias/archivo`); esto solo sirve si integrás otro bucket.
+  /// Slug por defecto si el usuario no elige organización (p. ej. `demo-sc`).
+  static String get tenantSlugDefault {
+    final s = dotenv.env['TENANT_SLUG_DEFAULT']?.trim().toLowerCase();
+    if (s != null && s.isNotEmpty) return s;
+    return 'demo-sc';
+  }
+
   static String? get fileUploadUrl {
     final u = dotenv.env['FILE_UPLOAD_URL']?.trim();
     if (u == null || u.isEmpty) return null;

@@ -38,10 +38,16 @@ async def get_finanzas_resumen(
     *,
     desde: datetime | None,
     hasta: datetime | None,
+    tenant_id: int | None = None,
 ) -> dict[str, Any]:
     c_filters = []
     p_filters = [Pago.estado == EstadoPagoEnum.PAGADO]
     s_filters = [SolicitudEmergencia.estado == EstadoSolicitudSeguimientoEnum.FINALIZADA]
+
+    if tenant_id is not None:
+        c_filters.append(Taller.tenant_id == tenant_id)
+        p_filters.append(SolicitudEmergencia.tenant_id == tenant_id)
+        s_filters.append(SolicitudEmergencia.tenant_id == tenant_id)
 
     if desde:
         c_filters.append(ComisionTaller.calculado_at >= desde)
@@ -58,15 +64,19 @@ async def get_finanzas_resumen(
         func.coalesce(func.sum(ComisionTaller.monto_comision), 0).label("total_comision_plataforma"),
         func.coalesce(func.sum(ComisionTaller.monto_taller_neto), 0).label("total_neto_taller"),
         func.count(distinct(ComisionTaller.taller_id)).label("n_talleres_con_comision"),
-    )
+    ).join(Taller, Taller.id == ComisionTaller.taller_id)
     if c_filters:
         com_q = com_q.where(*c_filters)
     com_row = (await db.execute(com_q)).mappings().one()
 
-    pagos_q = select(
-        func.count(Pago.id).label("n_pagos_pagados"),
-        func.coalesce(func.sum(Pago.monto), 0).label("total_monto_pagos"),
-    ).where(*p_filters)
+    pagos_q = (
+        select(
+            func.count(Pago.id).label("n_pagos_pagados"),
+            func.coalesce(func.sum(Pago.monto), 0).label("total_monto_pagos"),
+        )
+        .join(SolicitudEmergencia, SolicitudEmergencia.id == Pago.solicitud_id)
+        .where(*p_filters)
+    )
     pagos_row = (await db.execute(pagos_q)).mappings().one()
 
     solicitudes_q = select(func.count(SolicitudEmergencia.id).label("n_solicitudes_finalizadas")).where(*s_filters)
@@ -126,10 +136,13 @@ async def get_finanzas_reportes(
     *,
     desde: datetime | None,
     hasta: datetime | None,
+    tenant_id: int | None = None,
 ) -> dict[str, Any]:
-    resumen = await get_finanzas_resumen(db, desde=desde, hasta=hasta)
+    resumen = await get_finanzas_resumen(db, desde=desde, hasta=hasta, tenant_id=tenant_id)
 
     filters = []
+    if tenant_id is not None:
+        filters.append(Taller.tenant_id == tenant_id)
     if desde:
         filters.append(ComisionTaller.calculado_at >= desde)
     if hasta:
@@ -143,6 +156,7 @@ async def get_finanzas_reportes(
             func.coalesce(func.sum(ComisionTaller.monto_comision), 0).label("total_comision_plataforma"),
             func.coalesce(func.sum(ComisionTaller.monto_taller_neto), 0).label("total_neto_taller"),
         )
+        .join(Taller, Taller.id == ComisionTaller.taller_id)
         .group_by(cast(ComisionTaller.calculado_at, Date))
         .order_by(cast(ComisionTaller.calculado_at, Date).asc())
     )

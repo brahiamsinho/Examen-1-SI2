@@ -25,6 +25,7 @@ class UsuarioRead(BaseModel):
     email: str
     telefono: str
     estado: EstadoUsuarioEnum
+    tenant_id: Optional[int] = None
     ultimo_acceso_at: Optional[datetime]
     created_at: Optional[datetime]
 

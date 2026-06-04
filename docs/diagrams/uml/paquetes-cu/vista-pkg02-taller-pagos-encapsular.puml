@@ -1,0 +1,25 @@
+@startuml vista-pkg02-taller-pagos-encapsular
+' 4.2.1.3 Vista de paquetes — Paquete 2
+' EA package 11 | diagramID 33 (VISTA-PKG02)
+
+title Vista de paquete — Seleccion de taller y pagos del servicio
+
+left to right direction
+
+actor Cliente as cliente
+actor "Taller mecanico" as taller
+
+rectangle "Seleccion de taller y pagos\ndel servicio" as PKG2 {
+
+  usecase "CU37\nSeleccionar taller para\nrealizar el servicio" as CU37
+  usecase "CU38\nProcesar pago mediante\npasarela" as CU38
+  usecase "CU42\nRegistrar cotizacion\ndel servicio" as CU42
+  usecase "CU44\nConsultar tiempo estimado\nde reparacion" as CU44
+}
+
+cliente --> CU37
+cliente --> CU38
+cliente --> CU44
+taller --> CU42
+
+@enduml

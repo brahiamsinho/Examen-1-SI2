@@ -1,17 +1,70 @@
 @use './admin-theme' as t;
 
 @mixin ev-page-title {
-  margin: 0 0 calc(t.$ev-space * 2);
-  font-size: 1.125rem;
+  margin: 0;
+  font-size: 1.5rem;
   font-weight: 700;
+  letter-spacing: -0.03em;
+  color: t.$ev-text;
+}
+
+@mixin ev-page-lead {
+  margin: 0.35rem 0 0;
+  font-size: 0.9375rem;
+  color: t.$ev-muted;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+@mixin ev-page-header {
+  margin-bottom: calc(t.$ev-space * 3);
+
+  .ev-page-header__title {
+    @include ev-page-title;
+  }
+
+  .ev-page-header__lead {
+    @include ev-page-lead;
+  }
 }
 
 @mixin ev-card {
   background: t.$ev-surface;
   border: 1px solid t.$ev-border;
   border-radius: t.$ev-radius-lg;
-  padding: calc(t.$ev-space * 2);
+  padding: calc(t.$ev-space * 2.5);
   box-shadow: t.$ev-shadow-soft;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@mixin ev-card-interactive {
+  @include ev-card;
+  cursor: pointer;
+
+  &:hover {
+    border-color: t.$ev-border-strong;
+    box-shadow: t.$ev-shadow-card;
+  }
+}
+
+@mixin ev-stat-card {
+  @include ev-card;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: calc(t.$ev-space * 1.25);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: t.$ev-gradient-brand;
+    opacity: 0.85;
+  }
 }
 
 @mixin ev-toolbar {
@@ -20,26 +73,34 @@
   gap: calc(t.$ev-space * 1.5);
   align-items: center;
   margin-bottom: calc(t.$ev-space * 2);
+  padding: calc(t.$ev-space * 1.5);
+  border-radius: t.$ev-radius-md;
+  background: t.$ev-surface-2;
+  border: 1px solid t.$ev-border;
 }
 
 @mixin ev-input {
-  padding: 0.55rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border-radius: t.$ev-radius-sm;
   border: 1px solid t.$ev-border;
-  background: rgba(1, 4, 9, 0.55);
+  background: t.$ev-bg-subtle;
   color: t.$ev-text;
   font-family: inherit;
   font-size: 0.875rem;
   outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: t.$ev-muted-2;
+  }
 
   &:focus {
-    border-color: rgba(t.$ev-focus, 0.65);
-    box-shadow: 0 0 0 2px rgba(t.$ev-focus, 0.2);
+    @include t.ev-focus-ring;
   }
 }
 
 @mixin ev-btn-primary {
-  padding: 0.55rem 1rem;
+  padding: 0.625rem 1.125rem;
   border: none;
   border-radius: t.$ev-radius-sm;
   font-family: inherit;
@@ -48,30 +109,39 @@
   color: #fff;
   cursor: pointer;
   background: t.$ev-gradient-cta;
-  transition: filter 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 14px t.$ev-accent-glow;
+  transition: filter 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
 
   &:hover:not(:disabled) {
-    filter: brightness(1.06);
+    filter: brightness(1.08);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   &:disabled {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
   }
 }
 
 @mixin ev-btn-ghost {
-  padding: 0.55rem 0.85rem;
+  padding: 0.625rem 1rem;
   border-radius: t.$ev-radius-sm;
   border: 1px solid t.$ev-border;
   background: t.$ev-surface-2;
   color: t.$ev-text;
   font-family: inherit;
   font-size: 0.8125rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
 
   &:hover:not(:disabled) {
-    background: #21262d;
+    background: t.$ev-surface-3;
+    border-color: t.$ev-border-strong;
   }
 
   &:disabled {
@@ -88,25 +158,34 @@
   th,
   td {
     text-align: left;
-    padding: calc(t.$ev-space * 1.25) calc(t.$ev-space * 1.5);
+    padding: calc(t.$ev-space * 1.5) calc(t.$ev-space * 2);
     border-bottom: 1px solid t.$ev-border;
   }
 
   th {
     color: t.$ev-muted;
     font-weight: 600;
-    font-size: 0.65rem;
-    letter-spacing: 0.06em;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.02);
   }
 
-  tr:hover td {
-    background: rgba(240, 246, 252, 0.03);
+  tbody tr {
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
   }
 }
 
 @mixin ev-alert-error {
-  padding: calc(t.$ev-space * 1);
+  padding: calc(t.$ev-space * 1.25) calc(t.$ev-space * 1.5);
   border-radius: t.$ev-radius-sm;
   font-size: 0.8125rem;
   color: t.$ev-danger-text;
@@ -116,10 +195,10 @@
 }
 
 @mixin ev-alert-info {
-  padding: calc(t.$ev-space * 1);
+  padding: calc(t.$ev-space * 1.25) calc(t.$ev-space * 1.5);
   border-radius: t.$ev-radius-sm;
   font-size: 0.8125rem;
-  color: #79c0ff;
+  color: #93c5fd;
   background: t.$ev-info-bg;
   border: 1px solid t.$ev-info-border;
   margin-bottom: calc(t.$ev-space * 2);
@@ -129,7 +208,8 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,4 +222,18 @@
   width: 100%;
   max-height: 90vh;
   overflow: auto;
+  box-shadow: t.$ev-shadow-card;
+}
+
+@mixin ev-badge($bg, $color, $border) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: $bg;
+  color: $color;
+  border: 1px solid $border;
 }

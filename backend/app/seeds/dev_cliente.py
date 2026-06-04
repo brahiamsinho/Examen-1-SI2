@@ -27,6 +27,7 @@ async def _rol_cliente_id(db: AsyncSession) -> int | None:
 async def ensure_dev_cliente(
     db: AsyncSession,
     *,
+    tenant_id: int,
     require_enabled_flag: bool = True,
 ) -> None:
     """Usuario CLIENTE + fila clientes. CLI: require_enabled_flag=False."""
@@ -58,6 +59,9 @@ async def ensure_dev_cliente(
         if user.estado != EstadoUsuarioEnum.ACTIVO:
             user.estado = EstadoUsuarioEnum.ACTIVO
             user.updated_at = now
+        if user.tenant_id != tenant_id:
+            user.tenant_id = tenant_id
+            user.updated_at = now
 
         c_res = await db.execute(select(Cliente).where(Cliente.usuario_id == user.id))
         cliente = c_res.scalar_one_or_none()
@@ -65,6 +69,7 @@ async def ensure_dev_cliente(
             await usuarios_service.create_cliente(
                 {
                     "usuario_id": user.id,
+                    "tenant_id": tenant_id,
                     "ciudad": (settings.SEED_CLIENTE_CIUDAD or "").strip() or None,
                     "direccion": (settings.SEED_CLIENTE_DIRECCION or "").strip() or None,
                 },
@@ -76,6 +81,8 @@ async def ensure_dev_cliente(
                 cliente.ciudad = settings.SEED_CLIENTE_CIUDAD.strip() or None
             if settings.SEED_CLIENTE_DIRECCION is not None:
                 cliente.direccion = (settings.SEED_CLIENTE_DIRECCION or "").strip() or None
+            if cliente.tenant_id != tenant_id:
+                cliente.tenant_id = tenant_id
             cliente.updated_at = now
 
         await asignar_roles_usuario(user.id, [rol_id], db)
@@ -91,6 +98,7 @@ async def ensure_dev_cliente(
             "password": password,
             "username": None,
             "estado": EstadoUsuarioEnum.ACTIVO,
+            "tenant_id": tenant_id,
         },
         db,
         ejecutor_id=None,
@@ -98,6 +106,7 @@ async def ensure_dev_cliente(
     await usuarios_service.create_cliente(
         {
             "usuario_id": u.id,
+            "tenant_id": tenant_id,
             "ciudad": (settings.SEED_CLIENTE_CIUDAD or "").strip() or None,
             "direccion": (settings.SEED_CLIENTE_DIRECCION or "").strip() or None,
         },

@@ -1,0 +1,12 @@
+@startuml rel-pkg05-saas-trace
+' EA diagramID 32 | D-004e
+
+title Paquete 5 — Administracion multi-tenant SaaS
+
+package "Administracion multi-tenant SaaS" as PKG5
+
+usecase "CU40\nGestionar tenant o red\nde talleres" as CU40
+
+PKG5 ..> CU40 : <<trace>>
+
+@enduml

@@ -39,11 +39,15 @@ final class ClientAuthNotifier extends Notifier<ClientAuthState> {
     }
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    String? tenantSlug,
+  }) async {
     state = state.copyWith(isLoggingIn: true, clearError: true, clearInfoMessage: true);
     final auth = ref.read(authRepositoryProvider);
     try {
-      await auth.login(email: email, password: password);
+      await auth.login(email: email, password: password, tenantSlug: tenantSlug);
       final profile = await auth.fetchMiPerfil();
       state = ClientAuthState(
         status: ClientAuthStatus.authenticated,

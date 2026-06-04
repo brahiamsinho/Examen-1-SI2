@@ -1,0 +1,96 @@
+%% D-020 — 4.3.3.1.1 Diseño conceptual BD (puente draw.io MCP)
+%% Fuente: docs/diagrams/uml/class-database-conceptual.puml
+
+classDiagram
+  direction TB
+
+  class Tenant {
+    int id
+    string slug
+    string nombre
+    string estado
+    string plan
+  }
+  class Usuario {
+    int id
+    string email
+    string password_hash
+    string estado
+    int tenant_id
+  }
+  class Rol {
+    int id
+    string nombre
+    string descripcion
+  }
+  class UsuarioRol {
+    int id
+    int usuario_id
+    int rol_id
+    datetime asignado_at
+  }
+  class Cliente {
+    int id
+    int usuario_id
+    int tenant_id
+    string ciudad
+    string direccion
+  }
+  class MarcaVehiculo {
+    int id
+    string nombre
+  }
+  class Vehiculo {
+    int id
+    string placa
+    int anio
+    string color
+    int tenant_id
+  }
+  class Taller {
+    int id
+    string nombre_comercial
+    string direccion
+    float latitud
+    float longitud
+    int tenant_id
+    string estado
+  }
+  class Tecnico {
+    int id
+    int usuario_id
+    int taller_id
+    string estado
+  }
+  class SolicitudEmergencia {
+    int id
+    string descripcion_texto
+    string estado
+    float latitud
+    float longitud
+    int tenant_id
+  }
+  class Pago {
+    int id
+    float monto
+    string moneda
+    string estado
+    string metodo
+    string referencia_externa
+  }
+
+  Tenant "1" --> "0..*" Usuario : agrupa
+  Tenant "1" --> "0..*" Cliente : agrupa
+  Tenant "1" --> "0..*" Taller : agrupa
+  Usuario "1" --> "0..1" Cliente : es
+  Usuario "1" --> "0..1" Tecnico : es
+  Usuario "1" --> "0..*" UsuarioRol : tiene
+  Rol "1" --> "0..*" UsuarioRol : define
+  MarcaVehiculo "1" --> "0..*" Vehiculo : clasifica
+  Cliente "1" --> "0..*" Vehiculo : posee
+  Cliente "1" --> "0..*" SolicitudEmergencia : solicita
+  Vehiculo "1" --> "0..*" SolicitudEmergencia : involucra
+  Taller "0..1" --> "0..*" SolicitudEmergencia : atiende
+  Tecnico "0..1" --> "0..*" SolicitudEmergencia : asigna
+  Taller "1" --> "0..*" Tecnico : emplea
+  SolicitudEmergencia "1" --> "0..*" Pago : genera

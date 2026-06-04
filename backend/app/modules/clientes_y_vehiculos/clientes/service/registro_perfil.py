@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.tenant_request import resolve_tenant_id_for_request
 from app.core.timeutil import utc_now_naive
 from app.modules.acceso_y_administracion.auth.email_tokens import crear_y_enviar_verificacion_email
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
@@ -17,6 +18,7 @@ from .helpers import rol_id_por_nombre
 
 
 async def registro_cliente_publico(body: RegistroClienteMovilIn, db: AsyncSession) -> ClienteMiPerfilRead:
+    tenant_id = await resolve_tenant_id_for_request(db)
     user = await usuarios_service.create_usuario(
         {
             "nombres": body.nombres.strip(),
@@ -26,12 +28,13 @@ async def registro_cliente_publico(body: RegistroClienteMovilIn, db: AsyncSessio
             "password": body.password,
             "username": None,
             "estado": EstadoUsuarioEnum.PENDIENTE,
+            "tenant_id": tenant_id,
         },
         db,
         ejecutor_id=None,
     )
     cliente = await usuarios_service.create_cliente(
-        {"usuario_id": user.id, "ciudad": None, "direccion": None},
+        {"usuario_id": user.id, "ciudad": None, "direccion": None, "tenant_id": tenant_id},
         db,
     )
     rid = await rol_id_por_nombre(db, "CLIENTE")

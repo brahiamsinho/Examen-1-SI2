@@ -1,0 +1,19 @@
+@startuml CU36-consultar-ubicacion-tecnico
+' Detalle académico — Ciclo 4
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+
+left to right direction
+
+actor "Cliente" as cliente
+
+rectangle "Plataforma de Emergencias\nVehiculares (móvil cliente)" {
+  usecase "CU36\nConsultar ubicación del\ntécnico en tiempo real" as CU36
+}
+
+cliente --> CU36
+
+@enduml

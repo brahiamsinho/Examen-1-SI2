@@ -1,10 +1,20 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-04-26 — Incluye `comunicacion_y_notificaciones`, `atencion`, `talleres_y_tecnicos`, `incidentes`, `clientes_y_vehiculos`, `acceso_y_administracion` (imports Python; API igual)
+# Actualizado: 2026-05-28 — Ciclo 4 memoria + validación CU36–CU40
 # =========================================================
 
 ## ALTA — Entorno listo en 5 min
+
+0. **Subagentes:** … **diagramas** → `@diagrams-modeling` + skill **`uml-c4-puds-diagrams`**; **PUDS** → `puds`; memoria → `docs-memory`.
+0a. **Diagramas / PUDS:** leer **`docs/ai/PUDS_GUIDE.md`** y **`docs/diagrams/agent-memory/RULES.md`** (UML **2.5+ obligatorio**). C4 completo en `docs/diagrams/c4/`; abrir draw.io con MCP **`user-drawio`**. Guardar `.drawio` en `docs/diagrams/drawio/`. EA: reset manual `EA_CLEAN_RESET.md` si aplica; recrear D-006 con layout JSON.
+0b. **Multi-tenant (BD ya creada):** aplicar `0015_multitenancy_saas.sql` y **`0016_multitenancy_phase2.sql`** con `psql` en contenedor `db`; luego `docker compose exec backend python -m app.seeds` y **volver a iniciar sesión** (JWT con `tenant_id`). PowerShell:  
+   `Get-Content backend\migrations\0016_multitenancy_phase2.sql | docker compose exec -T db psql -U emergencias -d emergencias_db`
+0c. **Panel admin SaaS:** superadmin plataforma (`ADMIN` sin tenant) → selector «Organización» en la barra superior; gestión en `/admin/panel/organizaciones`.
+0d. **Fase 3 BD:** `Get-Content backend\migrations\0017_saas_billing_phase3.sql | docker compose exec -T db psql -U emergencias -d emergencias_db`
+0e. **Stripe SaaS (opcional):** `STRIPE_SAAS_PRICE_STARTER`, `STRIPE_SAAS_WEBHOOK_SECRET`, webhook URL `/api/webhooks/stripe-saas`.
+0f. **Mobile:** `TENANT_SLUG_DEFAULT=demo-sc` en `mobile/.env`; campo «organización» en login cliente/técnico.
+0g. **Stripe pagos CU38 (opcional):** en `.env` raíz `STRIPE_SECRET_KEY` + `STRIPE_PUBLISHABLE_KEY` (test); `docker compose up -d --force-recreate backend`; verificar `stripe_enabled=True` en contenedor; en app cliente pagar con **Tarjeta** y `4242…`.
 
 1. Leer **`AGENTS.md`** (raíz).
 2. Copiar **`.env.example` → `.env`** en la raíz del repo y ajustar `SECRET_KEY`, DB si hace falta. **IA:** definir **una sola vez** `AI_ENABLED` y `AI_INFERENCE_BASE_URL` (no duplicar bloques al pegar comentarios). Para Docker con worker en la misma red: `AI_ENABLED=true`, `AI_INFERENCE_BASE_URL=http://ai-inference:8080`.
@@ -59,10 +69,19 @@
   - [x] Push de bienvenida cliente al primer registro de token.
   - [x] Push al técnico cuando el taller lo asigna a una solicitud (mismo pipeline FCM; ver token único por dispositivo).
   - [x] Logging de entrega FCM en backend (`success_count`/`failure_count`).
-  - [ ] Tracking continuo de técnico en mapa en tiempo real (stream) + background location robusta.
+  - [x] **CU36:** pantalla ubicación técnico con polling 12 s + refresh manual (`emergencia_ubicacion_tecnico_screen.dart`).
+  - [ ] Tracking continuo de técnico en mapa en tiempo real (WebSocket/SSE) + background location robusta.
   - [ ] Auditar notificaciones “pendientes” y política de replay por ventana de tiempo (hoy: 10 últimas no leídas al primer token).
 - [x] Hora de presentación unificada en BOT (Santa Cruz) para web y mobile.
   - [x] Parse UTC naive en mobile para timestamps API sin zona (`api_datetime.dart`).
+
+## ALTA — Ciclo 4 (CU36–CU40) — validación manual
+
+1. Login cliente `carlos.vega@sc-demo.test` / `scdemo1`, org `demo-sc`.
+2. Crear emergencia con ubicación → **Elegir taller** (CU37) → confirmar → verificar bandeja solo en taller elegido.
+3. Taller acepta y asigna técnico; técnico comparte GPS → cliente **Ver ubicación del técnico** (CU36): mapa actualiza ~cada 12 s.
+4. Técnico presupuesto + `EN_ATENCION` → cliente **Pago** (CU38): tarjeta con Stripe si claves cargadas; si no, simulado.
+5. Admin `/admin/panel/organizaciones` (CU40) si aplica defensa SaaS.
 
 ## ALTA — Validación funcional post-fix (manual)
 

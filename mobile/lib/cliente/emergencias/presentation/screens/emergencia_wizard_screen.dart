@@ -565,17 +565,26 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
             ],
           ],
           const SizedBox(height: 24),
-          ShadButton(
-            onPressed: () => context.go('/cliente/app/home'),
-            child: const Text('Volver al inicio'),
-          ),
           if (d != null) ...[
+            ShadButton(
+              onPressed: () => context.push('/cliente/app/emergencias/solicitudes/${d.id}/seleccionar-taller'),
+              child: const Text('Elegir taller'),
+            ),
             const SizedBox(height: 12),
             ShadButton.outline(
+              onPressed: () => context.go('/cliente/app/home'),
+              child: const Text('Volver al inicio'),
+            ),
+            const SizedBox(height: 12),
+            ShadButton.ghost(
               onPressed: () => context.push('/cliente/app/emergencias/solicitudes/${d.id}/seguimiento'),
               child: const Text('Ver seguimiento'),
             ),
-          ],
+          ] else
+            ShadButton(
+              onPressed: () => context.go('/cliente/app/home'),
+              child: const Text('Volver al inicio'),
+            ),
         ];
     }
   }

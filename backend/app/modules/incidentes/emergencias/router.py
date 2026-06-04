@@ -5,14 +5,21 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission
+from app.core.dependencies import (
+    get_current_user,
+    require_permission,
+    require_writable_tenant_subscription,
+)
 from app.modules.clientes_y_vehiculos.clientes.service import get_cliente_row_for_usuario, require_cliente_rol
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 
+from app.modules.ai.schemas import AssignmentRankOut
 from . import service
 from .models import TipoEvidenciaSolicitudEnum
 from .schemas import (
     EvidenciaCreateIn,
+    SeleccionarTallerIn,
+    SeleccionarTallerOut,
     SolicitudEmergenciaCreateIn,
     SolicitudEmergenciaDetailRead,
     SolicitudEmergenciaRead,
@@ -38,7 +45,10 @@ async def _cliente_id(user: Usuario, db: AsyncSession) -> int:
     "",
     response_model=SolicitudEmergenciaDetailRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_permission("incidentes:crear"))],
+    dependencies=[
+        Depends(require_permission("incidentes:crear")),
+        Depends(require_writable_tenant_subscription),
+    ],
 )
 async def crear_solicitud_emergencia(
     body: SolicitudEmergenciaCreateIn,
@@ -62,6 +72,42 @@ async def listar_mis_solicitudes(
 ):
     cid = await _cliente_id(current_user, db)
     return await service.listar_solicitudes(cid, db, limit=limit)
+
+
+@router.get(
+    "/{solicitud_id}/talleres-candidatos",
+    response_model=AssignmentRankOut,
+    dependencies=[Depends(require_permission("incidentes:leer"))],
+)
+async def talleres_candidatos(
+    solicitud_id: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU37 — ranking de talleres para que el cliente elija."""
+    cid = await _cliente_id(current_user, db)
+    return await service.listar_talleres_candidatos(cid, solicitud_id, db)
+
+
+@router.post(
+    "/{solicitud_id}/seleccionar-taller",
+    response_model=SeleccionarTallerOut,
+    dependencies=[
+        Depends(require_permission("incidentes:actualizar")),
+        Depends(require_writable_tenant_subscription),
+    ],
+)
+async def confirmar_taller(
+    solicitud_id: int,
+    body: SeleccionarTallerIn,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU37 — envía la solicitud a la bandeja del taller elegido."""
+    cid = await _cliente_id(current_user, db)
+    return await service.seleccionar_taller(
+        current_user, cid, solicitud_id, body.taller_id, db
+    )
 
 
 @router.get(

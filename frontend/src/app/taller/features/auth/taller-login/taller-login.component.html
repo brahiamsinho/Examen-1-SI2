@@ -35,6 +35,17 @@
 
       <form class="taller-login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <div class="taller-login__field">
+          <label class="taller-login__label" for="taller-org">Organización (slug)</label>
+          <input
+            id="taller-org"
+            type="text"
+            class="taller-login__input"
+            formControlName="orgSlug"
+            autocomplete="organization"
+            placeholder="demo-sc"
+          />
+        </div>
+        <div class="taller-login__field">
           <label class="taller-login__label" for="taller-email">Correo electrónico</label>
           <input
             id="taller-email"

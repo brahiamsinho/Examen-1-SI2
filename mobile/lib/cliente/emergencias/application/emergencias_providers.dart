@@ -5,6 +5,7 @@ import '../data/emergencias_repository.dart';
 import '../data/optional_public_upload_service.dart';
 import '../domain/solicitud_emergencia_models.dart';
 import '../domain/solicitud_seguimiento_models.dart';
+import '../domain/taller_candidato_models.dart';
 import '../domain/ubicacion_tecnico_compartida.dart';
 
 final emergenciasRepositoryProvider = Provider<EmergenciasRepository>((ref) {
@@ -37,4 +38,10 @@ final emergenciaSeguimientoProvider =
 final emergenciaUbicacionTecnicoProvider =
     FutureProvider.autoDispose.family<UbicacionTecnicoCompartida, int>((ref, solicitudId) async {
   return ref.watch(emergenciasRepositoryProvider).fetchUbicacionTecnico(solicitudId);
+});
+
+/// CU37 — candidatos para elegir taller.
+final talleresCandidatosProvider =
+    FutureProvider.autoDispose.family<TalleresCandidatosResponse, int>((ref, solicitudId) async {
+  return ref.watch(emergenciasRepositoryProvider).fetchTalleresCandidatos(solicitudId);
 });

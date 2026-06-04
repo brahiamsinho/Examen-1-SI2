@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
+import { TimeoutError } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdminAuthService, AdminAuthError } from '../../../../core/services/admin-auth.service';
 
@@ -19,7 +21,6 @@ import { AdminAuthService, AdminAuthError } from '../../../../core/services/admi
 export class AdminLoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AdminAuthService);
-  private readonly router = inject(Router);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -41,25 +42,41 @@ export class AdminLoginComponent {
       this.form.markAllAsTouched();
       return;
     }
+
     const { email, password, remember } = this.form.getRawValue();
     this.submitting = true;
-    this.auth.login(email.trim(), password, remember).subscribe({
-      next: () => {
-        this.submitting = false;
-        void this.router.navigate(['/admin/panel']);
-      },
-      error: (err: unknown) => {
-        this.submitting = false;
-        this.errorMsg = this.formatError(err);
-      },
-    });
+
+    this.auth
+      .login(email.trim(), password, remember)
+      .pipe(timeout(30_000))
+      .subscribe({
+        next: () => {
+          if (!this.auth.isAdminSession()) {
+            this.submitting = false;
+            this.errorMsg = 'No se pudo validar la sesión de administrador.';
+            return;
+          }
+          // Recarga limpia: no tocar más el estado de este componente (evita crash al destruirlo).
+          globalThis.location.replace('/admin/panel');
+        },
+        error: (err: unknown) => {
+          this.submitting = false;
+          this.errorMsg = this.formatError(err);
+        },
+      });
   }
 
   private formatError(err: unknown): string {
+    if (err instanceof TimeoutError) {
+      return 'El servidor no respondió a tiempo. Comprueba que Docker esté en marcha (backend en puerto 8000).';
+    }
     if (err instanceof AdminAuthError) {
       return err.message;
     }
     if (err instanceof HttpErrorResponse) {
+      if (err.status === 0) {
+        return 'No hay conexión con la API. Levanta Docker: docker compose up -d backend';
+      }
       const d = err.error?.detail;
       if (typeof d === 'string') return d;
       if (Array.isArray(d) && d[0]?.msg) return d.map((x: { msg: string }) => x.msg).join(' ');

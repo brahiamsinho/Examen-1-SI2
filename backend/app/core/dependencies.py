@@ -12,6 +12,9 @@ from jose import JWTError
 
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.core.tenant import AuthContext, is_platform_superadmin
+from app.core.tenant_subscription import assert_tenant_subscription_write
+from app.modules.acceso_y_administracion.tenants import service as tenants_service
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 from app.modules.acceso_y_administracion.permisos.models import Permiso
 from app.modules.acceso_y_administracion.roles.models import Rol, RolPermiso, UsuarioRol
@@ -54,7 +57,106 @@ async def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Usuario en estado {user.estado.value}. Acceso denegado.",
         )
+
+    try:
+        payload = decode_token(credentials.credentials)
+        roles: list[str] = list(payload.get("roles") or [])
+        token_tenant = payload.get("tenant_id")
+        tenant_id = user.tenant_id
+        if tenant_id is None and token_tenant is not None:
+            tenant_id = int(token_tenant)
+        from app.core.tenant_context import set_request_auth_context
+
+        set_request_auth_context(
+            AuthContext(
+                user=user,
+                roles=roles,
+                tenant_id=tenant_id,
+                is_platform_superadmin=is_platform_superadmin(user, roles),
+            )
+        )
+    except JWTError:
+        pass
+
     return user
+
+
+async def get_auth_context(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    current_user: Usuario = Depends(get_current_user),
+) -> AuthContext:
+    """
+    Usuario + roles + tenant_id del JWT, validado contra el registro en BD.
+    Superadmin plataforma: rol ADMIN y usuario.tenant_id IS NULL.
+    """
+    try:
+        payload = decode_token(credentials.credentials)
+    except JWTError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido o expirado",
+        ) from exc
+
+    roles: list[str] = list(payload.get("roles") or [])
+    token_tenant = payload.get("tenant_id")
+
+    if token_tenant is not None and current_user.tenant_id is not None:
+        if int(token_tenant) != int(current_user.tenant_id):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token no coincide con el tenant del usuario",
+            )
+
+    tenant_id = current_user.tenant_id
+    if tenant_id is None and token_tenant is not None:
+        tenant_id = int(token_tenant)
+
+    ctx = AuthContext(
+        user=current_user,
+        roles=roles,
+        tenant_id=tenant_id,
+        is_platform_superadmin=is_platform_superadmin(current_user, roles),
+    )
+    from app.core.tenant_context import set_request_auth_context
+
+    set_request_auth_context(ctx)
+    return ctx
+
+
+def bind_auth_context(ctx: AuthContext = Depends(get_auth_context)) -> AuthContext:
+    """Guarda AuthContext en contextvar para get_db / RLS en la misma petición."""
+    from app.core.tenant_context import set_request_auth_context
+
+    set_request_auth_context(ctx)
+    return ctx
+
+
+async def require_platform_superadmin(
+    ctx: AuthContext = Depends(get_auth_context),
+) -> AuthContext:
+    if not ctx.is_platform_superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requiere superadmin de plataforma (ADMIN sin tenant).",
+        )
+    return ctx
+
+
+async def require_writable_tenant_subscription(
+    ctx: AuthContext = Depends(get_auth_context),
+    db: AsyncSession = Depends(get_db),
+) -> AuthContext:
+    """Bloquea escrituras si la suscripción SaaS del tenant no está al día (superadmin exento)."""
+    if ctx.is_platform_superadmin:
+        return ctx
+    if ctx.tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario sin organización asignada.",
+        )
+    tenant = await tenants_service.get_tenant_by_id(db, ctx.tenant_id)
+    assert_tenant_subscription_write(tenant)
+    return ctx
 
 
 async def get_current_user_permisos(

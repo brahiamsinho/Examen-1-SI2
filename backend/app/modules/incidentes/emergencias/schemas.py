@@ -206,3 +206,16 @@ class SolicitudSeguimientoRead(BaseModel):
         default=None,
         description="Momento en que el técnico registró el presupuesto.",
     )
+
+
+class SeleccionarTallerIn(BaseModel):
+    """CU37 — taller elegido por el cliente."""
+
+    taller_id: int = Field(..., gt=0)
+
+
+class SeleccionarTallerOut(BaseModel):
+    solicitud_id: int
+    taller_id: int
+    bandeja_id: int
+    estado: EstadoSolicitudSeguimientoEnum

@@ -73,11 +73,77 @@ def _incidente_select():
     )
 
 
-async def insert_bandeja_pendiente_por_cada_taller(
-    db: AsyncSession, *, solicitud_id: int, creado_at: datetime
+async def get_bandeja_por_solicitud_taller(
+    db: AsyncSession, *, solicitud_id: int, taller_id: int
+) -> SolicitudTallerBandeja | None:
+    res = await db.execute(
+        select(SolicitudTallerBandeja).where(
+            SolicitudTallerBandeja.solicitud_id == solicitud_id,
+            SolicitudTallerBandeja.taller_id == taller_id,
+        )
+    )
+    return res.scalar_one_or_none()
+
+
+async def expirar_todas_bandeja_pendientes(
+    db: AsyncSession,
+    *,
+    solicitud_id: int,
+    respondido_at: datetime,
+    excepto_bandeja_id: int | None = None,
 ) -> None:
-    """Al crear una solicitud, una fila PENDIENTE por taller (CU25)."""
-    res = await db.execute(select(Taller.id))
+    stmt = (
+        update(SolicitudTallerBandeja)
+        .where(
+            SolicitudTallerBandeja.solicitud_id == solicitud_id,
+            SolicitudTallerBandeja.estado == EstadoBandejaTallerEnum.PENDIENTE,
+        )
+        .values(estado=EstadoBandejaTallerEnum.EXPIRADA, respondido_at=respondido_at)
+    )
+    if excepto_bandeja_id is not None:
+        stmt = stmt.where(SolicitudTallerBandeja.id != excepto_bandeja_id)
+    await db.execute(stmt)
+
+
+async def ensure_bandeja_pendiente_para_taller(
+    db: AsyncSession,
+    *,
+    solicitud_id: int,
+    taller_id: int,
+    creado_at: datetime,
+) -> SolicitudTallerBandeja:
+    """CU37 — fila PENDIENTE para el taller elegido por el cliente."""
+    existing = await get_bandeja_por_solicitud_taller(
+        db, solicitud_id=solicitud_id, taller_id=taller_id
+    )
+    if existing is not None:
+        if existing.estado == EstadoBandejaTallerEnum.ACEPTADA:
+            return existing
+        existing.estado = EstadoBandejaTallerEnum.PENDIENTE
+        existing.respondido_at = None
+        existing.motivo_rechazo = None
+        await db.flush()
+        return existing
+
+    row = SolicitudTallerBandeja(
+        solicitud_id=solicitud_id,
+        taller_id=taller_id,
+        estado=EstadoBandejaTallerEnum.PENDIENTE,
+        creado_at=creado_at,
+    )
+    db.add(row)
+    await db.flush()
+    return row
+
+
+async def insert_bandeja_pendiente_por_cada_taller(
+    db: AsyncSession, *, solicitud_id: int, creado_at: datetime, tenant_id: int | None = None
+) -> None:
+    """Al crear una solicitud, una fila PENDIENTE por taller del mismo tenant (CU25)."""
+    stmt = select(Taller.id)
+    if tenant_id is not None:
+        stmt = stmt.where(Taller.tenant_id == tenant_id)
+    res = await db.execute(stmt)
     for (tid,) in res.fetchall():
         db.add(
             SolicitudTallerBandeja(

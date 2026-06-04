@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,11 +10,33 @@ import '../../application/emergencias_providers.dart';
 import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/emergencia_ubicacion_osm_map.dart';
 
-/// Mapa y datos de la última posición compartida por el técnico asignado.
-class EmergenciaUbicacionTecnicoScreen extends ConsumerWidget {
+/// Mapa y datos de la última posición compartida por el técnico asignado (CU36 polling).
+class EmergenciaUbicacionTecnicoScreen extends ConsumerStatefulWidget {
   const EmergenciaUbicacionTecnicoScreen({super.key, required this.solicitudId});
 
   final int solicitudId;
+
+  @override
+  ConsumerState<EmergenciaUbicacionTecnicoScreen> createState() =>
+      _EmergenciaUbicacionTecnicoScreenState();
+}
+
+class _EmergenciaUbicacionTecnicoScreenState extends ConsumerState<EmergenciaUbicacionTecnicoScreen> {
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      ref.invalidate(emergenciaUbicacionTecnicoProvider(widget.solicitudId));
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _abrirNavegacionExterna(double lat, double lng) async {
     final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
@@ -29,20 +53,27 @@ class EmergenciaUbicacionTecnicoScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(emergenciaUbicacionTecnicoProvider(solicitudId));
-    final detailAsync = ref.watch(emergenciaDetailProvider(solicitudId));
+  Widget build(BuildContext context) {
+    final async = ref.watch(emergenciaUbicacionTecnicoProvider(widget.solicitudId));
+    final detailAsync = ref.watch(emergenciaDetailProvider(widget.solicitudId));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ubicación del técnico'),
         leading: BackButton(onPressed: () => context.pop()),
+        actions: [
+          IconButton(
+            tooltip: 'Actualizar ahora',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(emergenciaUbicacionTecnicoProvider(widget.solicitudId)),
+          ),
+        ],
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _UbicacionError(
           message: e.toString().replaceFirst('Exception: ', ''),
-          onRetry: () => ref.invalidate(emergenciaUbicacionTecnicoProvider(solicitudId)),
+          onRetry: () => ref.invalidate(emergenciaUbicacionTecnicoProvider(widget.solicitudId)),
         ),
         data: (u) {
           final scheme = Theme.of(context).colorScheme;
@@ -53,6 +84,11 @@ class EmergenciaUbicacionTecnicoScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
             children: [
+              Text(
+                'Actualización automática cada 12 s',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 8),
               EmergenciaUbicacionOsmMap(
                 latitude: u.latitud,
                 longitude: u.longitud,

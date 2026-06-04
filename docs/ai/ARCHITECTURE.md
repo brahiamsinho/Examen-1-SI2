@@ -23,7 +23,7 @@ app/
 │   ├── security.py    ← bcrypt + JWT
 │   └── dependencies.py ← get_current_user, require_permission
 ├── modules/
-│   ├── acceso_y_administracion/  ← auth, roles, permisos, usuarios, bitácora (imports `app.modules.acceso_y_administracion.*`)
+│   ├── acceso_y_administracion/  ← auth, roles, permisos, usuarios, bitácora, tenants (SaaS)
 │   ├── comunicacion_y_notificaciones/  ← CU19, CU21 (y routers cliente/técnico)
 │   │   ├── comunicaciones/ ← Routers HTTP que agrupan FCM + notif + mensajes
 │   │   ├── notificaciones/ ← In-app + orquestación push
@@ -70,6 +70,18 @@ SQLAlchemy Models      ← mapeo a PostgreSQL
      ↓
 PostgreSQL             ← tablas + índices + ENUMs
 ```
+
+## Multi-tenancy SaaS (2026-05-24)
+
+- **Tenant** = organización B2B que paga la plataforma (tabla `tenants`, slug p. ej. `demo-sc`).
+- **Estrategia:** shared schema + columna `tenant_id` en tablas operativas (`usuarios`, `talleres`, `clientes`, `vehiculos`, `solicitudes_emergencia`).
+- **Superadmin plataforma:** usuario con rol `ADMIN` y `usuarios.tenant_id IS NULL` — ve todos los tenants y KPIs globales.
+- **Usuarios de tenant:** `tenant_id` obligatorio en JWT (`tenant_id` claim) y filtros en finanzas/bandeja.
+- **API admin tenants:** `GET/POST/PATCH /api/admin/tenants` (solo superadmin); contexto: `GET /api/admin/tenants/context/me`.
+- **Migraciones:** `0015` (tenants + `tenant_id`), `0016` (RLS + unicidad), `0017` (billing Stripe).
+- **API pública:** `GET /api/public/tenants`, `GET /api/public/tenant-by-host`.
+- **Billing SaaS:** `POST /api/admin/tenants/{id}/checkout-session`, `billing-portal`, webhook `POST /api/webhooks/stripe-saas`.
+- **Resolución tenant:** header `X-Tenant-Slug`, subdominio (`SAAS_PLATFORM_BASE_DOMAIN`), login móvil/taller con slug.
 
 ## Esquema y migraciones (Docker)
 

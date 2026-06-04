@@ -1,0 +1,23 @@
+---
+title: D-001 C4 Context — Plataforma emergencias vehiculares
+---
+C4Context
+  Person(cliente, "Cliente", "Propietario de vehículo; app Flutter")
+  Person(tecnico, "Técnico", "Mecánico asignado; app Flutter")
+  Person(taller, "Taller responsable", "Bandeja y equipo; portal Angular")
+  Person(admin, "Admin plataforma", "Superadmin SaaS; panel Angular")
+
+  System(plataforma, "Plataforma de emergencias", "Coordina solicitudes, pagos, comisiones y auditoría multi-tenant")
+
+  System_Ext(stripe, "Stripe", "Pagos emergencia y suscripción SaaS B2B")
+  System_Ext(fcm, "Firebase Cloud Messaging", "Push a dispositivos móviles")
+  System_Ext(ia_worker, "Worker IA (opcional)", "Visión y audio; contenedor ai-inference")
+
+  Rel(cliente, plataforma, "Reporta emergencia, paga, chatea")
+  Rel(tecnico, plataforma, "Atiende, presupuesto, evidencias")
+  Rel(taller, plataforma, "Bandeja, asignación, comisiones")
+  Rel(admin, plataforma, "Tenants, finanzas, usuarios globales")
+
+  Rel(plataforma, stripe, "Checkout / webhooks")
+  Rel(plataforma, fcm, "Notificaciones push")
+  Rel(plataforma, ia_worker, "Análisis imagen/audio vía API interna")

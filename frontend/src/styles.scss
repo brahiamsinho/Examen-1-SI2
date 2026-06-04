@@ -44,3 +44,36 @@ app-root {
 ::-webkit-scrollbar-thumb:hover {
   background: #484f58;
 }
+
+/* Errores fatales de Angular (panel negro → mensaje legible) */
+.app-fatal-error {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  padding: 2rem;
+  background: #0c0c0f;
+  color: #f0f6fc;
+  font-family: system-ui, sans-serif;
+  overflow: auto;
+}
+
+.app-fatal-error h1 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: #fca5a5;
+}
+
+.app-fatal-error pre {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #131316;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.85rem;
+}
+
+.app-fatal-error a {
+  color: #60a5fa;
+}

@@ -36,6 +36,9 @@ class Base(DeclarativeBase):
 async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         try:
+            from app.core.tenant_context import apply_postgres_tenant_session
+
+            await apply_postgres_tenant_session(session)
             yield session
             await session.commit()
         except Exception:

@@ -1,7 +1,105 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-04-26
+# Fecha: 2026-05-28 (memoria Ciclo 4 sincronizada)
+
+## Ciclo 4 — estado implementación (CU36–CU40)
+
+| CU | Estado | Notas rápidas |
+|----|--------|----------------|
+| CU36 | ✅ REST + polling mobile 12 s | Pendiente opcional: WebSocket |
+| CU37 | ✅ UI + API candidatos/seleccionar | Ya no bandeja masiva al crear solicitud |
+| CU38 | ✅ Stripe + simulado | Stripe real solo si `STRIPE_*` en `.env` y contenedor backend recreado |
+| CU39 | ✅ | PATCH técnico + presupuesto |
+| CU40 | ✅ | SaaS fases 1–3 |
+
+**Docs PUDS:** `docs/puds/casos-uso/CICLO4_SEGUIMIENTO_TIEMPO_REAL.md`, `CICLO4_DETALLE_CASOS_USO.md` (actualizados 2026-05-28).  
+**Sesión código CU37/CU36:** `docs/ai/sessions/2026-06-02-agent-cu37-cu36-mobile.md`.  
+**Probar CU37:** `carlos.vega@sc-demo.test` / `scdemo1`, tenant `demo-sc` → emergencia → Elegir taller.  
+**Probar Stripe:** `docker compose up -d --force-recreate backend` tras poner claves; `settings.stripe_enabled` debe ser `True`.
+
+## Documento oficial del examen (fuente académica)
+
+- **Archivo:** `c:\Users\brahi\Downloads\Segundo EXAMEN SI2 2026_Ciclos_4_5.docx`
+- **Sistema:** Plataforma Inteligente de Atención de Emergencias Vehiculares — INF412 — Grupo 39.
+- **Ciclo 4 (CU36–CU40):** tiempo real/tracking, selección taller, pago pasarela, estado atención técnico, multi-tenant SaaS.
+- **Ciclo 5 (CU41–CU46):** notificaciones, cotización, offline/sync, tiempo reparación, emergencia sin conexión, dashboard KPIs.
+- **4.1.5** Modelo general de casos de uso → EA diagrama **26** (solo CU36–CU40 + CU2 include); **Dependency** + `include`/`extend`; actores → **Association**.
+- **Repo alineado:** `docs/puds/casos-uso/CICLO4_DETALLE_CASOS_USO.md`, `MODELO_GENERAL_CASOS_USO.md`.
+- **Pendiente en el Word:** muchas secciones 4.2–4.5 son índice/placeholder (análisis, diseño secuencia, despliegue, pruebas) — completar artefactos PUDS.
+- **4.2.1 Identificación paquetes CU:** EA paquete **11**, diagrama **27**; doc `docs/puds/analisis/IDENTIFICACION_PAQUETES_CU.md`; PlantUML D-004.
+- **4.2.2 Relacionar paquete↔CU (`<<trace>>`):** EA diagramas **28–32** (5 diagramas); PlantUML en `docs/diagrams/uml/paquetes-cu/rel-pkg01..05-*.puml`.
+- **4.2.1.3 Vista de paquetes / encapsular:** EA diagramas **33–37** (`VISTA-PKG01`…`05`, IDs **34,33,37,35,36**); PlantUML `vista-pkg01..05-*-encapsular.puml`; conectores asoc. **372–387**, extend **375**, **382**.
+- **4.2.4 Analizar paquete:** EA diagrama **38** `DIAGRAMA GENERAL DE PAQUETES`; contenedor elementID **191**; deps PKG **388–392**; `docs/puds/analisis/ANALIZAR_PAQUETE_4_2_4.md`; PlantUML `diagrama-general-paquetes-analizar.puml`.
+- **4.3.1.1 Diseño físico (despliegue):** EA package **4**, diagrama **9** renombrado `4.3.1.1 Diseño físico - Despliegue Azure`; PlantUML D-006 actualizado (Azure→Ubuntu→Docker→FE/BE/BD/IA/Mailhog); doc `docs/puds/diseño/DISEÑO_FISICO_4_3_1_1_DESPLIEGUE.md`.
+- **4.3.1.2 Diseño lógico (paquetes MVC):** EA package **12**, diagrama **39**; PlantUML D-007; doc `docs/puds/diseño/DISEÑO_LOGICO_4_3_1_2_PAQUETES.md`.
+- **Diagrama componente principal:** EA package **13**, diagrama **40**; PlantUML D-008; script `scripts/ea-create-componente-principal.ps1`; doc `docs/puds/diseño/DISEÑO_COMPONENTE_PRINCIPAL.md`.
+- **MCP EA:** `.cursor/mcp.json` incluye `Enterprise Architect` con `-enableEdit` (reiniciar Cursor para usar MCP en chat).
+
+## Cambios recientes (2026-05-29) — Login admin “colgado” con API OK ✅
+
+- **Síntoma:** URL `/admin/panel`, login visible, pero `POST /auth/login 200` y `GET /api/admin/* 200`.
+- **Causas UI:** (1) `withViewTransitions()` — quitado; (2) login en ruta hermana `''` de `panel` — **login movido a `/admin/login`**; (3) `router.navigate` dejaba DOM del login — **tras login: `location.assign('/admin/panel')`** (recarga completa).
+- **Guards:** `adminGuestGuard` en login; `adminAuthGuard` redirige a `/admin/login`.
+- **Bundle nuevo:** `main-AOKVAZW2.js`, `chunk-6BFN7Q7Z.js` (shell). `docker compose build frontend && docker compose up -d frontend`.
+- **Credenciales:** `patricio.mendez@sc-demo.test` / `scdemo1`.
+- **Probar:** `http://localhost/admin/login` (o `/admin` redirige) → **Ctrl+Shift+R**; tras login debe verse sidebar “Resumen”, no el formulario.
+
+## Cambios recientes (2026-05-28) — Skill UML/C4/PUDS + subagentes sincronizados ✅
+
+- Skill **`.cursor/skills/uml-c4-puds-diagrams/`** — checklist UML 2.5+, C4 4 capas, draw.io, memoria.
+- **`docs/ai/SKILLS_REGISTRY.md`** creado.
+- Subagentes actualizados: `orchestrator`, `puds`, `docs-memory`, `diagrams-modeling` (MCP `user-drawio`, delegación clara).
+
+## Cambios recientes (2026-05-28) — C4 4 capas + draw.io + UML 2.5 + PUDS ✅
+
+- Modelo **C4 completo** (Context, Container, Component, Code): `docs/diagrams/c4/01`…`04` + índice `c4/README.md`.
+- Puente draw.io con notación C4 nativa (`C4Context`, `C4Container`, `C4Component`) en `drawio/mermaid/01`…`04-*-c4.mmd`; abiertos vía MCP **`user-drawio`**.
+- **UML 2.5+ obligatorio** reforzado: despliegue = D-006 + `deployment-docker-azure-uml.mmd` (no mezclar C4/Docker).
+- **`docs/ai/PUDS_GUIDE.md`** creado — fases PUDS, trazabilidad CU→diagrama→código, cuándo usar C4 vs UML.
+- Memoria actualizada: `diagrams/agent-memory/HANDOFF.md`, `LEARNINGS.md`, `RULES.md`, sesión `2026-05-28-agent-c4-drawio-uml25-puds.md`.
+- **Pendiente usuario:** guardar `.drawio` en `docs/diagrams/drawio/`; reset EA manual si aplica.
+
+## Cambios recientes (2026-05-28) — MCP draw.io + integración EA ✅
+
+- `.cursor/mcp.json` con `npx -y @drawio/mcp` (servidor `drawio`).
+- `docs/diagrams/drawio/mermaid/` (C4 context + containers), `DRAWIO_INTEGRATION.md`, `MCP_SETUP.md`.
+- Flujo: PlantUML (Git) + EA (modelo) + draw.io (visual). DEC-027.
+
+## Cambios recientes (2026-05-28) — Subagente diagramas + docs/diagrams/ ✅
+
+- Subagente **`diagrams-modeling`**: PlantUML, UML 2.5+, C4, skill `plantuml-ascii`, MCP Enterprise Architect (con EA abierto).
+- **`docs/diagrams/`** + memoria **`docs/diagrams/agent-memory/`** (RULES, LEARNINGS, no repetir errores).
+- Diagramas iniciales: C4 context/container, UML paquetes backend, secuencia alta emergencia cliente.
+- **`docs/ai/DIAGRAMS_GUIDE.md`**, **`PACKAGE_DESIGN.md`**; `orchestrator` y `puds` actualizados; DEC-026.
+- Sesión: `docs/ai/sessions/2026-05-28-agent-diagrams-modeling-subagent.md`.
+
+## Cambios recientes (2026-05-24) — SaaS fase 3 ✅
+
+- Migración `0017`, API pública, billing Stripe (checkout/portal/webhook), subdominio Host, tests `test_multitenancy_phase3.py`, mobile/taller org slug, `require_writable_tenant_subscription`.
+- Ver `docs/ai/SAAS_PHASE3_PLAN.md`, DEC-025.
+
+## Cambios recientes (2026-05-24) — SaaS multi-tenant fase 2 ✅
+
+- Migración `0016_multitenancy_phase2.sql` (RLS, unicidad por tenant, Stripe en `tenants`), middleware `X-Tenant-Slug`, contexto auth en `get_db`, login/me ampliados, panel Angular organizaciones + selector tenant.
+- Sesión: `docs/ai/sessions/2026-05-24-agent-saas-multitenancy-fase2.md`, DEC-024.
+- BD existente: aplicar `0016` con `psql` (ver `NEXT_STEPS.md` 0b).
+
+## Cambios recientes (2026-05-24) — SaaS multi-tenant fase 1 ✅
+
+- Migración `0015_multitenancy_saas.sql`, módulo `tenants`, `AuthContext`, JWT `tenant_id`, filtros finanzas/bandeja, seeds `dev_tenant`.
+- Skills: `multitenancy`, `multi-tenant-safety-checker`.
+- Sesión: `docs/ai/sessions/2026-05-24-agent-saas-multitenancy-fase1.md`, DEC-023.
+
+## Cambios recientes (2026-05-24) — Subagentes ai-inference, qa-testing, security ✅
+
+- Nuevos roles en `.cursor/agents/`:
+  - **`ai-inference`** — operación e implementación del stack IA del repo (worker + módulo backend + env Docker); complementa **`ai-researcher`** (investigación previa).
+  - **`qa-testing`** — estrategia y ejecución de pruebas (pytest, Flutter, manual, `TESTING_STRATEGY.md`).
+  - **`security`** — auditoría JWT/permisos/secretos/Stripe/FCM/uploads.
+- **`orchestrator.md`**: clasificación ampliada (ia, qa, seguridad) + tabla de delegación rápida.
+- Sesión: `docs/ai/sessions/2026-05-24-agent-subagentes-ia-qa-security.md`.
+- Decisión: `DECISIONS_LOG` **DEC-022**.
 
 ## Cambios recientes (2026-04-26) — Word `pruebas_api_servicio` + Prueba 2 mapeo ✅
 

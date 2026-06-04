@@ -1,0 +1,85 @@
+@startuml deployment-docker-azure
+' Proyecto: Examen-1-SI2 — Plataforma de Emergencias Vehiculares
+' PUDS 4.3.1.1 Diseño físico — Diagrama de despliegue (UML 2.5+)
+' Fuente: docker-compose.yml | Destino: VM Microsoft Azure + Docker Compose
+' ID: D-006 | EA: package Despliegue, diagramID 9
+
+skinparam nodesep 30
+skinparam ranksep 28
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+title 4.3.1.1 Diseño físico — Diagrama de despliegue (Azure + Docker)
+
+' --- Clientes ---
+node "«device»\nWeb" as web {
+  artifact "Navegador\nAngular admin / taller" as nav
+}
+
+node "«device»\nDispositivo móvil" as mobile {
+  artifact "Aplicación móvil\nFlutter (cliente + técnico)" as app
+}
+
+node "Internet" as inet
+
+' --- Nube (estilo plantilla académica: Azure > VM Ubuntu > Docker) ---
+node "Microsoft Azure" as azure {
+
+  node "«executionEnvironment»\nMáquina virtual Azure\n<<Ubuntu Server>>" as vm {
+
+    node "«executionEnvironment»\nDocker / Docker Compose" as docker {
+
+      node "«executionEnvironment»\nFrontend\n(contenedor)" as fe {
+        artifact "nginx + Angular SPA" as spa
+      }
+
+      node "«executionEnvironment»\nBackend\n(contenedor)" as be {
+        artifact "FastAPI + uvicorn" as api
+      }
+
+      node "«executionEnvironment»\nMicroservicio IA\n(contenedor, profile ai)" as ai {
+        artifact "FastAPI\n(YOLO / Whisper)" as aiworker
+      }
+
+      node "«executionEnvironment»\nBase de datos\n(contenedor)" as dbenv {
+        artifact "PostgreSQL 15" as pg
+      }
+
+      node "«executionEnvironment»\nMailhog\n(contenedor, dev)" as mail {
+        artifact "SMTP / Web UI\n(pruebas correo)" as mailhog
+      }
+    }
+  }
+}
+
+' --- Servicios externos ---
+node "«external»\nStripe" as stripe
+node "«external»\nFirebase FCM" as fcm
+
+' --- Communication paths ---
+web --> inet : HTTPS
+mobile --> inet : HTTPS
+inet --> fe : HTTPS :80
+inet --> be : HTTPS :8000
+fe --> be : REST/HTTP
+be --> dbenv : PostgreSQL\n(puerto 5432 red interna)
+be --> ai : REST/HTTP\n(AI_INFERENCE_BASE_URL)
+be --> mail : SMTP\n(dev)
+be --> stripe : HTTPS API
+be --> fcm : HTTPS
+
+note bottom of docker
+  **docker-compose.yml** (servicios):
+  frontend, backend, db, mailhog;
+  ai-inference con profile **ai**.
+  Red bridge: **emergencias_net**.
+  Volúmenes: postgres_data, uploads, ai cache.
+end note
+
+note bottom of vm
+  **Azure VM:** IP pública / dominio por entorno (.env).
+  Puertos expuestos típicos: **80** (SPA), **8000** (API).
+  BD **no** se publica fuera de Docker en producción.
+end note
+
+@enduml

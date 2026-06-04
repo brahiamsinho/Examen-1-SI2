@@ -56,6 +56,12 @@ class ApiConstants {
   static String appClienteEmergenciaUbicacionTecnico(int id) =>
       '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/ubicacion-tecnico';
 
+  static String appClienteEmergenciaTalleresCandidatos(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/talleres-candidatos';
+
+  static String appClienteEmergenciaSeleccionarTaller(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/seleccionar-taller';
+
   static String appClienteEmergenciaUbicaciones(int id) =>
       '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/ubicaciones';
 

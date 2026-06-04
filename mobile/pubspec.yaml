@@ -49,6 +49,10 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
 
+# Flutter 3.44+ marca IconData como final; lucide 3.1.12 falla al compilar.
+dependency_overrides:
+  lucide_icons_flutter: ^3.1.14+2
+
 flutter:
   uses-material-design: true
   assets:

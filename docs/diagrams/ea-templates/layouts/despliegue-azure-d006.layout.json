@@ -1,0 +1,42 @@
+{
+  "$schema": "examen-si2-ea-layout-v1",
+  "diagramID": 9,
+  "diagramName": "Despliegue Azure UML",
+  "packageID": 4,
+  "description": "Grilla versionada. El agente aplica via place_elements_on_diagram + layout_connectors.",
+  "excludeFromDiagram": [47],
+  "placements": [
+    { "elementID": 44, "x": 48, "y": 50, "width": 120, "height": 95 },
+    { "elementID": 53, "x": 64, "y": 100, "width": 90, "height": 37 },
+    { "elementID": 45, "x": 48, "y": 248, "width": 112, "height": 107 },
+    { "elementID": 54, "x": 58, "y": 304, "width": 90, "height": 37 },
+    { "elementID": 46, "x": 228, "y": 178, "width": 92, "height": 64 },
+    { "elementID": 102, "x": 352, "y": 50, "width": 310, "height": 340 },
+    { "elementID": 103, "x": 375, "y": 95, "width": 250, "height": 200 },
+    { "elementID": 50, "x": 385, "y": 151, "width": 108, "height": 83 },
+    { "elementID": 55, "x": 393, "y": 207, "width": 92, "height": 46 },
+    { "elementID": 51, "x": 505, "y": 151, "width": 108, "height": 83 },
+    { "elementID": 56, "x": 513, "y": 207, "width": 92, "height": 46 },
+    { "elementID": 52, "x": 375, "y": 310, "width": 250, "height": 68 },
+    { "elementID": 57, "x": 388, "y": 364, "width": 195, "height": 28 },
+    { "elementID": 48, "x": 720, "y": 145, "width": 100, "height": 48 },
+    { "elementID": 49, "x": 720, "y": 285, "width": 100, "height": 48 }
+  ],
+  "connectors": [
+    { "id": 160, "from": 44, "to": 46, "label": "HTTPS" },
+    { "id": 161, "from": 45, "to": 46, "label": "HTTPS" },
+    { "id": 168, "from": 46, "to": 103, "label": "HTTPS :80 / :8000" },
+    { "id": 164, "from": 50, "to": 51, "label": "REST/HTTP" },
+    { "id": 165, "from": 51, "to": 52, "label": "PostgreSQL" },
+    { "id": 166, "from": 51, "to": 48, "label": "HTTPS API" },
+    { "id": 167, "from": 51, "to": 49, "label": "HTTPS" }
+  ],
+  "connectorStyle": "OrthogonalRounded",
+  "manualSteps": [
+    "Delete from Diagram: elementID 47 (OBSOLETO Azure VM logico)",
+    "View → Zoom → Fit in Window",
+    "Diagram → Layout Diagram si alguna flecha cruza"
+  ],
+  "xmlExportPath": "docs/diagrams/ea-templates/patterns/despliegue-azure-d006.xml",
+  "xmlExportNote": "Usuario exporta paquete Despliegue desde EA una vez pulido; MCP no importa XML."
+}

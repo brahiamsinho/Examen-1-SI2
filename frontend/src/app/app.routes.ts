@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
+import { ADMIN_ROUTES } from './admin/admin.routes';
 
-/** Rutas raíz: landing pública + árboles lazy `admin` y `taller`. */
+/** Rutas raíz. Admin sin lazy load (evita pantalla negra al cargar /admin/panel). */
 export const routes: Routes = [
   {
     path: '',
@@ -10,7 +11,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    loadChildren: () => import('./admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+    children: ADMIN_ROUTES,
   },
   {
     path: 'taller',

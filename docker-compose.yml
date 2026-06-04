@@ -32,6 +32,9 @@ services:
       - ./backend/migrations/0011_usuario_tokens_seguridad.sql:/docker-entrypoint-initdb.d/11_usuario_tokens_seguridad.sql:ro
       - ./backend/migrations/0013_tecnico_ubicacion_compartida.sql:/docker-entrypoint-initdb.d/13_tecnico_ubicacion_compartida.sql:ro
       - ./backend/migrations/0014_presupuesto_bob_solicitud.sql:/docker-entrypoint-initdb.d/14_presupuesto_bob_solicitud.sql:ro
+      - ./backend/migrations/0015_multitenancy_saas.sql:/docker-entrypoint-initdb.d/15_multitenancy_saas.sql:ro
+      - ./backend/migrations/0016_multitenancy_phase2.sql:/docker-entrypoint-initdb.d/16_multitenancy_phase2.sql:ro
+      - ./backend/migrations/0017_saas_billing_phase3.sql:/docker-entrypoint-initdb.d/17_saas_billing_phase3.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:

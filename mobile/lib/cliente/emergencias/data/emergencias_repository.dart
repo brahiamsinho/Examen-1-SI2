@@ -6,6 +6,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_error.dart';
 import '../domain/solicitud_emergencia_models.dart';
 import '../domain/solicitud_seguimiento_models.dart';
+import '../domain/taller_candidato_models.dart';
 import '../domain/ubicacion_tecnico_compartida.dart';
 
 final class EmergenciasRepository {
@@ -46,6 +47,35 @@ final class EmergenciasRepository {
       final m = res.data;
       if (m == null) throw Exception('Seguimiento no disponible');
       return SolicitudSeguimiento.fromJson(m);
+    } on DioException catch (e) {
+      throw Exception(messageFromDio(e));
+    }
+  }
+
+  /// CU37 — talleres rankeados por proximidad, carga y especialidad.
+  Future<TalleresCandidatosResponse> fetchTalleresCandidatos(int solicitudId) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        ApiConstants.appClienteEmergenciaTalleresCandidatos(solicitudId),
+      );
+      final m = res.data;
+      if (m == null) throw Exception('Sin candidatos');
+      return TalleresCandidatosResponse.fromJson(m);
+    } on DioException catch (e) {
+      throw Exception(messageFromDio(e));
+    }
+  }
+
+  /// CU37 — confirma el taller elegido y envía a su bandeja.
+  Future<SeleccionTallerResult> seleccionarTaller(int solicitudId, int tallerId) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.appClienteEmergenciaSeleccionarTaller(solicitudId),
+        data: {'taller_id': tallerId},
+      );
+      final m = res.data;
+      if (m == null) throw Exception('Respuesta vacía');
+      return SeleccionTallerResult.fromJson(m);
     } on DioException catch (e) {
       throw Exception(messageFromDio(e));
     }

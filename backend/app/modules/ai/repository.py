@@ -12,10 +12,14 @@ from app.modules.atencion.taller_emergencias.models import (
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTecnicoEnum, EstadoTallerEnum, Taller, Tecnico
 
 
-async def list_talleres_for_assignment(db: AsyncSession) -> list[dict]:
-    r = await db.execute(
-        select(Taller).where(Taller.estado == EstadoTallerEnum.ACTIVO).order_by(Taller.id)
-    )
+async def list_talleres_for_assignment(
+    db: AsyncSession, *, tenant_id: int | None = None
+) -> list[dict]:
+    stmt = select(Taller).where(Taller.estado == EstadoTallerEnum.ACTIVO)
+    if tenant_id is not None:
+        stmt = stmt.where(Taller.tenant_id == tenant_id)
+    stmt = stmt.order_by(Taller.id)
+    r = await db.execute(stmt)
     talleres = list(r.scalars().unique().all())
     if not talleres:
         return []

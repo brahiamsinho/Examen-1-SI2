@@ -15,4 +15,6 @@ export interface MeResponse {
   username: string;
   roles: string[];
   permisos: string[];
+  tenant_id?: number | null;
+  is_platform_superadmin?: boolean;
 }

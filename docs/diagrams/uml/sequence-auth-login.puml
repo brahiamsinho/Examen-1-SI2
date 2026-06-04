@@ -1,0 +1,47 @@
+@startuml sequence-auth-login
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: UML 2.5 secuencia
+' Fuente: auth/router.py, auth/service.py (2026-05-28)
+' ID: D-011 | Agente: diagrams-modeling
+' Trazabilidad: POST /api/auth/login + header X-Tenant-Slug
+
+title Secuencia — Login (POST /api/auth/login)
+
+actor Usuario as u
+participant "Cliente\n(Flutter / Angular)" as app
+participant "AuthRouter\nFastAPI" as router
+participant "AuthService" as svc
+database "PostgreSQL" as db
+
+u -> app : login(email, password [, org])
+app -> router : POST /api/auth/login\nHeader: X-Tenant-Slug (opcional)
+router -> svc : login(email, password, tenant_slug)
+
+svc -> db : set_config(app.bypass_rls)\nSELECT usuario WHERE email
+db --> svc : Usuario | null
+
+alt credenciales invalidas
+  svc --> router : 401 Unauthorized
+  router --> app : error
+else usuario no ACTIVO
+  svc --> router : 403 Forbidden
+else exito
+  opt tenant_slug presente
+    svc -> db : SELECT tenant BY slug
+    svc -> svc : validar tenant_id usuario
+  end
+  svc -> db : SELECT roles (usuario_rol JOIN rol)
+  svc -> db : INSERT sesion\nUPDATE ultimo_acceso_at
+  svc -> svc : registrar_accion(INICIAR_SESION)
+  svc -> svc : create_access_token(jti, roles, tenant_id)\ncreate_refresh_token(jti)
+  svc --> router : TokenResponse
+  router --> app : 200 OK JSON
+  app --> u : tokens almacenados
+end
+
+note over router
+  Depends(get_db) + TenantSlugMiddleware
+  en otras rutas protegidas
+end note
+
+@enduml

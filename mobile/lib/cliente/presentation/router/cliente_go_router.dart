@@ -16,6 +16,7 @@ import '../../pagos/presentation/screens/pago_metodo_screen.dart';
 import '../../pagos/presentation/screens/pago_resumen_screen.dart';
 import '../../pagos/presentation/screens/pago_resultado_screen.dart';
 import '../../pagos/presentation/screens/solicitud_pagos_historial_screen.dart';
+import '../../emergencias/presentation/screens/emergencia_seleccion_taller_screen.dart';
 import '../../emergencias/presentation/screens/emergencia_detalle_screen.dart';
 import '../../emergencias/presentation/screens/emergencia_seguimiento_screen.dart';
 import '../../emergencias/presentation/screens/emergencia_ubicacion_tecnico_screen.dart';
@@ -225,6 +226,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/cliente/app/emergencias',
             builder: (context, state) => const EmergenciaSeleccionVehiculoScreen(),
+          ),
+          GoRoute(
+            path: '/cliente/app/emergencias/solicitudes/:sid/seleccionar-taller',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['sid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return EmergenciaSeleccionTallerScreen(solicitudId: id);
+            },
           ),
           GoRoute(
             path: '/cliente/app/emergencias/solicitudes/:sid/seguimiento',

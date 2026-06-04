@@ -39,11 +39,19 @@ final class TecnicoAuthNotifier extends Notifier<TecnicoAuthState> {
     }
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    String? tenantSlug,
+  }) async {
     state = state.copyWith(isLoggingIn: true, clearError: true);
     final repo = ref.read(tecnicoAuthRepositoryProvider);
     try {
-      final me = await repo.login(email: email, password: password);
+      final me = await repo.login(
+        email: email,
+        password: password,
+        tenantSlug: tenantSlug,
+      );
       final perfil = await repo.fetchPerfilCompleto(me);
       state = TecnicoAuthState(
         status: TecnicoAuthStatus.authenticated,

@@ -1,0 +1,59 @@
+@startuml sequence-auth-login-bce
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: UML 2.5 secuencia — patron BCE (Boundary / Control / Entity)
+' Estilo referencia academica: sd CU2 Gestionar categoria
+' Fuente: auth/router.py + auth/service.py (mapeo AuthController = router + service)
+' ID: D-011-BCE | Trazabilidad: POST /api/auth/login
+
+title DIAGRAMA DE SECUENCIA\nsd Login - Iniciar sesion
+
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+
+actor Usuario as actor
+boundary "V.Login" as vlogin
+control AuthController as ctrl
+entity "M.Usuario" as musr
+entity "M.Sesion" as mses
+entity "M.Tenant" as mtnt
+
+== alt login exitoso ==
+
+actor -> ctrl : login()
+ctrl -> vlogin : show()
+vlogin -> ctrl : store(email, password [, slug])
+ctrl -> musr : get(email)
+musr --> ctrl : return()
+ctrl -> mtnt : get(slug)\n[si X-Tenant-Slug]
+mtnt --> ctrl : return()
+ctrl -> musr : validar password y estado ACTIVO
+ctrl -> mses : create(jti, usuario_id)
+ctrl -> ctrl : create_access_token()\ncreate_refresh_token()
+ctrl --> vlogin : TokenResponse
+vlogin --> actor : sesion iniciada
+
+== alt credenciales invalidas ==
+
+actor -> ctrl : login()
+ctrl -> vlogin : show()
+vlogin -> ctrl : store(email, password)
+ctrl -> musr : get(email)
+musr --> ctrl : return()
+ctrl --> vlogin : 401 Unauthorized
+vlogin --> actor : mensaje error
+
+== alt cuenta pendiente o bloqueada ==
+
+actor -> ctrl : login()
+ctrl -> musr : get(email)
+musr --> ctrl : return()
+ctrl --> actor : 403 Forbidden
+
+note bottom of ctrl
+  Implementacion real:
+  AuthRouter (FastAPI) + AuthService
+  POST /api/auth/login
+  Header X-Tenant-Slug opcional
+end note
+
+@enduml

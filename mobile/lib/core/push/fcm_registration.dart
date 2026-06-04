@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../cliente/application/cliente_injection.dart';
 import '../../tecnico/application/tecnico_injection.dart';
 import '../constants/api_constants.dart';
+import 'firebase_bootstrap.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -18,7 +19,7 @@ final _lastClienteToken = <String, String?>{'t': null};
 final _lastTecnicoToken = <String, String?>{'t': null};
 
 Future<String?> _ensurePermissionAndToken() async {
-  if (kIsWeb) {
+  if (kIsWeb || !firebaseReady) {
     return null;
   }
   if (defaultTargetPlatform == TargetPlatform.android) {

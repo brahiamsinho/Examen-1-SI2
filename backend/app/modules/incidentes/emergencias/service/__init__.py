@@ -1,5 +1,6 @@
 # Servicio cliente emergencias: solicitudes, ubicaciones, evidencias (mismo contrato público).
 from .evidencias import agregar_evidencia, agregar_evidencia_archivo
+from .seleccion_taller import listar_talleres_candidatos, seleccionar_taller
 from .solicitudes import (
     actualizar_texto,
     crear_solicitud,
@@ -17,7 +18,9 @@ __all__ = [
     "agregar_ubicacion",
     "crear_solicitud",
     "listar_solicitudes",
+    "listar_talleres_candidatos",
     "obtener_detalle",
     "obtener_seguimiento",
     "obtener_ubicacion_tecnico_compartida_cliente",
+    "seleccionar_taller",
 ]

@@ -6,6 +6,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
+import '../tenant/tenant_slug_storage.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -13,6 +14,7 @@ class ApiClient {
 
   late final Dio _dio;
   final _storage = const FlutterSecureStorage();
+  final _tenantSlug = TenantSlugStorage();
 
   ApiClient._internal() {
     _dio = Dio(BaseOptions(
@@ -31,6 +33,10 @@ class ApiClient {
         final token = await _storage.read(key: 'access_token');
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
+        }
+        final slug = await _tenantSlug.read();
+        if (slug != null && slug.isNotEmpty) {
+          options.headers['X-Tenant-Slug'] = slug;
         }
         return handler.next(options);
       },

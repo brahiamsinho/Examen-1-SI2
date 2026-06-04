@@ -38,6 +38,9 @@ class Taller(Base):
     __tablename__ = "talleres"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=True
+    )
     usuario_responsable_id: Mapped[int] = mapped_column(
         ForeignKey("usuarios.id", ondelete="RESTRICT"), nullable=False, unique=True
     )

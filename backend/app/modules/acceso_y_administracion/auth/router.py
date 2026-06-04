@@ -1,7 +1,7 @@
 # app/modules/auth/router.py
 import html as html_module
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
 from jose import JWTError
 from sqlalchemy import select
@@ -10,7 +10,8 @@ from starlette.responses import Response
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_user_permisos
+from app.core.dependencies import get_auth_context, get_current_user, get_current_user_permisos
+from app.core.tenant import AuthContext
 from app.core.security import decode_token
 from app.modules.acceso_y_administracion.auth import service
 from app.modules.acceso_y_administracion.auth.schemas import (
@@ -31,9 +32,12 @@ async def login(
     body: LoginRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
+    x_tenant_slug: str | None = Header(default=None, alias="X-Tenant-Slug"),
 ):
-    """Inicia sesión con email y contraseña. Devuelve access + refresh token."""
-    return await service.login(body.email, body.password, db, request)
+    """Inicia sesión con email y contraseña. Opcional: header X-Tenant-Slug para login por organización."""
+    return await service.login(
+        body.email, body.password, db, request, tenant_slug=x_tenant_slug
+    )
 
 
 @auth_router.post(
@@ -120,16 +124,19 @@ async def logout(
 @auth_router.get("/me", response_model=MeResponse)
 async def me(
     user_and_perms: tuple = Depends(get_current_user_permisos),
+    ctx: AuthContext = Depends(get_auth_context),
     db: AsyncSession = Depends(get_db),
 ):
-    """Devuelve el usuario autenticado con sus roles y permisos."""
+    """Devuelve el usuario autenticado con sus roles, permisos y contexto de tenant."""
     user, permisos = user_and_perms
-    roles_result = await db.execute(
-        select(Rol.nombre)
-        .join(UsuarioRol, UsuarioRol.rol_id == Rol.id)
-        .where(UsuarioRol.usuario_id == user.id)
-    )
-    roles = [r for (r,) in roles_result.fetchall()]
+    roles = list(ctx.roles)
+    if not roles:
+        roles_result = await db.execute(
+            select(Rol.nombre)
+            .join(UsuarioRol, UsuarioRol.rol_id == Rol.id)
+            .where(UsuarioRol.usuario_id == user.id)
+        )
+        roles = [r for (r,) in roles_result.fetchall()]
     return MeResponse(
         id=user.id,
         nombres=user.nombres,
@@ -138,4 +145,6 @@ async def me(
         username=user.username,
         roles=roles,
         permisos=permisos,
+        tenant_id=ctx.tenant_id,
+        is_platform_superadmin=ctx.is_platform_superadmin,
     )

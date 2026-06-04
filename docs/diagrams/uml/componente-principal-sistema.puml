@@ -1,0 +1,127 @@
+@startuml componente-principal-sistema
+' PUDS — Diagrama de componente principal del sistema
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' ID: D-008 | Fuente: backend/app/main.py, app/modules/*
+' Notación: UML Component (no C4 — ver c4/03 para vista C4)
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+skinparam component {
+  BorderColor #333333
+  FontSize 11
+}
+
+title 4.4.1.1.1 Diagrama de componente principal del sistema
+
+' ═══════════════════ TOP: protocolo y seguridad ═══════════════════
+together {
+  component "WebSockets / Requests" as HTTP #FFE0E0
+  component "Autenticacion /\nAutorizacion\nJWT / Session" as AUTH #E8D4FF
+}
+
+' ═══════════════════ CENTRO: núcleo API ═══════════════════
+component "Backend API\n(FastAPI)" as API #FFFFFF;line.bold;line:black; {
+  portin " "
+  portout " "
+}
+
+' ═══════════════════ IZQUIERDA: módulos funcionales ═══════════════════
+together {
+  component "Acceso, Roles\ny Permisos" as MOD_ACC #FFF4CC
+  component "Usuarios" as MOD_USR #FFF4CC
+  component "Vehiculos" as MOD_VEH #FFF4CC
+  component "Incidentes" as MOD_INC #FFF4CC
+  component "Gestion de\nTalleres y Tecnicos" as MOD_TAL #FFF4CC
+  component "Inteligencia\ndel Incidente" as MOD_IA #FFF4CC
+  component "Priorizacion\ny Asignacion" as MOD_ASG #FFF4CC
+  component "Atencion de\nSolicitudes" as MOD_ATN #FFF4CC
+  component "Finanzas" as MOD_FIN #FFF4CC
+  component "Notificaciones" as MOD_NOT #FFF4CC
+  component "Historial y\nTrazabilidad" as MOD_BIT #FFF4CC
+}
+
+' ═══════════════════ DERECHA: capas internas FastAPI ═══════════════════
+together {
+  component "Routers" as L_ROUT #D6EAF8
+  component "URLs /\nEndpoints" as L_URL #D6EAF8
+  component "Schemas" as L_SCH #D6EAF8
+  component "Services\n(casos de uso)" as L_SVC #D6EAF8
+  component "Permissions /\nSecurity" as L_SEC #D6EAF8
+  component "Repositories\n(acceso datos)" as L_REP #D6EAF8
+  component "Models\n(SQLAlchemy)" as L_MOD #D6EAF8
+  component "Migrations\n(SQL scripts)" as L_MIG #D6EAF8
+  component "Signals / Events" as L_SIG #D6EAF8
+  component "Tasks / WebSockets" as L_TSK #D6EAF8
+}
+
+' ═══════════════════ ABAJO: persistencia e integraciones ═══════════════════
+component "Almacenamiento\nde medios\n(Imagenes / Audios)" as STORE #D5F5E3
+
+component "Servicios externos\n(Mapas / IA / Push / Pagos)" as EXT #D5F5E3
+
+package "Base de datos (PostgreSQL)" as DBPKG #D5F5E3 {
+  component "Tablas principales" as DB #D5F5E3
+  note bottom of DB
+    tenants, usuarios, roles, permisos,
+    clientes, vehiculos, talleres, tecnicos,
+    solicitudes_emergencia, notificaciones,
+    mensajes_solicitud, pagos, comisiones,
+    bitacora, dispositivos_push, evidencias
+  end note
+}
+
+' ─── Entrada cliente → API ───
+HTTP --> API
+AUTH --> API
+
+' ─── Módulos funcionales → API (app/modules/*) ───
+MOD_ACC --> API : auth, roles,\npermisos, tenants
+MOD_USR --> API : usuarios
+MOD_VEH --> API : clientes,\nvehiculos
+MOD_INC --> API : emergencias\ncliente
+MOD_TAL --> API : talleres,\ntecnicos
+MOD_IA --> API : enrich IA
+MOD_ASG --> API : rank / assign
+MOD_ATN --> API : bandeja taller
+MOD_FIN --> API : pagos, finanzas,\nbilling Stripe
+MOD_NOT --> API : FCM, chat,\nnotificaciones
+MOD_BIT --> API : bitacora
+
+' ─── API → capas internas ───
+API --> L_ROUT
+API --> L_URL
+API --> L_SCH
+API --> L_SVC
+API --> L_SEC
+API --> L_REP
+API --> L_MOD
+API --> L_MIG
+API --> L_SIG
+API --> L_TSK
+
+' ─── Flujo en capas (derecha, línea discontinua) ───
+L_ROUT ..> L_SVC : invoca
+L_SVC ..> L_REP : usa
+L_REP ..> L_MOD : persiste
+L_MOD ..> DB : ORM async
+
+' ─── API → infraestructura inferior ───
+API --> STORE : uploads\n/api/media/evidencias
+API --> EXT : Stripe, FCM,\nai-inference, SMTP
+API --> DB : SQLAlchemy\nasyncpg
+
+STORE ..> DB : metadatos\nevidencias
+
+legend bottom
+  **Implementación:** `backend/app/main.py` registra routers bajo `/api`.
+  **Módulos:** `app/modules/acceso_y_administracion`, `clientes_y_vehiculos`,
+  `talleres_y_tecnicos`, `incidentes`, `atencion`, `comunicacion_y_notificaciones`,
+  `pagos_y_comisiones`, `ai`.
+  **Transversal:** `app/core` (config, database, dependencies, tenant).
+  Complemento C4: `docs/diagrams/c4/03-components-backend.puml`
+end legend
+
+@enduml

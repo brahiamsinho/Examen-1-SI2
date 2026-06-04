@@ -1,0 +1,568 @@
+// =============================================================================
+// DISEÑO RELACIONAL DE LA BASE DE DATOS — DBML
+// Proyecto: Plataforma de Emergencias Vehiculares (Examen SI2)
+// Motor:    PostgreSQL 15+
+// Fuente:   schema-relacional-bd.sql (backend/migrations consolidado)
+// Herramienta sugerida: dbdiagram.io
+// =============================================================================
+
+Project emergencias_vehiculares {
+  database_type: 'PostgreSQL'
+  Note: '''
+    Artefacto PUDS 4.3.3 — diagrama relacional.
+    29 tablas. Sin seed. RLS multi-tenant no modelado aquí.
+  '''
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+Enum estado_usuario {
+  ACTIVO
+  INACTIVO
+  BLOQUEADO
+  PENDIENTE
+}
+
+Enum estado_sesion {
+  ACTIVA
+  CERRADA
+  EXPIRADA
+  REVOCADA
+}
+
+Enum estado_taller {
+  ACTIVO
+  INACTIVO
+  SUSPENDIDO
+  PENDIENTE
+}
+
+Enum estado_tecnico {
+  ACTIVO
+  INACTIVO
+}
+
+Enum accion_bitacora {
+  CREAR
+  ACTUALIZAR
+  ELIMINAR
+  INICIAR_SESION
+  CERRAR_SESION
+  RESTABLECER_CONTRASENA
+  ASIGNAR_ROL
+  ASIGNAR_PERMISO
+  CONSULTAR
+}
+
+Enum estado_solicitud_seguimiento {
+  REGISTRADA
+  EN_REVISION
+  TALLER_ASIGNADO
+  TECNICO_ASIGNADO
+  EN_CAMINO
+  EN_ATENCION
+  FINALIZADA
+  CANCELADA
+}
+
+Enum tipo_evidencia_solicitud {
+  FOTO
+  AUDIO
+}
+
+Enum tipo_notificacion {
+  SOLICITUD_CREADA
+  ESTADO_ACTUALIZADO
+  TALLER_ASIGNADO
+  TECNICO_ASIGNADO
+  MENSAJE_NUEVO
+}
+
+Enum estado_pago {
+  PENDIENTE
+  PAGADO
+  FALLIDO
+  ANULADO
+}
+
+Enum metodo_pago {
+  QR
+  TARJETA
+  TRANSFERENCIA
+  EFECTIVO
+  OTRO
+}
+
+Enum estado_bandeja_taller {
+  PENDIENTE
+  ACEPTADA
+  RECHAZADA
+  EXPIRADA
+}
+
+Enum estado_asignacion_tecnico {
+  ASIGNADO
+  REASIGNADO
+  CANCELADO
+}
+
+Enum estado_comision_taller {
+  PENDIENTE
+  CALCULADA
+  LIQUIDADA
+  ANULADA
+}
+
+Enum estado_tenant {
+  ACTIVO
+  INACTIVO
+  SUSPENDIDO
+  PENDIENTE
+}
+
+Enum plan_tenant {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+Enum estado_suscripcion_tenant {
+  TRIAL
+  ACTIVA
+  PAST_DUE
+  CANCELADA
+  SUSPENDIDA
+}
+
+// =============================================================================
+// MULTI-TENANCY
+// =============================================================================
+
+Table tenants {
+  id serial [pk]
+  slug varchar(80) [unique, not null]
+  nombre varchar(150) [not null]
+  estado estado_tenant [not null, default: 'ACTIVO']
+  plan plan_tenant [not null, default: 'STARTER']
+  dominio_custom varchar(255)
+  stripe_customer_id varchar(255)
+  stripe_subscription_id varchar(255)
+  stripe_price_id varchar(255)
+  subscription_status estado_suscripcion_tenant [default: 'TRIAL']
+  subscription_ends_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+TableGroup saas {
+  tenants
+}
+
+// =============================================================================
+// SEGURIDAD Y ACCESO (RBAC)
+// =============================================================================
+
+Table roles {
+  id int [pk, increment]
+  nombre varchar(50) [unique, not null]
+  descripcion varchar(255)
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table permisos {
+  id int [pk, increment]
+  codigo varchar(80) [unique, not null]
+  nombre varchar(80) [not null]
+  modulo varchar(80) [not null]
+  descripcion varchar(255)
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table usuarios {
+  id int [pk, increment]
+  tenant_id int [ref: > tenants.id]
+  nombres varchar(100) [not null]
+  apellidos varchar(100) [not null]
+  username varchar(50) [unique]
+  email varchar(120) [not null, note: 'único por tenant (índice parcial en PG)']
+  telefono varchar(30) [not null, note: 'único por tenant (índice parcial en PG)']
+  password_hash varchar(255) [not null]
+  estado estado_usuario [not null]
+  ultimo_acceso_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table rol_permiso {
+  id int [pk, increment]
+  rol_id int [not null, ref: > roles.id]
+  permiso_id int [not null, ref: > permisos.id]
+  created_at timestamp
+
+  indexes {
+    (rol_id, permiso_id) [unique]
+  }
+}
+
+Table usuario_rol {
+  id int [pk, increment]
+  usuario_id int [not null, ref: > usuarios.id]
+  rol_id int [not null, ref: > roles.id]
+  asignado_at timestamp
+
+  indexes {
+    (usuario_id, rol_id) [unique]
+  }
+}
+
+Table sesiones {
+  id int [pk, increment]
+  usuario_id int [not null, ref: > usuarios.id]
+  token_jti varchar(255) [unique, not null]
+  ip_address varchar(45)
+  user_agent text
+  dispositivo varchar(100)
+  plataforma varchar(50)
+  iniciado_at timestamp [not null]
+  cerrado_at timestamp
+  expira_at timestamp
+  estado estado_sesion [not null]
+}
+
+Table usuario_tokens_seguridad {
+  id int [pk, increment]
+  usuario_id int [not null, ref: > usuarios.id]
+  tipo varchar(32) [not null, note: 'VERIFICAR_EMAIL | RESTABLECER_PASSWORD']
+  token_hash char(64) [not null]
+  expires_at timestamp [not null]
+  usado_at timestamp
+  created_at timestamp [not null, default: `now()`]
+}
+
+Table usuario_fcm_tokens {
+  id int [pk, increment]
+  usuario_id int [not null, ref: > usuarios.id]
+  token text [unique, not null]
+  platform varchar(20)
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+}
+
+TableGroup seguridad {
+  roles
+  permisos
+  usuarios
+  rol_permiso
+  usuario_rol
+  sesiones
+  usuario_tokens_seguridad
+  usuario_fcm_tokens
+}
+
+// =============================================================================
+// ACTORES DE DOMINIO
+// =============================================================================
+
+Table clientes {
+  id int [pk, increment]
+  tenant_id int [ref: > tenants.id]
+  usuario_id int [unique, not null, ref: > usuarios.id]
+  ciudad varchar(100)
+  direccion text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table talleres {
+  id int [pk, increment]
+  tenant_id int [ref: > tenants.id]
+  usuario_responsable_id int [unique, not null, ref: > usuarios.id]
+  nombre_comercial varchar(150) [not null]
+  telefono_contacto varchar(30) [not null]
+  email_contacto varchar(120) [not null]
+  direccion text [not null]
+  ciudad varchar(100) [not null]
+  latitud decimal(10,7)
+  longitud decimal(10,7)
+  descripcion text
+  estado estado_taller [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table especialidades_tecnico {
+  id int [pk, increment]
+  nombre varchar(100) [unique, not null]
+  descripcion varchar(255)
+}
+
+Table tecnicos {
+  id int [pk, increment]
+  usuario_id int [unique, not null, ref: > usuarios.id]
+  taller_id int [not null, ref: > talleres.id]
+  especialidad_id int [ref: > especialidades_tecnico.id]
+  documento_identidad varchar(50)
+  disponibilidad varchar(120)
+  estado estado_tecnico [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+TableGroup actores {
+  clientes
+  talleres
+  especialidades_tecnico
+  tecnicos
+}
+
+// =============================================================================
+// VEHÍCULOS
+// =============================================================================
+
+Table marcas_vehiculo {
+  id int [pk, increment]
+  nombre varchar(80) [unique, not null]
+}
+
+Table modelos_vehiculo {
+  id int [pk, increment]
+  marca_id int [not null, ref: > marcas_vehiculo.id]
+  nombre varchar(80) [not null]
+
+  indexes {
+    (marca_id, nombre) [unique]
+  }
+}
+
+Table tipos_vehiculo {
+  id int [pk, increment]
+  nombre varchar(50) [unique, not null]
+}
+
+Table vehiculos {
+  id int [pk, increment]
+  tenant_id int [ref: > tenants.id]
+  cliente_id int [not null, ref: > clientes.id]
+  placa varchar(20) [not null, note: 'única por tenant (índice parcial en PG)']
+  marca_id int [not null, ref: > marcas_vehiculo.id]
+  modelo_id int [not null, ref: > modelos_vehiculo.id]
+  tipo_vehiculo_id int [not null, ref: > tipos_vehiculo.id]
+  anio int
+  color varchar(50)
+  created_at timestamp
+  updated_at timestamp
+}
+
+TableGroup vehiculos_catalogo {
+  marcas_vehiculo
+  modelos_vehiculo
+  tipos_vehiculo
+  vehiculos
+}
+
+// =============================================================================
+// EMERGENCIAS Y SEGUIMIENTO
+// =============================================================================
+
+Table solicitudes_emergencia {
+  id int [pk, increment]
+  tenant_id int [ref: > tenants.id]
+  cliente_id int [not null, ref: > clientes.id]
+  vehiculo_id int [not null, ref: > vehiculos.id]
+  taller_id int [ref: > talleres.id]
+  tecnico_id int [ref: > tecnicos.id]
+  estado estado_solicitud_seguimiento [not null, default: 'REGISTRADA']
+  descripcion_texto text
+  tiempo_estimado_min int
+  presupuesto_bob decimal(12,2)
+  presupuesto_registrado_at timestamp
+  ai_payload jsonb
+  tecnico_ult_latitud decimal(10,7)
+  tecnico_ult_longitud decimal(10,7)
+  tecnico_ult_precision_metros decimal(8,2)
+  tecnico_ult_ubicacion_at timestamp
+  tecnico_asignado_at timestamp
+  finalizada_at timestamp
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+}
+
+Table solicitud_ubicaciones {
+  id int [pk, increment]
+  solicitud_id int [not null, ref: > solicitudes_emergencia.id]
+  latitud decimal(10,7) [not null]
+  longitud decimal(10,7) [not null]
+  precision_metros decimal(8,2)
+  direccion_referencia text
+  es_actual boolean [not null, default: false, note: 'solo una es_actual=true por solicitud']
+  registrado_at timestamp [not null, default: `now()`]
+}
+
+Table solicitud_evidencias {
+  id int [pk, increment]
+  solicitud_id int [not null, ref: > solicitudes_emergencia.id]
+  tipo tipo_evidencia_solicitud [not null]
+  archivo_url text [not null]
+  mime_type varchar(100)
+  nombre_archivo varchar(255)
+  tamano_bytes bigint
+  created_at timestamp [not null, default: `now()`]
+}
+
+Table solicitud_historial_estado {
+  id int [pk, increment]
+  solicitud_id int [not null, ref: > solicitudes_emergencia.id]
+  estado_anterior estado_solicitud_seguimiento
+  estado_nuevo estado_solicitud_seguimiento [not null]
+  usuario_id int [ref: > usuarios.id]
+  observacion text
+  created_at timestamp [not null, default: `now()`]
+}
+
+TableGroup emergencias {
+  solicitudes_emergencia
+  solicitud_ubicaciones
+  solicitud_evidencias
+  solicitud_historial_estado
+}
+
+// =============================================================================
+// COMUNICACIONES
+// =============================================================================
+
+Table notificaciones {
+  id int [pk, increment]
+  usuario_id int [not null, ref: > usuarios.id]
+  solicitud_id int [ref: > solicitudes_emergencia.id]
+  tipo tipo_notificacion [not null]
+  titulo varchar(150) [not null]
+  mensaje text [not null]
+  leida boolean [not null, default: false]
+  created_at timestamp [not null, default: `now()`]
+  leida_at timestamp
+}
+
+Table solicitud_mensajes {
+  id int [pk, increment]
+  solicitud_id int [not null, ref: > solicitudes_emergencia.id]
+  emisor_usuario_id int [not null, ref: > usuarios.id]
+  receptor_usuario_id int [not null, ref: > usuarios.id]
+  mensaje text [not null]
+  created_at timestamp [not null, default: `now()`]
+  leido_at timestamp
+}
+
+TableGroup comunicaciones {
+  notificaciones
+  solicitud_mensajes
+}
+
+// =============================================================================
+// OPERACIÓN DE TALLER
+// =============================================================================
+
+Table taller_disponibilidad {
+  id int [pk, increment]
+  taller_id int [unique, not null, ref: > talleres.id]
+  acepta_nuevas_solicitudes boolean [not null, default: true]
+  capacidad_maxima_diaria int [not null, default: 10]
+  servicios_activos int [not null, default: 0]
+  observacion text
+  updated_by_usuario_id int [ref: > usuarios.id]
+  updated_at timestamp [not null, default: `now()`]
+}
+
+Table solicitud_taller_bandeja {
+  id int [pk, increment]
+  solicitud_id int [not null, ref: > solicitudes_emergencia.id]
+  taller_id int [not null, ref: > talleres.id]
+  estado estado_bandeja_taller [not null, default: 'PENDIENTE']
+  motivo_rechazo text
+  creado_at timestamp [not null, default: `now()`]
+  respondido_at timestamp
+
+  indexes {
+    (solicitud_id, taller_id) [unique]
+  }
+}
+
+Table solicitud_asignaciones_tecnico {
+  id int [pk, increment]
+  solicitud_id int [not null, ref: > solicitudes_emergencia.id]
+  taller_id int [not null, ref: > talleres.id]
+  tecnico_id int [not null, ref: > tecnicos.id]
+  estado estado_asignacion_tecnico [not null, default: 'ASIGNADO']
+  asignado_por_usuario_id int [ref: > usuarios.id]
+  observacion text
+  created_at timestamp [not null, default: `now()`]
+}
+
+TableGroup taller_operacion {
+  taller_disponibilidad
+  solicitud_taller_bandeja
+  solicitud_asignaciones_tecnico
+}
+
+// =============================================================================
+// FINANZAS
+// =============================================================================
+
+Table pagos {
+  id int [pk, increment]
+  solicitud_id int [not null, ref: > solicitudes_emergencia.id]
+  cliente_id int [not null, ref: > clientes.id]
+  monto decimal(10,2) [not null]
+  moneda char(3) [not null, default: 'BOB']
+  metodo metodo_pago [not null]
+  estado estado_pago [not null, default: 'PENDIENTE']
+  referencia_externa varchar(255)
+  proveedor varchar(32) [not null, default: 'SIMULADO']
+  metadata_json jsonb
+  conciliado_at timestamp
+  created_at timestamp [not null, default: `now()`]
+  pagado_at timestamp
+}
+
+Table comisiones_taller {
+  id int [pk, increment]
+  solicitud_id int [unique, not null, ref: > solicitudes_emergencia.id]
+  taller_id int [not null, ref: > talleres.id]
+  pago_id int [unique, ref: > pagos.id]
+  porcentaje_plataforma decimal(5,2) [not null, default: 10.00]
+  monto_servicio decimal(10,2) [not null]
+  monto_comision decimal(10,2) [not null]
+  monto_taller_neto decimal(10,2) [not null]
+  estado estado_comision_taller [not null, default: 'PENDIENTE']
+  calculado_at timestamp [not null, default: `now()`]
+  liquidado_at timestamp
+}
+
+TableGroup finanzas {
+  pagos
+  comisiones_taller
+}
+
+// =============================================================================
+// AUDITORÍA
+// =============================================================================
+
+Table bitacora {
+  id int [pk, increment]
+  usuario_id int [ref: > usuarios.id]
+  modulo varchar(100) [not null]
+  entidad varchar(100) [not null]
+  entidad_id int
+  accion accion_bitacora [not null]
+  descripcion text
+  ip_address varchar(45)
+  created_at timestamp [not null]
+}
+
+TableGroup auditoria {
+  bitacora
+}

@@ -1,0 +1,18 @@
+@startuml rel-pkg02-taller-pagos-trace
+' EA diagramID 31 | D-004b
+
+title Paquete 2 — Seleccion de taller y pagos del servicio
+
+package "Seleccion de taller y\npagos del servicio" as PKG2
+
+usecase "CU37\nSeleccionar taller para\nrealizar el servicio" as CU37
+usecase "CU38\nProcesar pago mediante\npasarela" as CU38
+usecase "CU42\nRegistrar cotizacion\ndel servicio" as CU42
+usecase "CU44\nConsultar tiempo estimado\nde reparacion" as CU44
+
+PKG2 ..> CU37 : <<trace>>
+PKG2 ..> CU38 : <<trace>>
+PKG2 ..> CU42 : <<trace>>
+PKG2 ..> CU44 : <<trace>>
+
+@enduml

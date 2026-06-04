@@ -1,0 +1,33 @@
+@startuml identificacion-paquetes-casos-uso-ciclo4
+' Versión reducida (3 paquetes) — solo Ciclo 4 del examen
+' Para entregar junto al diagrama general CU36–CU40
+
+title IDENTIFICAR PAQUETES — Ciclo 4
+
+skinparam packageStyle rectangle
+skinparam noteBackgroundColor #FFFFFE
+
+package "Seguimiento y atencion del\nservicio en tiempo real" as P1
+note right of P1
+  Casos de uso:
+  **CU36** Consultar ubicacion del tecnico en tiempo real
+  **CU39** Actualizar estado de atencion del servicio
+end note
+
+package "Seleccion de taller y\npagos del servicio" as P2
+note right of P2
+  Casos de uso:
+  **CU37** Seleccionar taller para realizar el servicio
+  **CU38** Procesar pago mediante pasarela
+end note
+
+package "Administracion multi-tenant SaaS" as P3
+note right of P3
+  Casos de uso:
+  **CU40** Gestionar tenant o red de talleres
+end note
+
+P1 -[hidden]down- P2
+P2 -[hidden]down- P3
+
+@enduml

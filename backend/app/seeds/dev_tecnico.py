@@ -22,7 +22,12 @@ async def _rol_tecnico_id(db: AsyncSession) -> int | None:
     return int(x) if x is not None else None
 
 
-async def ensure_dev_tecnico(db: AsyncSession, *, require_enabled_flag: bool = True) -> None:
+async def ensure_dev_tecnico(
+    db: AsyncSession,
+    *,
+    tenant_id: int,
+    require_enabled_flag: bool = True,
+) -> None:
     if require_enabled_flag and not settings.SEED_TECNICO_ON_START:
         return
     email = (settings.SEED_TECNICO_EMAIL or "").strip()
@@ -48,6 +53,8 @@ async def ensure_dev_tecnico(db: AsyncSession, *, require_enabled_flag: bool = T
             user.updated_at = now
         user.estado = EstadoUsuarioEnum.ACTIVO
         user.updated_at = now
+        if user.tenant_id != tenant_id:
+            user.tenant_id = tenant_id
     else:
         user = await usuarios_service.create_usuario(
             {
@@ -58,6 +65,7 @@ async def ensure_dev_tecnico(db: AsyncSession, *, require_enabled_flag: bool = T
                 "password": pwd,
                 "username": None,
                 "estado": EstadoUsuarioEnum.ACTIVO,
+                "tenant_id": tenant_id,
             },
             db,
             ejecutor_id=None,

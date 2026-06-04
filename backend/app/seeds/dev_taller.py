@@ -28,8 +28,9 @@ async def _rol_taller_responsable_id(db: AsyncSession) -> int | None:
     return int(row)
 
 
-def _taller_payload(user_id: int, email: str, telefono: str) -> dict:
+def _taller_payload(user_id: int, email: str, telefono: str, tenant_id: int) -> dict:
     return {
+        "tenant_id": tenant_id,
         "usuario_responsable_id": user_id,
         "nombre_comercial": settings.SEED_TALLER_NOMBRE_COMERCIAL,
         "telefono_contacto": telefono,
@@ -61,6 +62,7 @@ async def _ensure_taller_row(
     user: Usuario,
     email: str,
     telefono: str,
+    tenant_id: int,
 ) -> None:
     """Un taller por responsable; savepoint ante carreras."""
     await db.flush()
@@ -68,13 +70,15 @@ async def _ensure_taller_row(
     taller = t_res.scalar_one_or_none()
     if taller is not None:
         await _apply_taller_demo_fields(taller, email, telefono)
+        if taller.tenant_id != tenant_id:
+            taller.tenant_id = tenant_id
         logger.info("Seed taller: taller ya existía, datos actualizados (usuario_id=%s)", user.id)
         return
 
     async with db.begin_nested():
         try:
             await talleres_service.create_taller(
-                _taller_payload(user.id, email, telefono),
+                _taller_payload(user.id, email, telefono, tenant_id),
                 db,
                 ejecutor_id=user.id,
             )
@@ -99,6 +103,7 @@ async def _ensure_taller_row(
 async def ensure_dev_taller(
     db: AsyncSession,
     *,
+    tenant_id: int,
     require_enabled_flag: bool = True,
 ) -> None:
     """Usuario TALLER_RESPONSABLE + taller ACTIVO. CLI usa require_enabled_flag=False."""
@@ -130,9 +135,12 @@ async def ensure_dev_taller(
         if user.estado != EstadoUsuarioEnum.ACTIVO:
             user.estado = EstadoUsuarioEnum.ACTIVO
             user.updated_at = now
+        if user.tenant_id != tenant_id:
+            user.tenant_id = tenant_id
+            user.updated_at = now
 
         await asignar_roles_usuario(user.id, [rol_id], db)
-        await _ensure_taller_row(db, user, email, telefono)
+        await _ensure_taller_row(db, user, email, telefono, tenant_id)
         return
 
     u = await usuarios_service.create_usuario(
@@ -144,10 +152,11 @@ async def ensure_dev_taller(
             "password": password,
             "username": None,
             "estado": EstadoUsuarioEnum.ACTIVO,
+            "tenant_id": tenant_id,
         },
         db,
         ejecutor_id=None,
     )
     await asignar_roles_usuario(u.id, [rol_id], db)
-    await _ensure_taller_row(db, u, email, telefono)
+    await _ensure_taller_row(db, u, email, telefono, tenant_id)
     logger.info("Usuario responsable de taller demo creado (seed): %s", email)

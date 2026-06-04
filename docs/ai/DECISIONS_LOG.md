@@ -139,9 +139,68 @@ es la opción estándar de la comunidad Flutter.
 **Decisión:** No fijar en el `docker-compose.yml` base un bind a `backend/incidentes_emergencias_v1.pt` (los clones sin peso local fallarían al hacer `up`). El montaje queda en **`docker-compose.ai-custom-model.yml`**. El `.env` con modelo propio usa `YOLO_TASK=classify`, `YOLO_MODEL=/models/incidentes_emergencias_v1.pt`, `YOLO_IMGSZ=224` y se levanta con **dos** archivos compose.  
 **Por qué:** Un `.pt` solo en el host no basta: sin volumen, `/models/...` no existe en el contenedor; con `YOLO_TASK=detect` y `yolov8n.pt` el worker aplica COCO, no el clasificador de Colab.
 
+## DEC-029 — EA: Model Wizard y documentación Sparx antes de implementar (2026-05-28)
+
+**Fecha:** 2026-05-28  
+**Decisión:** Antes de crear o editar diagramas en Enterprise Architect (MCP o manual), el agente debe (1) revisar **Model Wizard** (`Ctrl+Shift+M`, pestaña Diagram o Model Patterns), (2) leer la descripción del patrón y la **documentación oficial Sparx** del tipo de diagrama (secuencia BCE, despliegue, etc.), (3) solo entonces ajustar con MCP. Runbook: `docs/diagrams/agent-memory/EA_MODEL_WIZARD_WORKFLOW.md`.  
+**Por qué:** Implementar solo con MCP generó lifelines genéricos y diagramas duplicados (login ID 11 vs 12); los patrones Wizard y la guía BCE de Sparx alinean el modelo al estilo académico del curso.
+
+## DEC-028 — UML 2.5+ obligatorio + C4 4 capas + PUDS_GUIDE (2026-05-28)
+
+**Fecha:** 2026-05-28  
+**Decisión:** (1) **UML 2.5+** es obligatorio para paquetes, secuencia, clases y despliegue académico — no sustituir despliegue por C4 Container ni diagramas Docker genéricos. (2) Modelo **C4 en 4 capas** (D-001…D-004c) como vista de arquitectura del producto. (3) Crear **`docs/ai/PUDS_GUIDE.md`** enlazando fases PUDS, artefactos y trazabilidad CU→diagrama→código. (4) draw.io vía MCP **`user-drawio`** con Mermaid C4 nativo; PlantUML sigue siendo fuente Git.  
+**Por qué:** Defensa académica exige notación UML 2.5 en despliegue y diseño; C4 y UML cumplen roles distintos; memoria persistente evita repetir errores (mezclar notaciones, entregar solo Git sin draw.io).
+
+## DEC-027 — MCP draw.io + integración EA / PlantUML (2026-05-28)
+
+**Fecha:** 2026-05-28  
+**Decisión:** Configurar MCP oficial **`@drawio/mcp`** en `.cursor/mcp.json` (clave `drawio`). Añadir carpeta `docs/diagrams/drawio/` con Mermaid puente (`mermaid/*.mmd`) hacia el editor; documentar flujo triple PlantUML (Git) + EA (modelo académico) + draw.io (edición visual) en `DRAWIO_INTEGRATION.md` y `MCP_SETUP.md`.  
+**Por qué:** Permite abrir diagramas editables en el navegador desde Cursor, importar Mermaid alineado a C4 existente, y complementar EA sin reemplazar `.puml` ni el `.eapx` del curso.
+
+## DEC-026 — Subagente diagrams-modeling + memoria `docs/diagrams/` (2026-05-28)
+
+**Fecha:** 2026-05-28  
+**Decisión:** Crear subagente **`diagrams-modeling`** (PlantUML, UML 2.5+, C4, ASCII vía skill `plantuml-ascii`, integración MCP **Enterprise Architect** cuando EA está abierto). Fuente versionada en `docs/diagrams/`; memoria exclusiva del agente en `docs/diagrams/agent-memory/` (RULES, LEARNINGS, HANDOFF, etc.). Artefactos PUDS enlazados: `docs/ai/DIAGRAMS_GUIDE.md`, `PACKAGE_DESIGN.md`. El agente **`puds`** delega la generación de diagramas y conserva trazabilidad RF/CU.  
+**Por qué:** Separar modelado visual/académico del análisis textual PUDS; evitar errores repetidos (nombres inventados, `/servicios` inexistente, EA timeout) con memoria que “aprende”; mantener diagramas en Git alineados al código real.
+
+## DEC-025 — SaaS fase 3: billing Stripe, API pública, subdominio, mobile (2026-05-24)
+
+**Fecha:** 2026-05-24  
+**Decisión:** Módulo `billing` con webhook `stripe-saas`; endpoints públicos de descubrimiento de tenant; resolución de slug por `Host`; registro y login con `X-Tenant-Slug`; `require_writable_tenant_subscription` en alta de emergencias; tests unitarios sin BD.  
+**Por qué:** Completar el roadmap SaaS B2B (cobro plataforma, UX por organización, defensa en profundidad operativa).
+
+## DEC-024 — SaaS multi-tenant fase 2: RLS, unicidad por tenant, panel organizaciones (2026-05-24)
+
+**Fecha:** 2026-05-24  
+**Decisión:** Migración `0016_multitenancy_phase2.sql`: índices únicos `(tenant_id, email)` / placa, columnas Stripe en `tenants`, RLS en 5 tablas con `app.tenant_id` y `app.bypass_rls`; middleware `X-Tenant-Slug`; `get_auth_context` / `get_current_user` publican `AuthContext` para `get_db`; login con bypass RLS; Angular: selector de organización para superadmin, ruta `/admin/panel/organizaciones`, finanzas/usuarios/talleres con `?tenant_id=`.  
+**Por qué:** Refuerzo en BD del aislamiento (defensa en profundidad), preparación billing SaaS y UX de operador de plataforma sin mezclar datos entre tenants.
+
+## DEC-023 — SaaS multi-tenant: shared schema + `tenant_id` (2026-05-24)
+
+**Fecha:** 2026-05-24  
+**Decisión:** Introducir tabla `tenants` y columna `tenant_id` en entidades operativas; JWT incluye `tenant_id`; superadmin plataforma = rol `ADMIN` con `usuarios.tenant_id` NULL; API `/api/admin/tenants` para alta/gestión de organizaciones; finanzas y bandeja filtran por tenant salvo superadmin. Migración `0015_multitenancy_saas.sql`. Skills instaladas: `multitenancy`, `multi-tenant-safety-checker`.  
+**Por qué:** Preparar el producto para varios clientes B2B aislados sin desplegar una instancia por cliente; alinea con PUDS y operación SaaS real manteniendo un solo stack FastAPI/Postgres.
+
+## DEC-022 — Subagentes especializados ai-inference, qa-testing, security (2026-05-24)
+
+**Fecha:** 2026-05-24  
+**Decisión:** Añadir tres subagentes en `.cursor/agents/` además del roster existente: **`ai-inference`** (implementación/depuración del pipeline IA del repo), **`qa-testing`** (pruebas automatizadas y manuales alineadas a `TESTING_STRATEGY.md`) y **`security`** (auth, secretos, Stripe, FCM, hardening). Actualizar **`orchestrator.md`** con tabla de delegación y distinguir **`ai-inference`** (operar lo existente) de **`ai-researcher`** (investigar tecnologías nuevas).  
+**Por qué:** El dominio IA es transversal (worker Docker, backend, mobile, env) y no encaja solo en backend; las pruebas y la seguridad tienen entregables distintos a reviewer/backend. Evita agent sprawl manteniendo roles acotados y documentados en el repo.
+
 ## DEC-021 — Re-ejecutar enriquecimiento IA al agregar evidencia/ubicación (2026-04-27)
 
 **Fecha:** 2026-04-27  
 **Decisión:** Tras insertar `solicitud_evidencias` (URL o archivo), tras insertar `solicitud_ubicaciones` y tras actualizar `descripcion_texto` en `REGISTRADA`, se llama de nuevo a `enrich_solicitud_ai_after_create` para recalcular `ai_payload`. Para enviar la imagen al worker se usa `load_evidencia_bytes` (lectura bajo `uploads/evidencias/` cuando el path de la URL es `/.../media/evidencias/<file>`) antes de `GET` HTTP.  
 **Por qué:** En el flujo real el cliente no siempre sube imagen al crear; si la IA solo corre en el `POST` inicial, queda `clasificacion.fuentes: ["texto"]` aun con foto posterior, y además un `httpx` a una URL pública con IP de LAN del teléfono es frágil dentro de Docker.
-#si
+
+## DEC-025 — UML casos de uso: Include/Extend explícitos en EA y PUDS (2026-05-29)
+
+**Fecha:** 2026-05-29  
+**Decisión:** Documentar en `docs/diagrams/agent-memory/USE_CASE_INCLUDE_EXTEND_GUIDE.md` la notación UML 2.5: actor→CU con `Association` sólida; entre CUs solo `Include` (base→incluido) o `Extend` (extensión→base) con línea discontinua y estereotipo. En EA MCP usar `type: Include` / `type: Extend`, no `Association`. Diagrama general Ciclo 4 (CU36–CU40) en EA diagramID **26**, conectores **316–320**.  
+**Por qué:** Entrega académica 4.1.5 y plantilla de examen exigen distinguir `«include»` y `«extend»`; asociaciones genéricas entre CUs no son defendibles en PUDS.
+
+## DEC-026 — CU37: bandeja solo tras elección explícita del cliente (2026-06-02)
+
+**Fecha:** 2026-06-02  
+**Decisión:** `crear_solicitud` deja de insertar filas `solicitud_taller_bandeja` PENDIENTE para todos los talleres del tenant. El cliente elige taller vía `GET/POST .../talleres-candidatos` y `.../seleccionar-taller`; el backend crea una sola bandeja PENDIENTE y expira pendientes previas. Seeds demo que necesiten multi-taller siguen llamando `insert_bandeja_pendiente_por_cada_taller` de forma explícita.  
+**Por qué:** Alinea el flujo con CU37 (elección del cliente) y evita que varios talleres vean la misma emergencia antes de la decisión. Documentado en `CICLO4_DETALLE_CASOS_USO.md` y memoria `docs/ai` (2026-05-28).

@@ -1,9 +1,11 @@
 # app/modules/usuarios/router.py
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import bind_auth_context, get_current_user
+from app.core.tenant import AuthContext
+from app.core.tenant_context import effective_list_tenant_id
 from app.modules.acceso_y_administracion.usuarios import service
 from app.modules.acceso_y_administracion.roles.schemas import AsignarRolesAUsuario
 from app.modules.clientes_y_vehiculos.clientes.schemas import ClienteCreate, ClienteRead
@@ -20,10 +22,13 @@ router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 @router.get("/", response_model=list[UsuarioListRead])
 async def listar_usuarios(
+    tenant_id: int | None = Query(default=None, description="Filtro tenant (solo superadmin)"),
+    ctx: AuthContext = Depends(bind_auth_context),
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    return await service.get_usuarios_admin(db)
+    scope = effective_list_tenant_id(ctx, tenant_id)
+    return await service.get_usuarios_admin(db, list_tenant_id=scope)
 
 
 @router.get("/{usuario_id}", response_model=UsuarioListRead)
@@ -38,10 +43,14 @@ async def obtener_usuario(
 @router.post("/", response_model=UsuarioRead, status_code=status.HTTP_201_CREATED)
 async def crear_usuario(
     body: UsuarioCreate,
+    ctx: AuthContext = Depends(bind_auth_context),
     db: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    return await service.create_usuario(body.model_dump(), db, ejecutor_id=current_user.id)
+    payload = body.model_dump()
+    if payload.get("tenant_id") is None and not ctx.is_platform_superadmin:
+        payload["tenant_id"] = ctx.tenant_id
+    return await service.create_usuario(payload, db, ejecutor_id=current_user.id)
 
 
 @router.put("/{usuario_id}", response_model=UsuarioRead)

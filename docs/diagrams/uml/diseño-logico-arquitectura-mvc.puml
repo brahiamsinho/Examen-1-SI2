@@ -1,0 +1,95 @@
+@startuml diseño-logico-arquitectura-mvc
+' PUDS 4.3.1.2 — Diseño lógico MVC con franjas separadas por líneas (plantilla académica)
+' ID: D-007 | EA diagramID 39
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam rectangle {
+  BorderColor #333333
+  BackgroundColor #FAFAFA
+}
+skinparam package {
+  BorderColor #333333
+  BackgroundColor #FFFFFF
+}
+
+title DISEÑO LÓGICO DE LA ARQUITECTURA
+
+' Marco exterior (como la plantilla del curso)
+rectangle "DISEÑO LÓGICO DE LA ARQUITECTURA" as MARCO #FAFAFA;line:black;line.bold; {
+
+  ' ─────────────── Franja 1: Vista ───────────────
+  rectangle "Vista" as FR_V #FFF8E7;line:black;line.bold; {
+    package "Paquete Vista\nacceso y administracion" as V_ACC
+    package "Paquete Vista\nseguimiento y atencion" as V_SEG
+    package "Paquete Vista\ntaller y pagos" as V_TAL
+    package "Paquete Vista\ncontinuidad offline" as V_OFF
+    package "Paquete Vista\nanalitica KPIs" as V_KPI
+    V_ACC -[hidden]right-> V_SEG
+    V_SEG -[hidden]right-> V_TAL
+    V_TAL -[hidden]right-> V_OFF
+    V_OFF -[hidden]right-> V_KPI
+  }
+
+  ' ─────────────── Franja 2: controlador ───────────────
+  rectangle "controlador" as FR_C #E8F4FF;line:black;line.bold; {
+    package "Paquete Controlador\nacceso_y_administracion" as C_ACC
+    package "Paquete Controlador\nseguimiento y atencion" as C_SEG
+    package "Paquete Controlador\ntaller y pagos" as C_TAL
+    package "Paquete Controlador\ncontinuidad offline" as C_OFF
+    package "Paquete Controlador\nanalitica KPIs" as C_KPI
+    C_ACC -[hidden]right-> C_SEG
+    C_SEG -[hidden]right-> C_TAL
+    C_TAL -[hidden]right-> C_OFF
+    C_OFF -[hidden]right-> C_KPI
+  }
+
+  ' ─────────────── Franja 3: Modelo ───────────────
+  rectangle "Modelo" as FR_M #E8FFE8;line:black;line.bold; {
+    package "Paquete Modelo\nacceso y administracion" as M_ACC
+    package "Paquete Modelo\nseguimiento y atencion" as M_SEG
+    package "Paquete Modelo\ntaller y pagos" as M_TAL
+    package "Paquete Modelo\ncontinuidad offline" as M_OFF
+    package "Paquete Modelo\nanalitica KPIs" as M_KPI
+    M_ACC -[hidden]right-> M_SEG
+    M_SEG -[hidden]right-> M_TAL
+    M_TAL -[hidden]right-> M_OFF
+    M_OFF -[hidden]right-> M_KPI
+  }
+
+  package "Base de datos\nPostgreSQL" as M_DB
+}
+
+' Orden vertical de franjas
+FR_V -[hidden]down-> FR_C
+FR_C -[hidden]down-> FR_M
+FR_M -[hidden]down-> M_DB
+
+' --- Dependencias (plantilla académica) ---
+C_ACC ..> V_ACC
+C_SEG ..> V_SEG
+C_TAL ..> V_TAL
+C_OFF ..> V_OFF
+C_KPI ..> V_KPI
+
+C_SEG ..> C_TAL
+C_TAL ..> C_ACC
+C_TAL ..> C_OFF
+C_OFF ..> C_ACC
+C_KPI ..> C_SEG
+
+C_ACC ..> M_ACC
+C_SEG ..> M_SEG
+C_TAL ..> M_TAL
+C_OFF ..> M_OFF
+C_KPI ..> M_KPI
+C_SEG ..> M_TAL
+
+M_ACC ..> M_DB
+M_SEG ..> M_DB
+M_TAL ..> M_DB
+M_OFF ..> M_DB
+M_KPI ..> M_DB
+
+@enduml

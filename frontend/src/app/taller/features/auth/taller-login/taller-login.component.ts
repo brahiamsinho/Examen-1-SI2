@@ -1,13 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TallerAuthService, TallerAuthError } from '../../../../core/services/taller-auth.service';
+import { TenantSlugService } from '../../../../core/services/tenant-slug.service';
 
 @Component({
   selector: 'app-taller-login',
@@ -16,12 +17,15 @@ import { TallerAuthService, TallerAuthError } from '../../../../core/services/ta
   templateUrl: './taller-login.component.html',
   styleUrl: './taller-login.component.scss',
 })
-export class TallerLoginComponent {
+export class TallerLoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(TallerAuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly tenantSlug = inject(TenantSlugService);
 
   readonly form = this.fb.nonNullable.group({
+    orgSlug: ['demo-sc', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(1)]],
     remember: [false],
@@ -30,6 +34,14 @@ export class TallerLoginComponent {
   showPassword = false;
   submitting = false;
   errorMsg: string | null = null;
+
+  ngOnInit(): void {
+    const org = this.route.snapshot.queryParamMap.get('org');
+    const resolved = this.tenantSlug.resolveFromQueryParam(org);
+    if (resolved) {
+      this.form.patchValue({ orgSlug: resolved });
+    }
+  }
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
@@ -41,9 +53,10 @@ export class TallerLoginComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { email, password, remember } = this.form.getRawValue();
+    const { email, password, remember, orgSlug } = this.form.getRawValue();
+    this.tenantSlug.set(orgSlug);
     this.submitting = true;
-    this.auth.login(email.trim(), password, remember).subscribe({
+    this.auth.login(email.trim(), password, remember, orgSlug).subscribe({
       next: () => {
         this.submitting = false;
         void this.router.navigate(['/taller/panel']);

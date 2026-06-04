@@ -18,7 +18,6 @@ from app.modules.incidentes.emergencias.schemas import (
     SolicitudSeguimientoRead,
     UbicacionTecnicoCompartidaRead,
 )
-from app.modules.atencion.taller_emergencias.repository import insert_bandeja_pendiente_por_cada_taller
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 
 from . import helpers
@@ -47,6 +46,7 @@ async def crear_solicitud(
 
     sol = await repository.insert_solicitud(
         db,
+        tenant_id=user.tenant_id or v.tenant_id,
         cliente_id=cliente_id,
         vehiculo_id=body.vehiculo_id,
         descripcion_texto=desc,
@@ -66,10 +66,6 @@ async def crear_solicitud(
 
     if body.ubicacion_inicial is not None:
         await helpers.add_ubicacion_internal(db, sol, body.ubicacion_inicial, now)
-
-    await insert_bandeja_pendiente_por_cada_taller(
-        db, solicitud_id=sol.id, creado_at=now
-    )
 
     await registrar_accion(
         db,

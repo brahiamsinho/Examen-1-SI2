@@ -1,0 +1,14 @@
+@startuml rel-pkg03-offline-trace
+' EA diagramID 29 | D-004c
+
+title Paquete 3 — Continuidad offline y sincronizacion
+
+package "Continuidad offline y\nsincronizacion" as PKG3
+
+usecase "CU43\nEnviar emergencia pendiente\nal recuperar conexion" as CU43
+usecase "CU45\nRegistrar emergencia\nsin conexion" as CU45
+
+PKG3 ..> CU43 : <<trace>>
+PKG3 ..> CU45 : <<trace>>
+
+@enduml

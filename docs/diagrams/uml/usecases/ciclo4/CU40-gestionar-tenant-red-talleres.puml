@@ -1,0 +1,18 @@
+@startuml CU40-gestionar-tenant-red-talleres
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+
+left to right direction
+
+actor "Administrador" as admin
+
+rectangle "Plataforma Emergencias\nVehiculares (portal admin web)" {
+  usecase "CU40\nGestionar tenant o\nred de talleres" as CU40
+}
+
+admin --> CU40
+
+@enduml

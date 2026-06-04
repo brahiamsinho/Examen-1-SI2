@@ -1,0 +1,34 @@
+@startuml diagrama-general-casos-uso-ciclo4
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Sección PUDS: 4.1.5 Estructurar el Modelo de Caso de Uso
+' Fuente: docs/puds/casos-uso/CICLO4_DETALLE_CASOS_USO.md
+' ID: D-UC-GEN | EA paquete 7, diagramID 26
+
+title DIAGRAMA GENERAL DE CASOS DE USO — Ciclo 4 (CU36–CU40)
+
+actor Cliente as cli
+actor Tecnico as tec
+actor Administrador as adm
+
+rectangle "Plataforma Emergencias Vehiculares" {
+  usecase "CU36\nConsultar ubicacion del\ntecnico en tiempo real" as CU36
+  usecase "CU37\nSeleccionar taller para\nrealizar el servicio" as CU37
+  usecase "CU38\nProcesar pago\nmediante pasarela" as CU38
+  usecase "CU39\nActualizar estado de\natencion del servicio" as CU39
+  usecase "CU40\nGestionar tenant o\nred de talleres" as CU40
+  usecase "CU2\nIniciar sesion" as CU2
+}
+
+cli --> CU36
+cli --> CU37
+cli --> CU38
+tec --> CU39
+adm --> CU40
+
+CU36 ..> CU39 : <<extend>>
+CU38 ..> CU39 : <<extend>>
+CU37 ..> CU2 : <<include>>
+CU39 ..> CU2 : <<include>>
+CU40 ..> CU2 : <<include>>
+
+@enduml

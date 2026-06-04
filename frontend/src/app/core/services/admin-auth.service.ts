@@ -50,7 +50,9 @@ export class AdminAuthService {
   isAdminSession(): boolean {
     const me = this.getMe();
     const token = this.getAccessToken();
-    return !!(token && me?.roles?.includes('ADMIN'));
+    if (!token || !me) return false;
+    if (me.is_platform_superadmin) return true;
+    return Array.isArray(me.roles) && me.roles.includes('ADMIN');
   }
 
   clearSession(): void {
@@ -65,7 +67,7 @@ export class AdminAuthService {
     const token = this.getAccessToken();
     if (!token) {
       this.clearSession();
-      void this.router.navigate(['/admin']);
+      void this.router.navigate(['/admin/login']);
       return;
     }
     this.http
@@ -73,11 +75,11 @@ export class AdminAuthService {
       .subscribe({
         next: () => {
           this.clearSession();
-          void this.router.navigate(['/admin']);
+          void this.router.navigate(['/admin/login']);
         },
         error: () => {
           this.clearSession();
-          void this.router.navigate(['/admin']);
+          void this.router.navigate(['/admin/login']);
         },
       });
   }
@@ -91,7 +93,10 @@ export class AdminAuthService {
       switchMap((tokens) =>
         this.fetchMe(tokens.access_token).pipe(
           mergeMap((me) => {
-            if (!me.roles?.includes('ADMIN')) {
+            const allowed =
+              me.is_platform_superadmin ||
+              (Array.isArray(me.roles) && me.roles.includes('ADMIN'));
+            if (!allowed) {
               return throwError(
                 () =>
                   new AdminAuthError(
@@ -140,7 +145,10 @@ export class AdminAuthService {
         const s = this.activeStorage();
         if (s) s.setItem(ME, JSON.stringify(me));
       }),
-      map((me) => me.roles?.includes('ADMIN') ?? false),
+      map((me) => {
+        if (me.is_platform_superadmin) return true;
+        return Array.isArray(me.roles) && me.roles.includes('ADMIN');
+      }),
       catchError(() => {
         this.clearSession();
         return of(false);

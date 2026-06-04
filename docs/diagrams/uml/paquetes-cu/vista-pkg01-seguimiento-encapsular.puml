@@ -1,0 +1,28 @@
+@startuml vista-pkg01-seguimiento-encapsular
+' 4.2.1.3 Vista de paquetes / Encapsular paquete — Paquete 1
+' EA package 11 | diagramID 34 (VISTA-PKG01)
+
+title Vista de paquete — Seguimiento y atencion del servicio en tiempo real
+
+left to right direction
+
+actor Cliente as cliente
+actor Tecnico as tecnico
+actor "Taller mecanico" as taller
+
+rectangle "Seguimiento y atencion del\nservicio en tiempo real" as PKG1 {
+
+  usecase "CU36\nConsultar ubicacion del\ntecnico en tiempo real" as CU36
+  usecase "CU39\nActualizar estado de\natencion del servicio" as CU39
+  usecase "CU41\nRecibir notificaciones\ninmediatas del servicio" as CU41
+
+  CU36 .> CU39 : <<extend>>
+}
+
+cliente --> CU36
+cliente --> CU41
+tecnico --> CU39
+taller --> CU41
+tecnico --> CU41
+
+@enduml

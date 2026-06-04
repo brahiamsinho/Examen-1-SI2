@@ -1,0 +1,156 @@
+@startuml class-database-multitenant-core
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: UML diagrama de clases — Diseño lógico de datos (core multi-tenant)
+' Fuente: backend/migrations/0015–0017 + models.py
+' ID: D-020 | EA: paquete 8, diagramID 22 | 2026-05-28
+' Trazabilidad: RF multi-tenancy, CU40 gestionar tenant
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #EDE8F4
+  BorderColor #5B4B8A
+}
+
+title D-020 — Diagrama de clases BD (core multi-tenant)
+
+class Tenant <<entity>> {
+  +id: int <<PK>>
+  +slug: str
+  +nombre: str
+  +estado: str
+  +plan: str
+  +stripe_customer_id: str?
+}
+
+class Usuario <<entity>> {
+  +id: int <<PK>>
+  +tenant_id: int? <<FK>>
+  +email: str
+  +password_hash: str
+  +estado: str
+}
+
+class Rol <<entity>> {
+  +id: int <<PK>>
+  +nombre: str
+  +descripcion: str?
+}
+
+class Cliente <<entity>> {
+  +id: int <<PK>>
+  +tenant_id: int <<FK>>
+  +usuario_id: int <<FK>>
+  +documento: str?
+}
+
+class Taller <<entity>> {
+  +id: int <<PK>>
+  +tenant_id: int <<FK>>
+  +usuario_responsable_id: int? <<FK>>
+  +nombre: str
+  +latitud: float?
+  +longitud: float?
+}
+
+class Tecnico <<entity>> {
+  +id: int <<PK>>
+  +taller_id: int <<FK>>
+  +usuario_id: int <<FK>>
+  +estado: str
+}
+
+class MarcaVehiculo <<entity>> {
+  +id: int <<PK>>
+  +nombre: str
+}
+
+class Vehiculo <<entity>> {
+  +id: int <<PK>>
+  +tenant_id: int <<FK>>
+  +cliente_id: int <<FK>>
+  +marca_id: int <<FK>>
+  +placa: str
+  +modelo: str?
+}
+
+class SolicitudEmergencia <<entity>> {
+  +id: int <<PK>>
+  +tenant_id: int <<FK>>
+  +cliente_id: int <<FK>>
+  +vehiculo_id: int <<FK>>
+  +taller_id: int? <<FK>>
+  +tecnico_id: int? <<FK>>
+  +estado: str
+  +latitud: float?
+  +longitud: float?
+}
+
+class Pago <<entity>> {
+  +id: int <<PK>>
+  +cliente_id: int <<FK>>
+  +solicitud_id: int <<FK>>
+  +monto: decimal
+  +estado: str
+  +metodo: str
+}
+
+class Notificacion <<entity>> {
+  +id: int <<PK>>
+  +usuario_id: int <<FK>>
+  +solicitud_id: int? <<FK>>
+  +tipo: str
+  +mensaje: str
+}
+
+class ComisionTaller <<entity>> {
+  +id: int <<PK>>
+  +taller_id: int <<FK>>
+  +solicitud_id: int <<FK>>
+  +pago_id: int? <<FK>>
+  +monto: decimal
+}
+
+' --- Multi-tenancy ---
+Tenant "1" -- "0..*" Usuario : tenant_id
+Tenant "1" -- "0..*" Cliente : tenant_id
+Tenant "1" -- "0..*" Taller : tenant_id
+Tenant "1" -- "0..*" Vehiculo : tenant_id
+Tenant "1" -- "0..*" SolicitudEmergencia : tenant_id
+
+' --- Identidad y roles ---
+Usuario "1" -- "0..1" Cliente : usuario_id
+Usuario "1" -- "0..1" Taller : usuario_responsable_id
+Usuario "1" -- "0..1" Tecnico : usuario_id
+Usuario "0..*" -- "0..*" Rol : roles\n(vía usuario_rol)
+
+' --- Cliente y vehículos ---
+Cliente "1" -- "0..*" Vehiculo : cliente_id
+Cliente "1" -- "0..*" SolicitudEmergencia : cliente_id
+Cliente "1" -- "0..*" Pago : cliente_id
+MarcaVehiculo "1" -- "0..*" Vehiculo : marca_id
+
+' --- Taller y técnico ---
+Taller "1" -- "0..*" Tecnico : taller_id
+Taller "0..1" -- "0..*" SolicitudEmergencia : taller_id
+Tecnico "0..1" -- "0..*" SolicitudEmergencia : tecnico_id
+
+' --- Emergencia y pagos ---
+Vehiculo "1" -- "0..*" SolicitudEmergencia : vehiculo_id
+SolicitudEmergencia "1" -- "0..*" Pago : solicitud_id
+SolicitudEmergencia "0..1" -- "0..*" Notificacion : solicitud_id
+Usuario "1" -- "0..*" Notificacion : usuario_id
+SolicitudEmergencia "1" -- "0..1" ComisionTaller : solicitud_id
+Taller "1" -- "0..*" ComisionTaller : taller_id
+Pago "0..1" -- "0..1" ComisionTaller : pago_id
+
+note top of Tenant
+  Entidad raíz del SaaS multi-tenant.
+  RLS (0016) filtra por tenant_id.
+end note
+
+note bottom of Rol
+  Tabla puente usuario_rol no modelada
+  en este diagrama core (M:N directo).
+end note
+
+@enduml

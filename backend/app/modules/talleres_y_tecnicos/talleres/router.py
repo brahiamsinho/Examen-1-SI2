@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import bind_auth_context, get_current_user
+from app.core.tenant import AuthContext
+from app.core.tenant_context import effective_list_tenant_id
 from app.modules.talleres_y_tecnicos.talleres import service
 from app.modules.talleres_y_tecnicos.talleres.schemas import (
     TallerCreate, TallerRead, TallerUpdate,
@@ -16,8 +18,14 @@ from app.modules.acceso_y_administracion.usuarios.models import Usuario
 router = APIRouter(prefix="/talleres", tags=["Talleres"])
 
 @router.get("/", response_model=list[TallerRead])
-async def listar_talleres(db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    return await service.get_talleres(db)
+async def listar_talleres(
+    tenant_id: int | None = Query(default=None, description="Filtro tenant (solo superadmin)"),
+    ctx: AuthContext = Depends(bind_auth_context),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    scope = effective_list_tenant_id(ctx, tenant_id)
+    return await service.get_talleres(db, list_tenant_id=scope)
 
 @router.post("/", response_model=TallerRead, status_code=201)
 async def crear_taller(body: TallerCreate, db: AsyncSession = Depends(get_db),

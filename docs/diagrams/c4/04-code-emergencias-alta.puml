@@ -1,0 +1,115 @@
+@startuml
+' Proyecto: Examen-1-SI2 — Emergencias vehiculares
+' Tipo: C4 Code (nivel 4) — zoom componente Emergencias (alta CU11)
+' Fuente: backend/app/modules/incidentes/emergencias/* (2026-05-28)
+' Agente: diagrams-modeling
+' Trazabilidad: CU11 → POST /api/app/cliente/emergencias
+' Relacionado: uml/sequence-emergencia-alta-cliente.puml
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+title C4 Nivel 4 (Code) — Alta solicitud de emergencia (cliente)
+
+package "Contenedor: API Backend" <<Frame>> #E8F4FC {
+  package "Componente: Incidentes — emergencias" <<Frame>> #FFF8E8 {
+
+    class EmergenciasRouter <<router>> {
+      +crear_solicitud_emergencia(body, user, db): SolicitudEmergenciaDetailRead
+      +listar_mis_solicitudes(...)
+      +seguimiento_solicitud(...)
+    }
+
+    class SolicitudesService <<service>> {
+      +crear_solicitud(user, cliente_id, body, db): SolicitudEmergenciaDetailRead
+      +listar_solicitudes(...)
+      +obtener_detalle(...)
+    }
+
+    class EmergenciasRepository <<repository>> {
+      +get_vehiculo_if_cliente(db, vehiculo_id, cliente_id)
+      +insert_solicitud(...)
+      +insert_historial_estado(...)
+    }
+
+    class SolicitudEmergenciaCreateIn <<Pydantic>> {
+      +vehiculo_id: int
+      +descripcion_texto: str?
+    }
+
+    class SolicitudEmergenciaDetailRead <<Pydantic>> {
+      +id: int
+      +estado: EstadoSolicitudSeguimientoEnum
+      +descripcion_texto: str?
+      ...
+    }
+  }
+}
+
+package "Persistencia" <<Frame>> #EDE8F4 {
+  class SolicitudEmergencia <<ORM>> {
+    +id: int
+    +tenant_id: int?
+    +cliente_id: int
+    +vehiculo_id: int
+    +estado: EstadoSolicitudSeguimientoEnum
+    +descripcion_texto: str?
+    +ai_payload: JSONB?
+    +created_at: datetime
+  }
+
+  class HistorialEstadoSolicitud <<ORM>> {
+    +solicitud_id: int
+    +estado_anterior: enum?
+    +estado_nuevo: enum
+    +changed_at: datetime
+  }
+
+  enum EstadoSolicitudSeguimientoEnum {
+    REGISTRADA
+    EN_REVISION
+    TALLER_ASIGNADO
+    ...
+  }
+}
+
+package "Colaboradores (otros componentes)" <<Frame>> #F5F5E8 {
+  class BitacoraService <<service>> {
+    +registrar_accion(...)
+  }
+
+  class AiEnrichService <<service>> {
+    +enrich_solicitud_ai_after_create(...)
+  }
+
+  class BandejaRepository <<repository>> {
+    +insert_bandeja_pendiente_por_cada_taller(...)
+  }
+}
+
+' --- Flujo alta ---
+EmergenciasRouter ..> SolicitudEmergenciaCreateIn : recibe
+EmergenciasRouter ..> SolicitudesService : delega
+EmergenciasRouter ..> SolicitudEmergenciaDetailRead : devuelve
+
+SolicitudesService ..> EmergenciasRepository : valida vehículo + insert
+SolicitudesService ..> BitacoraService : auditoría
+SolicitudesService ..> AiEnrichService : opcional post-create
+SolicitudesService ..> BandejaRepository : bandeja talleres
+
+EmergenciasRepository ..> SolicitudEmergencia : INSERT
+EmergenciasRepository ..> HistorialEstadoSolicitud : INSERT REGISTRADA
+
+SolicitudEmergencia --> EstadoSolicitudSeguimientoEnum
+HistorialEstadoSolicitud --> EstadoSolicitudSeguimientoEnum
+
+note bottom of SolicitudesService
+  1. Verificar vehículo del cliente
+  2. INSERT solicitudes_emergencia (tenant_id)
+  3. INSERT historial estado REGISTRADA
+  4. Bandeja pendiente por taller
+  5. Bitácora CREAR_SOLICITUD
+  6. Enriquecimiento IA (async opcional)
+end note
+
+@enduml

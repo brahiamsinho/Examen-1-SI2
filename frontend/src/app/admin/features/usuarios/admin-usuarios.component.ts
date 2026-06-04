@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { AdminApiService } from '../../../core/services/admin-api.service';
+import { AdminTenantContextService } from '../../../core/services/admin-tenant-context.service';
 import type {
   EstadoUsuario,
   RolDto,
@@ -20,6 +21,7 @@ import type {
 })
 export class AdminUsuariosComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly tenantCtx = inject(AdminTenantContextService);
 
   usuarios: UsuarioListDto[] = [];
   roles: RolDto[] = [];
@@ -57,7 +59,10 @@ export class AdminUsuariosComponent implements OnInit {
 
   reload(): void {
     this.loading = true;
-    forkJoin({ usuarios: this.api.listUsuarios(), roles: this.api.listRoles() }).subscribe({
+    forkJoin({
+      usuarios: this.api.listUsuarios(this.tenantCtx.tenantQueryParam()),
+      roles: this.api.listRoles(),
+    }).subscribe({
       next: ({ usuarios, roles }) => {
         this.usuarios = usuarios;
         this.roles = roles;

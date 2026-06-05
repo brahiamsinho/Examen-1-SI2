@@ -8,7 +8,8 @@
     <input
       type="search"
       class="roles__search"
-      [(ngModel)]="search"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
       placeholder="Buscar por nombre o descripción…"
       aria-label="Buscar roles"
     />
@@ -30,7 +31,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let r of filtered">
+        <tr *ngFor="let r of filtered()">
           <td><strong>{{ r.nombre }}</strong></td>
           <td>{{ r.descripcion || '—' }}</td>
           <td>{{ r.created_at | date : 'short' }}</td>
@@ -44,7 +45,7 @@
         </tr>
       </tbody>
     </table>
-    <p class="roles__empty" *ngIf="!filtered.length">Sin resultados.</p>
+    <p class="roles__empty" *ngIf="!filtered().length">Sin resultados.</p>
   </div>
 
   <!-- Modal crear -->

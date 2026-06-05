@@ -1,9 +1,17 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import type { PermisoDto, RolDto } from '../../../core/models/admin-api.models';
+import { filterRowsByQuery } from '../../../core/utils/list-filter.util';
 
 @Component({
   selector: 'app-admin-roles',
@@ -11,13 +19,14 @@ import type { PermisoDto, RolDto } from '../../../core/models/admin-api.models';
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-roles.component.html',
   styleUrl: './admin-roles.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminRolesComponent implements OnInit {
   private readonly api = inject(AdminApiService);
 
-  roles: RolDto[] = [];
-  permisos: PermisoDto[] = [];
-  search = '';
+  readonly roles = signal<RolDto[]>([]);
+  readonly permisos = signal<PermisoDto[]>([]);
+  readonly search = signal('');
   loading = true;
   error: string | null = null;
   busy = false;
@@ -43,8 +52,8 @@ export class AdminRolesComponent implements OnInit {
       permisos: this.api.listPermisos(),
     }).subscribe({
       next: ({ roles, permisos }) => {
-        this.roles = roles;
-        this.permisos = permisos;
+        this.roles.set(roles);
+        this.permisos.set(permisos);
         this.loading = false;
       },
       error: () => {
@@ -54,19 +63,13 @@ export class AdminRolesComponent implements OnInit {
     });
   }
 
-  get filtered(): RolDto[] {
-    const q = this.search.trim().toLowerCase();
-    if (!q) return this.roles;
-    return this.roles.filter(
-      (r) =>
-        r.nombre.toLowerCase().includes(q) ||
-        (r.descripcion && r.descripcion.toLowerCase().includes(q)),
-    );
-  }
+  readonly filtered = computed(() =>
+    filterRowsByQuery(this.roles(), this.search(), (r) => [r.nombre, r.descripcion]),
+  );
 
   permisosByModulo(): Record<string, PermisoDto[]> {
     const m: Record<string, PermisoDto[]> = {};
-    for (const p of this.permisos) {
+    for (const p of this.permisos()) {
       m[p.modulo] = m[p.modulo] || [];
       m[p.modulo].push(p);
     }
@@ -119,7 +122,7 @@ export class AdminRolesComponent implements OnInit {
     this.busy = true;
     this.api.createRol(this.newNombre.trim(), this.newDesc.trim() || null).subscribe({
       next: (r) => {
-        this.roles = [...this.roles, r].sort((a, b) => a.nombre.localeCompare(b.nombre));
+        this.roles.set([...this.roles(), r].sort((a, b) => a.nombre.localeCompare(b.nombre)));
         this.modalCreate = false;
         this.newNombre = '';
         this.newDesc = '';

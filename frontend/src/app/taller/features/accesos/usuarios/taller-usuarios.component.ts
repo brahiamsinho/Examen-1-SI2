@@ -1,4 +1,12 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -11,6 +19,7 @@ import type {
   UsuarioListDto,
   UsuarioUpdatePayload,
 } from '../../../../core/models/admin-api.models';
+import { filterRowsByQuery } from '../../../../core/utils/list-filter.util';
 
 const ROLES_ASIGNABLES = new Set(['TECNICO', 'TALLER_RESPONSABLE']);
 
@@ -20,17 +29,19 @@ const ROLES_ASIGNABLES = new Set(['TECNICO', 'TALLER_RESPONSABLE']);
   imports: [CommonModule, FormsModule],
   templateUrl: './taller-usuarios.component.html',
   styleUrl: './taller-usuarios.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerUsuariosComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   readonly auth = inject(TallerAuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  usuarios: UsuarioListDto[] = [];
-  roles: RolDto[] = [];
-  search = '';
-  estado: EstadoUsuario | '' = '';
-  rolFilter = '';
-  loading = true;
+  readonly usuarios = signal<UsuarioListDto[]>([]);
+  readonly roles = signal<RolDto[]>([]);
+  readonly search = signal('');
+  readonly estado = signal<EstadoUsuario | ''>('');
+  readonly rolFilter = signal('');
+  readonly loading = signal(true);
   error: string | null = null;
   busy = false;
 
@@ -54,6 +65,21 @@ export class TallerUsuariosComponent implements OnInit {
   editForm: UsuarioUpdatePayload = {};
   readonly estados: EstadoUsuario[] = ['ACTIVO', 'INACTIVO', 'BLOQUEADO', 'PENDIENTE'];
 
+  readonly assignableRoles = computed(() =>
+    this.roles().filter((r) => ROLES_ASIGNABLES.has(r.nombre)),
+  );
+
+  readonly rolesForFilter = this.assignableRoles;
+
+  readonly filtered = computed(() => {
+    let rows = this.usuarios();
+    const estado = this.estado();
+    if (estado) rows = rows.filter((u) => u.estado === estado);
+    const rol = this.rolFilter();
+    if (rol) rows = rows.filter((u) => (u.roles || []).includes(rol));
+    return filterRowsByQuery(rows, this.search(), (u) => [u.email, u.nombres, u.apellidos]);
+  });
+
   ngOnInit(): void {
     this.reload();
   }
@@ -66,57 +92,37 @@ export class TallerUsuariosComponent implements OnInit {
     return this.auth.tienePermiso('usuarios:actualizar');
   }
 
-  get assignableRoles(): RolDto[] {
-    return this.roles.filter((r) => ROLES_ASIGNABLES.has(r.nombre));
-  }
-
-  get rolesForFilter(): RolDto[] {
-    return this.assignableRoles;
-  }
-
   reload(): void {
-    this.loading = true;
+    this.loading.set(true);
     forkJoin({
       usuarios: this.api.listUsuarios(),
       roles: this.api.listRoles(),
     }).subscribe({
       next: ({ usuarios, roles }) => {
-        this.usuarios = usuarios;
-        this.roles = roles;
-        this.loading = false;
+        this.usuarios.set(usuarios);
+        this.roles.set(roles);
+        this.loading.set(false);
         this.error = null;
+        this.cdr.markForCheck();
       },
       error: () => {
-        this.loading = false;
+        this.loading.set(false);
         this.error = 'No se pudieron cargar los usuarios de tu organización.';
+        this.cdr.markForCheck();
       },
     });
-  }
-
-  get filtered(): UsuarioListDto[] {
-    let rows = this.usuarios;
-    if (this.estado) rows = rows.filter((u) => u.estado === this.estado);
-    if (this.rolFilter) rows = rows.filter((u) => (u.roles || []).includes(this.rolFilter));
-    const q = this.search.trim().toLowerCase();
-    if (q) {
-      rows = rows.filter(
-        (u) =>
-          u.email.toLowerCase().includes(q) ||
-          u.nombres.toLowerCase().includes(q) ||
-          u.apellidos.toLowerCase().includes(q),
-      );
-    }
-    return rows;
   }
 
   openCreateModal(): void {
     this.error = null;
     this.modalCreate = true;
+    this.cdr.markForCheck();
   }
 
   openDetail(u: UsuarioListDto): void {
     this.selected = u;
     this.modalDetail = true;
+    this.cdr.markForCheck();
   }
 
   openEdit(u: UsuarioListDto): void {
@@ -129,6 +135,7 @@ export class TallerUsuariosComponent implements OnInit {
       estado: u.estado,
     };
     this.modalEdit = true;
+    this.cdr.markForCheck();
   }
 
   saveEdit(): void {
@@ -137,15 +144,19 @@ export class TallerUsuariosComponent implements OnInit {
     this.api.updateUsuario(this.selected.id, this.editForm).subscribe({
       next: (u) => {
         const prevRoles = this.selected?.roles || [];
-        this.usuarios = this.usuarios.map((x) =>
-          x.id === u.id ? { ...(u as UsuarioListDto), roles: prevRoles } : x,
+        this.usuarios.update((list) =>
+          list.map((x) =>
+            x.id === u.id ? { ...(u as UsuarioListDto), roles: prevRoles } : x,
+          ),
         );
         this.closeModals();
         this.busy = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;
         this.error = 'No se pudo actualizar el usuario.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -154,6 +165,7 @@ export class TallerUsuariosComponent implements OnInit {
     if (!this.puedeCrear) return;
     if (!this.createForm.password || this.createForm.password.length < 4) {
       this.error = 'La contraseña debe tener al menos 4 caracteres.';
+      this.cdr.markForCheck();
       return;
     }
     this.busy = true;
@@ -171,10 +183,12 @@ export class TallerUsuariosComponent implements OnInit {
           username: '',
           estado: 'ACTIVO',
         };
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;
         this.error = 'No se pudo crear el usuario (email o teléfono duplicado).';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -183,8 +197,11 @@ export class TallerUsuariosComponent implements OnInit {
     if (!this.puedeEditar) return;
     this.selected = u;
     const names = new Set(u.roles || []);
-    this.rolIds = new Set(this.assignableRoles.filter((r) => names.has(r.nombre)).map((r) => r.id));
+    this.rolIds = new Set(
+      this.assignableRoles().filter((r) => names.has(r.nombre)).map((r) => r.id),
+    );
     this.modalRoles = true;
+    this.cdr.markForCheck();
   }
 
   toggleRol(id: number): void {
@@ -204,6 +221,7 @@ export class TallerUsuariosComponent implements OnInit {
       error: () => {
         this.busy = false;
         this.error = 'No se pudieron asignar roles.';
+        this.cdr.markForCheck();
       },
     });
   }
@@ -212,5 +230,6 @@ export class TallerUsuariosComponent implements OnInit {
     this.modalCreate = this.modalEdit = this.modalDetail = this.modalRoles = false;
     this.selected = null;
     this.rolIds = new Set();
+    this.cdr.markForCheck();
   }
 }

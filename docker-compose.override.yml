@@ -1,7 +1,11 @@
 # docker-compose.override.yml
 # =========================================================
 # Override DESARROLLO LOCAL (se fusiona con docker-compose.yml).
-# Producción: docker compose -f docker-compose.yml up si
+# Producción / CI sin hot-reload: docker compose -f docker-compose.yml up -d
+#
+# Nota Windows: bind mount ./backend:/app en OneDrive suele ir lento (--reload + sync).
+# Si el arranque o el reload se sienten pesados, cloná el repo fuera de OneDrive o usá
+# solo docker-compose.yml (sin este override) cuando no edites Python en caliente.
 # =========================================================
 
 services:

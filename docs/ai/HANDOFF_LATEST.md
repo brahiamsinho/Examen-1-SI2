@@ -1,7 +1,27 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-04 (Admin planes/precios + Stripe landing)
+# Fecha: 2026-06-04 (Docker optimización + refactor rendimiento)
+
+## Cambios recientes (2026-06-04) — Docker optimización ✅
+
+- **Mailpit** en lugar de Mailhog (imagen ~25 MB); alias `mailhog` en red Docker.
+- Initdb: migraciones **0018/0019** + `99_register_sql_migrations.sql` (arranque backend más rápido en BD nueva).
+- `frontend` → `depends_on: backend: condition: service_healthy`.
+- Stripe env con defaults vacíos; ai-inference multi-stage + `aiuser`.
+- Override dev: comentario OneDrive/bind mount.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-docker-optimizacion.md`.
+
+## Cambios recientes (2026-06-04) — Refactor rendimiento Fase 1 ✅
+
+- **Rama:** `feature/optimizando`.
+- **Landing:** OnPush, scroll throttled, forkJoin pricing API.
+- **Dashboard:** barras precalculadas, formatter money compartido.
+- **Listados:** signals/computed en permisos, roles, usuarios, talleres (admin + taller).
+- **Shells:** OnPush admin y taller.
+- **Utils:** `list-filter.util.ts`, `format-money.util.ts`.
+- **Backend:** overview admin en paralelo (`asyncio.gather`); cache planes públicos 5 min; `GET /api/public/pricing/bootstrap`; landing usa bootstrap.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-refactor-performance-fase1.md`.
 
 ## Cambios recientes (2026-06-04) — Admin planes y precios + Stripe ✅
 

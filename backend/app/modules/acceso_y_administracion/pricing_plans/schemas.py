@@ -45,6 +45,13 @@ class StripeConfigPublicRead(BaseModel):
     publishable_key: Optional[str] = None
 
 
+class PublicPricingBootstrapRead(BaseModel):
+    """Planes + Stripe en una sola respuesta para la landing."""
+
+    plans: list[PricingPlanRead]
+    stripe: StripeConfigPublicRead
+
+
 class PublicCheckoutIn(BaseModel):
     plan_slug: str = Field(..., min_length=1, max_length=50)
     email: EmailStr

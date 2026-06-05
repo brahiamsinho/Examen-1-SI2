@@ -7,17 +7,23 @@
     muestra el catálogo y la relación conceptual con roles (asignación desde <strong>Roles → Permisos</strong>).
   </div>
 
-  <div class="perm__alert" *ngIf="error" role="alert">{{ error }}</div>
+  <div class="perm__alert" *ngIf="error()" role="alert">{{ error() }}</div>
 
-  <div class="perm__toolbar" *ngIf="!loading">
-    <select class="perm__select" [(ngModel)]="modulo" aria-label="Filtrar por módulo">
+  <div class="perm__toolbar" *ngIf="!loading()">
+    <select
+      class="perm__select"
+      [ngModel]="modulo()"
+      (ngModelChange)="modulo.set($event)"
+      aria-label="Filtrar por módulo"
+    >
       <option value="">Todos los módulos</option>
-      <option *ngFor="let m of modulos" [value]="m">{{ m }}</option>
+      <option *ngFor="let m of modulos()" [value]="m">{{ m }}</option>
     </select>
     <input
       type="search"
       class="perm__search"
-      [(ngModel)]="search"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
       placeholder="Buscar código o nombre…"
       aria-label="Buscar permisos"
     />
@@ -26,9 +32,9 @@
     </button>
   </div>
 
-  <p class="perm__muted" *ngIf="loading">Cargando…</p>
+  <p class="perm__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="perm__tablewrap" *ngIf="!loading">
+  <div class="perm__tablewrap" *ngIf="!loading()">
     <table class="perm__table">
       <thead>
         <tr>
@@ -39,7 +45,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let p of filtered">
+        <tr *ngFor="let p of filtered()">
           <td><code>{{ p.codigo }}</code></td>
           <td>{{ p.nombre }}</td>
           <td><span class="perm__pill">{{ p.modulo }}</span></td>
@@ -47,6 +53,6 @@
         </tr>
       </tbody>
     </table>
-    <p class="perm__empty" *ngIf="!filtered.length">Sin resultados.</p>
+    <p class="perm__empty" *ngIf="!filtered().length">Sin resultados.</p>
   </div>
 </div>

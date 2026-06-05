@@ -1,8 +1,9 @@
 # docker-compose.yml
 # =========================================================
-# Stack: PostgreSQL, FastAPI backend, Angular frontend, Mailhog.
+# Stack: PostgreSQL, FastAPI backend, Angular frontend, Mailpit (SMTP dev).
 #
-# Copy .env.example to .env in the repo root; Compose loads ./.env automatically. si
+# Copy .env.example to .env in the repo root; Compose loads ./.env automatically.
+# Producción / sin hot-reload: docker compose -f docker-compose.yml up -d
 # =========================================================
 
 services:
@@ -35,6 +36,9 @@ services:
       - ./backend/migrations/0015_multitenancy_saas.sql:/docker-entrypoint-initdb.d/15_multitenancy_saas.sql:ro
       - ./backend/migrations/0016_multitenancy_phase2.sql:/docker-entrypoint-initdb.d/16_multitenancy_phase2.sql:ro
       - ./backend/migrations/0017_saas_billing_phase3.sql:/docker-entrypoint-initdb.d/17_saas_billing_phase3.sql:ro
+      - ./backend/migrations/0018_taller_acceso_permisos.sql:/docker-entrypoint-initdb.d/18_taller_acceso_permisos.sql:ro
+      - ./backend/migrations/0019_pricing_plans.sql:/docker-entrypoint-initdb.d/19_pricing_plans.sql:ro
+      - ./backend/migrations/99_register_sql_migrations.sql:/docker-entrypoint-initdb.d/99_register_sql_migrations.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:
@@ -48,17 +52,26 @@ services:
       retries: 12
       start_period: 240s
 
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    container_name: emergencias_mailhog
+  mailpit:
+    image: axllent/mailpit:v1.22
+    container_name: emergencias_mailpit
     restart: unless-stopped
     environment:
       TZ: ${TZ:-America/La_Paz}
+      MP_MAX_MESSAGES: ${MAILPIT_MAX_MESSAGES:-500}
     ports:
       - "${MAILHOG_SMTP_PORT:-1025}:1025"
       - "${MAILHOG_WEB_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
-      - emergencias_net
+      emergencias_net:
+        aliases:
+          # Compat: SMTP_HOST=mailhog en .env sigue resolviendo en la red Docker.
+          - mailhog
 
   backend:
     build:
@@ -124,8 +137,8 @@ services:
       FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/app/firebase-credentials.json}
       PAGO_SIMULADO_AUTOCOMPLETE: ${PAGO_SIMULADO_AUTOCOMPLETE:-true}
       PAGO_PROVEEDOR_DEFAULT: ${PAGO_PROVEEDOR_DEFAULT:-SIMULADO}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       EVIDENCIAS_PUBLIC_BASE_URL: ${EVIDENCIAS_PUBLIC_BASE_URL}
       EVIDENCIA_MAX_UPLOAD_BYTES: ${EVIDENCIA_MAX_UPLOAD_BYTES}
       SMTP_HOST: ${SMTP_HOST}
@@ -153,8 +166,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      mailhog:
-        condition: service_started
+      mailpit:
+        condition: service_healthy
     networks:
       - emergencias_net
     healthcheck:
@@ -174,6 +187,7 @@ services:
       # Contexto acotado: evita enviar mobile/frontend/docs al daemon (build mucho más rápido).
       context: ./services/ai-inference
       dockerfile: Dockerfile
+      target: runtime
     container_name: emergencias_ai_inference
     restart: unless-stopped
     environment:
@@ -186,7 +200,7 @@ services:
       YOLO_IMGSZ: ${YOLO_IMGSZ:-640}
       TZ: ${TZ:-America/La_Paz}
     volumes:
-      - ai_inference_cache:/root/.cache
+      - ai_inference_cache:/home/aiuser/.cache
     networks:
       - emergencias_net
 
@@ -204,7 +218,8 @@ services:
     ports:
       - "${FRONTEND_HTTP_PORT:-80}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - emergencias_net
 

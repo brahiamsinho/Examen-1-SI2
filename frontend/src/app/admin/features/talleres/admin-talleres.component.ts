@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   DestroyRef,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -22,6 +24,7 @@ import type {
   TallerProvisionPayload,
   TallerUpdatePayload,
 } from '../../../core/models/admin-api.models';
+import { filterRowsByQuery } from '../../../core/utils/list-filter.util';
 
 @Component({
   selector: 'app-admin-talleres',
@@ -38,12 +41,12 @@ export class AdminTalleresComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
-  talleres: TallerDto[] = [];
+  readonly talleres = signal<TallerDto[]>([]);
   tenants: TenantDto[] = [];
   createTenantId: number | null = null;
-  search = '';
-  estado: EstadoTaller | '' = '';
-  loading = true;
+  readonly search = signal('');
+  readonly estado = signal<EstadoTaller | ''>('');
+  readonly loading = signal(true);
   error: string | null = null;
   busy = false;
 
@@ -92,8 +95,19 @@ export class AdminTalleresComponent implements OnInit {
     this.tenantCtx.setSelectedTenantId(id);
   }
 
+  readonly filtered = computed(() => {
+    let rows = this.talleres();
+    const estado = this.estado();
+    if (estado) rows = rows.filter((t) => t.estado === estado);
+    return filterRowsByQuery(rows, this.search(), (t) => [
+      t.nombre_comercial,
+      t.ciudad,
+      t.email_contacto,
+    ]);
+  });
+
   reload(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.error = null;
     this.cdr.markForCheck();
     const tq = this.tenantCtx.tenantQueryParam();
@@ -102,13 +116,13 @@ export class AdminTalleresComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (talleres) => {
-          this.talleres = talleres;
-          this.loading = false;
+          this.talleres.set(talleres);
+          this.loading.set(false);
           this.error = null;
           this.cdr.markForCheck();
         },
         error: () => {
-          this.loading = false;
+          this.loading.set(false);
           this.error = 'No se pudieron cargar los talleres.';
           this.cdr.markForCheck();
         },
@@ -120,21 +134,6 @@ export class AdminTalleresComponent implements OnInit {
       return this.auth.getMe()?.tenant_id ?? null;
     }
     return this.createTenantId;
-  }
-
-  get filtered(): TallerDto[] {
-    let rows = this.talleres;
-    if (this.estado) rows = rows.filter((t) => t.estado === this.estado);
-    const q = this.search.trim().toLowerCase();
-    if (q) {
-      rows = rows.filter(
-        (t) =>
-          t.nombre_comercial.toLowerCase().includes(q) ||
-          t.ciudad.toLowerCase().includes(q) ||
-          t.email_contacto.toLowerCase().includes(q),
-      );
-    }
-    return rows;
   }
 
   openDetail(t: TallerDto): void {
@@ -244,7 +243,7 @@ export class AdminTalleresComponent implements OnInit {
     this.busy = true;
     this.api.updateTaller(this.editId, this.editForm).subscribe({
       next: (t) => {
-        this.talleres = this.talleres.map((x) => (x.id === t.id ? t : x));
+        this.talleres.update((list) => list.map((x) => (x.id === t.id ? t : x)));
         this.modalEdit = false;
         this.busy = false;
         this.detail = null;
@@ -294,7 +293,7 @@ export class AdminTalleresComponent implements OnInit {
     this.error = null;
     this.api.provisionTaller(payload).subscribe({
       next: (result) => {
-        this.talleres = [...this.talleres, result];
+        this.talleres.update((list) => [...list, result]);
         this.provisionResult = result;
         this.busy = false;
         this.cdr.markForCheck();
@@ -314,7 +313,7 @@ export class AdminTalleresComponent implements OnInit {
     this.busy = true;
     this.api.updateTaller(t.id, { estado }).subscribe({
       next: (u) => {
-        this.talleres = this.talleres.map((x) => (x.id === u.id ? u : x));
+        this.talleres.update((list) => list.map((x) => (x.id === u.id ? u : x)));
         this.busy = false;
         if (this.detail?.id === u.id) this.detail = u;
         this.cdr.markForCheck();

@@ -16,18 +16,8 @@ import type {
   ReportExecuteResultDto,
   ReportExportFormat,
   ReportTemplateDto,
+  ReportVoiceTranscribeResultDto,
 } from '../../../core/models/taller-api.models';
-
-type SpeechRecognitionLike = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  start: () => void;
-  stop: () => void;
-  onresult: ((ev: { results: { 0: { 0: { transcript: string } } } }) => void) | null;
-  onerror: ((ev: { error: string }) => void) | null;
-  onend: (() => void) | null;
-};
 
 @Component({
   selector: 'app-taller-reportes',
@@ -56,45 +46,23 @@ export class TallerReportesComponent implements OnInit {
   pendingExportFormats: ReportExportFormat[] = [];
 
   listening = false;
-  speechSupported = false;
-  private recognition: SpeechRecognitionLike | null = null;
+  voiceSupported = false;
+  private mediaRecorder: MediaRecorder | null = null;
+  private mediaStream: MediaStream | null = null;
+  private audioChunks: Blob[] = [];
+  private listenWatchdogId: ReturnType<typeof setTimeout> | null = null;
+  private readonly maxRecordMs = 15000;
 
   saveName = '';
 
   ngOnInit(): void {
-    this.initSpeech();
+    this.voiceSupported = !!(
+      typeof navigator !== 'undefined' &&
+      typeof navigator.mediaDevices?.getUserMedia === 'function' &&
+      typeof MediaRecorder !== 'undefined'
+    );
+    this.destroyRef.onDestroy(() => this.cleanupVoice());
     this.loadTemplates();
-  }
-
-  private initSpeech(): void {
-    const w = window as unknown as {
-      SpeechRecognition?: new () => SpeechRecognitionLike;
-      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
-    };
-    const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!Ctor) return;
-    this.speechSupported = true;
-    this.recognition = new Ctor();
-    this.recognition.lang = 'es-BO';
-    this.recognition.continuous = false;
-    this.recognition.interimResults = false;
-    this.recognition.onresult = (ev) => {
-      const text = ev.results[0][0].transcript?.trim();
-      if (text) {
-        this.nlQuery = text;
-        this.cdr.markForCheck();
-        this.interpretAndRun(true);
-      }
-    };
-    this.recognition.onerror = () => {
-      this.listening = false;
-      this.error = 'No se pudo capturar voz. Escribe la consulta o revisa permisos del micrófono.';
-      this.cdr.markForCheck();
-    };
-    this.recognition.onend = () => {
-      this.listening = false;
-      this.cdr.markForCheck();
-    };
   }
 
   loadTemplates(): void {
@@ -119,19 +87,152 @@ export class TallerReportesComponent implements OnInit {
   }
 
   toggleVoice(): void {
-    if (!this.recognition) {
-      this.error = 'Tu navegador no soporta reconocimiento de voz. Escribe la consulta manualmente.';
+    if (!this.voiceSupported) {
+      this.error =
+        'Tu navegador no permite grabar audio. Escribe la consulta manualmente o usa Chrome/Edge actualizado.';
       this.cdr.markForCheck();
       return;
     }
     if (this.listening) {
-      this.recognition.stop();
+      this.stopRecording(false);
       return;
     }
+    void this.startRecording();
+  }
+
+  private async startRecording(): Promise<void> {
     this.error = null;
+    this.success = null;
+    this.audioChunks = [];
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      this.error = 'Permiso de micrófono denegado. Actívalo en el navegador e inténtalo de nuevo.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : '';
+
+    try {
+      this.mediaRecorder = mimeType
+        ? new MediaRecorder(this.mediaStream, { mimeType })
+        : new MediaRecorder(this.mediaStream);
+    } catch {
+      this.cleanupVoice();
+      this.error = 'No se pudo iniciar la grabación de voz en este navegador.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.mediaRecorder.ondataavailable = (ev) => {
+      if (ev.data.size > 0) this.audioChunks.push(ev.data);
+    };
+    this.mediaRecorder.onerror = () => {
+      this.error = 'Error al grabar audio. Intenta de nuevo o escribe la consulta.';
+      this.cleanupVoice();
+      this.cdr.markForCheck();
+    };
+    this.mediaRecorder.onstop = () => {
+      const chunks = [...this.audioChunks];
+      const type = this.mediaRecorder?.mimeType || chunks[0]?.type || 'audio/webm';
+      this.cleanupVoice();
+      if (!chunks.length) {
+        this.error = 'No se captó audio. Habla cerca del micrófono e inténtalo otra vez.';
+        this.cdr.markForCheck();
+        return;
+      }
+      this.sendVoiceRecording(new Blob(chunks, { type }));
+    };
+
     this.listening = true;
-    this.recognition.start();
+    this.armListenWatchdog();
+    this.mediaRecorder.start();
     this.cdr.markForCheck();
+
+    setTimeout(() => {
+      if (this.listening) this.stopRecording(false);
+    }, this.maxRecordMs);
+  }
+
+  private stopRecording(fromWatchdog: boolean): void {
+    if (this.mediaRecorder?.state === 'recording') {
+      this.mediaRecorder.stop();
+    } else if (fromWatchdog) {
+      this.cleanupVoice();
+      this.error = 'Tiempo de escucha agotado. Intenta una frase más corta.';
+      this.cdr.markForCheck();
+    }
+  }
+
+  private armListenWatchdog(): void {
+    this.clearListenWatchdog();
+    this.listenWatchdogId = setTimeout(() => {
+      if (this.listening) this.stopRecording(true);
+    }, this.maxRecordMs + 5000);
+  }
+
+  private clearListenWatchdog(): void {
+    if (this.listenWatchdogId != null) {
+      clearTimeout(this.listenWatchdogId);
+      this.listenWatchdogId = null;
+    }
+  }
+
+  private cleanupVoice(resetListening = true): void {
+    this.clearListenWatchdog();
+    if (this.mediaRecorder) {
+      this.mediaRecorder.ondataavailable = null;
+      this.mediaRecorder.onerror = null;
+      this.mediaRecorder.onstop = null;
+      this.mediaRecorder = null;
+    }
+    if (this.mediaStream) {
+      for (const track of this.mediaStream.getTracks()) track.stop();
+      this.mediaStream = null;
+    }
+    if (resetListening) {
+      this.listening = false;
+    }
+  }
+
+  private sendVoiceRecording(blob: Blob): void {
+    this.loadingReport = true;
+    this.error = null;
+    this.success = null;
+    const ext = blob.type.includes('webm') ? 'webm' : 'bin';
+    this.api
+      .voiceReportQuery(blob, `consulta-reporte.${ext}`)
+      .pipe(
+        finalize(() => {
+          this.loadingReport = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (voice) => this.applyVoiceTranscription(voice),
+        error: (err) => {
+          const detail = err?.error?.detail;
+          this.error =
+            typeof detail === 'string'
+              ? detail
+              : 'No se pudo transcribir el audio. Escribe la consulta o revisa que IA esté habilitada.';
+        },
+      });
+  }
+
+  private applyVoiceTranscription(voice: ReportVoiceTranscribeResultDto): void {
+    this.nlQuery = voice.transcripcion;
+    this.interpretation = '';
+    this.report = null;
+    this.currentQbe = null;
+    const via = voice.provider === 'gemini' ? 'Gemini' : 'Whisper';
+    this.success = `Transcripción (${via}): revisa el texto y pulsa «Interpretar y ejecutar».`;
   }
 
   interpretAndRun(autoExport = false): void {

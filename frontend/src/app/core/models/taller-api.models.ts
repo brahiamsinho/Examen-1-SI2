@@ -253,6 +253,12 @@ export interface ReportNlQueryResultDto {
   interpretation: string;
 }
 
+export interface ReportVoiceTranscribeResultDto {
+  transcripcion: string;
+  confianza: number;
+  provider?: string;
+}
+
 export interface ReportTemplateCreatePayload {
   nombre: string;
   descripcion?: string;

@@ -27,10 +27,10 @@
         type="button"
         class="t-rep__btn"
         (click)="toggleVoice()"
-        [disabled]="!speechSupported"
+        [disabled]="!voiceSupported || loadingReport"
         [class.t-rep__btn--active]="listening"
       >
-        {{ listening ? 'Escuchando…' : 'Micrófono' }}
+        {{ listening ? 'Escuchando…' : loadingReport ? 'Procesando voz…' : 'Micrófono' }}
       </button>
     </div>
     <p class="t-rep__muted" *ngIf="interpretation">{{ interpretation }}</p>

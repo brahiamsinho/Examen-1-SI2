@@ -76,6 +76,12 @@ class NlQueryOut(BaseModel):
     interpretation: str
 
 
+class VoiceTranscribeOut(BaseModel):
+    transcripcion: str
+    confianza: float = 0.0
+    provider: str = "gemini"
+
+
 class VoiceQueryOut(NlQueryOut):
     transcripcion: str
     confianza: float = 0.0

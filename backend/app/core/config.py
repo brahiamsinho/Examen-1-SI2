@@ -43,6 +43,7 @@ class Settings(BaseSettings):
         "SAAS_PLATFORM_BASE_DOMAIN",
         "SMTP_USER",
         "SMTP_PASSWORD",
+        "GEMINI_API_KEY",
         mode="before",
     )
     @classmethod
@@ -220,6 +221,14 @@ class Settings(BaseSettings):
     AI_MAX_IMAGE_BYTES: int = 12 * 1024 * 1024
     # Si true, no llama al worker: útil en tests o sin contenedor IA.
     AI_INFERENCE_STUB: bool = False
+
+    # Google Gemini — transcripción real en reportes por voz (prioridad sobre Whisper/stub).
+    GEMINI_API_KEY: str | None = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+
+    @property
+    def gemini_enabled(self) -> bool:
+        return bool((self.GEMINI_API_KEY or "").strip())
 
     # Evidencias CU13/CU14 — subida directa al API (multipart). URL pública del fichero (IA / taller).
     # Si es None, se usa API_PUBLIC_URL o el Host de cada petición. En Docker interno a veces conviene

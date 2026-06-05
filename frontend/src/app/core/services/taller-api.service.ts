@@ -25,6 +25,7 @@ import type {
   ReportExecuteResultDto,
   ReportExportFormat,
   ReportNlQueryResultDto,
+  ReportVoiceTranscribeResultDto,
   ReportTemplateCreatePayload,
   ReportTemplateDto,
 } from '../models/taller-api.models';
@@ -149,6 +150,12 @@ export class TallerApiService {
 
   nlReportQuery(query: string): Observable<ReportNlQueryResultDto> {
     return this.http.post<ReportNlQueryResultDto>(`${this.base}/reportes/nl-query`, { query });
+  }
+
+  voiceReportQuery(audio: Blob, filename = 'voice.webm'): Observable<ReportVoiceTranscribeResultDto> {
+    const form = new FormData();
+    form.append('file', audio, filename);
+    return this.http.post<ReportVoiceTranscribeResultDto>(`${this.base}/reportes/voice`, form);
   }
 
   exportReport(fmt: ReportExportFormat, qbe: QbePayload): Observable<Blob> {

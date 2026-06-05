@@ -21,15 +21,15 @@ from app.modules.acceso_y_administracion.reportes.schemas import (
     ReportTemplateCreate,
     ReportTemplateRead,
     ReportTemplateUpdate,
-    VoiceQueryOut,
+    VoiceTranscribeOut,
 )
+from app.modules.acceso_y_administracion.reportes.voice_transcribe import transcribe_reporte_voice
 from app.modules.acceso_y_administracion.reportes.services.export_engine import (
     qbe_result_to_csv_bytes,
     qbe_result_to_excel_bytes,
     qbe_result_to_pdf_bytes,
 )
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
-from app.modules.ai.services import inference_client
 from app.modules.talleres_y_tecnicos.taller_responsable.router import require_taller_responsable
 from app.modules.talleres_y_tecnicos.talleres.models import Taller
 
@@ -201,29 +201,24 @@ async def consulta_nl(
 
 @router.post(
     '/voice',
-    response_model=VoiceQueryOut,
+    response_model=VoiceTranscribeOut,
     dependencies=[Depends(require_permission('reportes:leer'))],
 )
 async def consulta_voz(
     file: UploadFile = File(...),
     ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
-    db: AsyncSession = Depends(get_db),
 ):
-    if not settings.AI_ENABLED and not settings.AI_INFERENCE_STUB:
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail='Transcripción por voz requiere IA habilitada (AI_ENABLED) o use el micrófono del navegador.',
-        )
-    tenant_id, taller_id, _, _ = _ctx(db, ctx)
     raw = await file.read()
     if len(raw) > settings.AI_MAX_AUDIO_BYTES:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail='Audio demasiado grande.')
     try:
-        data = await inference_client.call_transcribe_audio(
+        data = await transcribe_reporte_voice(
             raw,
             file.filename or 'audio.bin',
             file.content_type or 'application/octet-stream',
         )
+    except RuntimeError as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
     except Exception as exc:
         _log.exception('reportes voice transcribe')
         raise HTTPException(
@@ -236,8 +231,8 @@ async def consulta_voz(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail='No se detectó texto en el audio.')
     conf = float(data.get('confidence') or 0.0)
     conf = max(0.0, min(1.0, conf))
-    nl = service.nl_query(text, tenant_id=tenant_id, taller_id=taller_id)
-    return VoiceQueryOut(transcripcion=text, confianza=conf, **nl)
+    provider = str(data.get('provider') or ('gemini' if settings.gemini_enabled else 'whisper'))
+    return VoiceTranscribeOut(transcripcion=text, confianza=conf, provider=provider)
 
 
 @router.post(

@@ -223,3 +223,9 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-06-04  
 **Decisión:** El contenedor `backend` usa ENTRYPOINT en `Dockerfile` → `python -m app.db.docker_bootstrap` → uvicorn. Migraciones: Alembic (`stamp head` si initdb ya creó esquema; si no `upgrade head`) + SQL incremental vía tabla `app_sql_migrations`. Seeds compartidos en `app/seeds/runner.py`; en Compose `RUN_SEEDS_IN_LIFESPAN=false` y seeds vía flags `SEED_*` en entrypoint (override dev).  
 **Por qué:** Elimina pasos manuales (`alembic stamp`, `python -m app.seeds`) tras `docker compose up`; aplica SQL 0007–0017 en volúmenes antiguos; evita doble seed con `--reload`. Producción: `RUN_MIGRATIONS_ON_START=true`, seeds off salvo control explícito.
+
+## DEC-032 — Bitácora portal taller: endpoint dedicado + permiso acotado (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** No reutilizar `GET /api/bitacora/` para el taller. Nuevo `GET /api/app/taller/bitacora` con permiso `bitacora_taller:leer`, filtro obligatorio por `tenant_id`, actores (responsable + técnicos del `taller_id`) y whitelist de módulos operativos. Respuesta sin `ip_address`.  
+**Por qué:** El endpoint admin filtra solo por tenant y expondría acciones de clientes u otros talleres de la misma organización. Tres capas (tenant + equipo + módulo) garantizan aislamiento sin `tenant_id` en la tabla `bitacora`.

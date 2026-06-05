@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type {
@@ -8,9 +8,15 @@ import type {
   MiTallerUpdatePayload,
   RegistroTallerPayload,
   TallerDashboardDto,
+  TallerSuscripcionCheckoutPayload,
+  TallerSuscripcionCheckoutResponse,
+  TallerSuscripcionConfirmPayload,
+  TallerSuscripcionDto,
   TecnicoPortalCreatePayload,
   TecnicoPortalDto,
   TecnicoPortalUpdatePayload,
+  TallerBitacoraDto,
+  TallerBitacoraListParams,
 } from '../models/taller-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -52,5 +58,29 @@ export class TallerApiService {
 
   listEspecialidades(): Observable<EspecialidadDto[]> {
     return this.http.get<EspecialidadDto[]>(`${environment.apiUrl}/especialidades`);
+  }
+
+  getSuscripcion(): Observable<TallerSuscripcionDto> {
+    return this.http.get<TallerSuscripcionDto>(`${this.base}/suscripcion`);
+  }
+
+  createSuscripcionCheckout(body: TallerSuscripcionCheckoutPayload): Observable<TallerSuscripcionCheckoutResponse> {
+    return this.http.post<TallerSuscripcionCheckoutResponse>(`${this.base}/suscripcion/checkout`, body);
+  }
+
+  confirmSuscripcionCheckout(body: TallerSuscripcionConfirmPayload): Observable<TallerSuscripcionDto> {
+    return this.http.post<TallerSuscripcionDto>(`${this.base}/suscripcion/confirm`, body);
+  }
+
+  listBitacora(params: TallerBitacoraListParams = {}): Observable<TallerBitacoraDto[]> {
+    let httpParams = new HttpParams();
+    if (params.usuario_id != null) httpParams = httpParams.set('usuario_id', String(params.usuario_id));
+    if (params.modulo) httpParams = httpParams.set('modulo', params.modulo);
+    if (params.accion) httpParams = httpParams.set('accion', params.accion);
+    if (params.desde) httpParams = httpParams.set('desde', params.desde);
+    if (params.hasta) httpParams = httpParams.set('hasta', params.hasta);
+    if (params.limit != null) httpParams = httpParams.set('limit', String(params.limit));
+    if (params.offset != null) httpParams = httpParams.set('offset', String(params.offset));
+    return this.http.get<TallerBitacoraDto[]>(`${this.base}/bitacora`, { params: httpParams });
   }
 }

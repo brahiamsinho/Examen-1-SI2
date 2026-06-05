@@ -1,0 +1,177 @@
+@use '../../../admin/admin-theme' as t;
+@use '../../../admin/admin-ui' as ui;
+@use '../../taller-page' as tp;
+
+.sub__head {
+  @include ui.ev-page-header;
+}
+
+.sub__title {
+  @include tp.taller-page-title;
+}
+
+.sub__lead {
+  @include tp.taller-page-lead;
+}
+
+.sub__alert {
+  @include ui.ev-alert-error;
+  margin-bottom: 1rem;
+
+  &--ok {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.35);
+    color: #bbf7d0;
+  }
+}
+
+.sub__toolbar {
+  @include ui.ev-toolbar;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: calc(t.$ev-space * 2);
+}
+
+.sub__current {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.sub__current-label {
+  color: t.$ev-muted;
+  font-size: 0.8125rem;
+}
+
+.sub__current-name {
+  font-weight: 600;
+  color: #86efac;
+}
+
+.sub__status {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #bbf7d0;
+}
+
+.sub__muted {
+  color: t.$ev-muted;
+}
+
+.sub__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: calc(t.$ev-space * 2);
+}
+
+.sub__card {
+  @include ui.ev-card;
+  display: flex;
+  flex-direction: column;
+  gap: calc(t.$ev-space * 1.25);
+  border-color: t.$ev-border;
+
+  &--current {
+    border-color: rgba(34, 197, 94, 0.45);
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.2);
+  }
+
+  &--featured {
+    border-color: rgba(34, 197, 94, 0.35);
+  }
+}
+
+.sub__card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.sub__slug {
+  display: block;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: t.$ev-muted;
+}
+
+.sub__name {
+  margin: 0.15rem 0 0;
+  font-size: 1.125rem;
+}
+
+.sub__badge {
+  font-size: 0.6875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+
+  &--current {
+    background: rgba(34, 197, 94, 0.25);
+  }
+}
+
+.sub__desc {
+  margin: 0;
+  color: t.$ev-muted;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.sub__price {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.sub__benefits {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: t.$ev-muted;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.sub__actions {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.sub__btn {
+  @include tp.taller-btn-primary;
+  width: 100%;
+
+  &--ghost {
+    @include ui.ev-btn-ghost;
+    width: auto;
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.sub__hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: t.$ev-muted;
+}
+
+.sub__foot {
+  margin-top: 1.5rem;
+  font-size: 0.8125rem;
+  color: t.$ev-muted;
+
+  code {
+    font-size: 0.75rem;
+    color: #86efac;
+  }
+}

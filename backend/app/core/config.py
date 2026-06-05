@@ -39,6 +39,7 @@ class Settings(BaseSettings):
         "STRIPE_SAAS_WEBHOOK_SECRET",
         "STRIPE_SAAS_PRICE_STARTER",
         "STRIPE_SAAS_PRICE_PRO",
+        "STRIPE_SAAS_PRICE_MAX",
         "SAAS_PLATFORM_BASE_DOMAIN",
         "SMTP_USER",
         "SMTP_PASSWORD",
@@ -154,6 +155,9 @@ class Settings(BaseSettings):
     STRIPE_SAAS_WEBHOOK_SECRET: str | None = None
     STRIPE_SAAS_PRICE_STARTER: str | None = None
     STRIPE_SAAS_PRICE_PRO: str | None = None
+    STRIPE_SAAS_PRICE_MAX: str | None = None
+    # true (default en dev): crea price_... en Stripe test si faltan en BD y .env
+    STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES: bool = True
     # Subdominio: demo-sc.<SAAS_PLATFORM_BASE_DOMAIN>
     SAAS_PLATFORM_BASE_DOMAIN: str | None = None
 
@@ -164,6 +168,14 @@ class Settings(BaseSettings):
     @property
     def stripe_saas_price_id(self) -> str | None:
         return (self.STRIPE_SAAS_PRICE_STARTER or "").strip() or None
+
+    def stripe_saas_price_id_for_slug(self, slug: str) -> str | None:
+        """Price ID opcional por plan desde `.env` (pro/max/starter)."""
+        from app.modules.acceso_y_administracion.billing.stripe_price_resolver import (
+            env_stripe_price_id_for_slug,
+        )
+
+        return env_stripe_price_id_for_slug(slug)
 
     # ── Firebase Cloud Messaging (CU19) — opcional; ruta al JSON de cuenta de servicio ──
     FCM_ENABLED: bool = False

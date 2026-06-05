@@ -137,6 +137,16 @@ export const TALLER_ROUTES: Routes = [
             (m) => m.TallerEmergenciasDisponibilidadComponent,
           ),
       },
+      {
+        path: 'suscripcion',
+        loadComponent: () =>
+          import('./features/suscripcion/taller-suscripcion.component').then((m) => m.TallerSuscripcionComponent),
+      },
+      {
+        path: 'bitacora',
+        loadComponent: () =>
+          import('./features/bitacora/taller-bitacora.component').then((m) => m.TallerBitacoraComponent),
+      },
     ],
   },
   {

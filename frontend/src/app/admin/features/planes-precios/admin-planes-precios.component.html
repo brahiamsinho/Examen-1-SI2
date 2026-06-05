@@ -51,6 +51,7 @@
             @case ('free') { Sin Stripe (gratuito) }
             @case ('ready') { Stripe listo }
             @case ('missing') { Falta Price ID }
+            @case ('invalid') { Price ID inválido }
           }
         </span>
         <span class="plans__pill plans__pill--muted" *ngIf="!plan.active">Inactivo</span>
@@ -123,7 +124,7 @@
         name="stripe_price_id"
         placeholder="price_..."
       />
-      <span class="plans__hint">Obligatorio para checkout en landing en planes de pago.</span>
+      <span class="plans__hint">Copiá el ID desde Stripe Dashboard → Products → Price (formato <code>price_...</code>). No uses el monto en BOB.</span>
     </label>
 
     <div class="plans__form-row">

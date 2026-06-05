@@ -1,7 +1,38 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-05 (fix panel taller + organizaciones admin)
+# Fecha: 2026-06-05 (bitácora taller + Stripe confirm checkout)
+
+## Cambios recientes (2026-06-05) — Bitácora portal taller (multi-tenant seguro) ✅
+
+- **Pedido:** auditoría en panel taller sin exponer datos de otros talleres ni clientes.
+- **API:** `GET /api/app/taller/bitacora` + permiso `bitacora_taller:leer` (migración `0020`).
+- **Filtros:** tenant del usuario + solo responsable/técnicos del taller + whitelist de módulos operativos.
+- **UI:** `/taller/panel/bitacora`, nav en «Equipo y taller».
+- **Logging extra:** checkout/confirm suscripción (`taller_portal`).
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-bitacora.md`.
+
+## Cambios recientes (2026-06-05) — Confirmación post-checkout Stripe (dev local) ✅
+
+- **Problema:** plan no se actualizaba tras pagar en Checkout; webhook no llega a `localhost`.
+- **Fix:** `POST /api/app/taller/suscripcion/confirm` + `session_id={CHECKOUT_SESSION_ID}` en success URL.
+- **Lógica compartida:** `aplicar_checkout_session_completada` (webhook + confirm).
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-stripe-confirm-checkout.md`.
+
+## Cambios recientes (2026-06-05) — Stripe test desde `.env` + bootstrap automático ✅
+
+- **Pedido:** usar credenciales test del `.env` sin pegar `price_...` a mano en admin.
+- **Backend:** `stripe_price_resolver`, `stripe_saas_bootstrap` en lifespan; vars `STRIPE_SAAS_PRICE_PRO/MAX`, `STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES`.
+- **Docker:** compose pasa todas las vars `STRIPE_SAAS_*`.
+- **Verificado:** checkout Pro devuelve `cs_test_...` con solo `sk_test_`/`pk_test_` en `.env`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-stripe-env-bootstrap.md`.
+
+## Cambios recientes (2026-06-05) — Planes SaaS en panel taller + upgrade Stripe ✅
+
+- **Pedido:** sidebar del taller muestra planes SaaS, plan actual, upgrade (sin downgrade) con Stripe del `.env`.
+- **Backend:** `GET/POST /api/app/taller/suscripcion` (+ checkout); validación por `sort_order`; webhook actualiza `tenant.plan`.
+- **Frontend:** bloque planes en sidebar, ruta `/taller/panel/suscripcion`, nav «Suscripción».
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-planes-saas-stripe.md`.
 
 ## Cambios recientes (2026-06-05) — Fix panel taller atascado en "Cargando…" ✅
 

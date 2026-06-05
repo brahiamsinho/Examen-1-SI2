@@ -17,6 +17,18 @@ _log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if settings.stripe_enabled:
+        try:
+            from app.core.database import AsyncSessionLocal
+            from app.modules.acceso_y_administracion.billing.stripe_saas_bootstrap import (
+                ensure_saas_stripe_prices,
+            )
+
+            async with AsyncSessionLocal() as session:
+                await ensure_saas_stripe_prices(session)
+        except Exception as exc:
+            _log.warning("Bootstrap Stripe SaaS omitido o falló: %s", exc)
+
     if settings.RUN_SEEDS_IN_LIFESPAN:
         from app.seeds.runner import run_startup_seeds, seeds_enabled_for_startup
 

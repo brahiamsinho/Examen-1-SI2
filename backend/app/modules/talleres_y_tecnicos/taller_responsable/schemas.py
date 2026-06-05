@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
+from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, EstadoTecnicoEnum
 
 
@@ -96,3 +97,58 @@ class TallerDashboardRead(BaseModel):
     taller_estado: EstadoTallerEnum
     usuarios_activos: int = 0
     clientes_registrados: int = 0
+
+
+class TallerPlanOptionRead(BaseModel):
+    slug: str
+    name: str
+    description: Optional[str] = None
+    price_monthly_bob: float
+    currency: str
+    benefits: list[str]
+    featured: bool
+    badge: Optional[str] = None
+    sort_order: int
+    is_current: bool
+    can_upgrade: bool
+    stripe_checkout_available: bool
+
+
+class TallerSuscripcionRead(BaseModel):
+    tenant_nombre: str
+    tenant_slug: str
+    current_plan_slug: str
+    current_plan_name: str
+    subscription_status: str
+    subscription_ends_at: Optional[datetime] = None
+    stripe_enabled: bool
+    plans: list[TallerPlanOptionRead]
+
+
+class TallerSuscripcionCheckoutIn(BaseModel):
+    plan_slug: str = Field(..., min_length=1, max_length=50)
+    success_url: str = Field(..., min_length=8, max_length=2048)
+    cancel_url: str = Field(..., min_length=8, max_length=2048)
+
+
+class TallerSuscripcionCheckoutOut(BaseModel):
+    checkout_url: str
+    session_id: str
+
+
+class TallerSuscripcionConfirmIn(BaseModel):
+    session_id: str = Field(..., min_length=3, max_length=255)
+
+
+class TallerBitacoraRead(BaseModel):
+    """Registro de auditoría visible en el portal taller (sin IP ni datos de otros talleres)."""
+
+    id: int
+    usuario_id: Optional[int]
+    usuario_nombre: Optional[str]
+    modulo: str
+    entidad: str
+    entidad_id: Optional[int]
+    accion: AccionBitacoraEnum
+    descripcion: Optional[str]
+    created_at: datetime

@@ -95,3 +95,77 @@ export interface TecnicoPortalUpdatePayload {
   disponibilidad?: string | null;
   estado?: EstadoTecnico;
 }
+
+export interface TallerPlanOptionDto {
+  slug: string;
+  name: string;
+  description?: string | null;
+  price_monthly_bob: number;
+  currency: string;
+  benefits: string[];
+  featured: boolean;
+  badge?: string | null;
+  sort_order: number;
+  is_current: boolean;
+  can_upgrade: boolean;
+  stripe_checkout_available: boolean;
+}
+
+export interface TallerSuscripcionDto {
+  tenant_nombre: string;
+  tenant_slug: string;
+  current_plan_slug: string;
+  current_plan_name: string;
+  subscription_status: string;
+  subscription_ends_at?: string | null;
+  stripe_enabled: boolean;
+  plans: TallerPlanOptionDto[];
+}
+
+export interface TallerSuscripcionCheckoutPayload {
+  plan_slug: string;
+  success_url: string;
+  cancel_url: string;
+}
+
+export interface TallerSuscripcionCheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface TallerSuscripcionConfirmPayload {
+  session_id: string;
+}
+
+export type TallerAccionBitacora =
+  | 'CREAR'
+  | 'ACTUALIZAR'
+  | 'ELIMINAR'
+  | 'INICIAR_SESION'
+  | 'CERRAR_SESION'
+  | 'RESTABLECER_CONTRASENA'
+  | 'ASIGNAR_ROL'
+  | 'ASIGNAR_PERMISO'
+  | 'CONSULTAR';
+
+export interface TallerBitacoraDto {
+  id: number;
+  usuario_id: number | null;
+  usuario_nombre: string | null;
+  modulo: string;
+  entidad: string;
+  entidad_id: number | null;
+  accion: TallerAccionBitacora;
+  descripcion: string | null;
+  created_at: string;
+}
+
+export interface TallerBitacoraListParams {
+  usuario_id?: number;
+  modulo?: string;
+  accion?: TallerAccionBitacora;
+  desde?: string;
+  hasta?: string;
+  limit?: number;
+  offset?: number;
+}

@@ -10,6 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.timeutil import utc_now_naive
 from app.modules.acceso_y_administracion.pricing_plans.models import PricingPlan
+from app.modules.acceso_y_administracion.billing.stripe_price_id import assert_valid_stripe_price_id
+from app.modules.acceso_y_administracion.billing.stripe_price_resolver import (
+    resolve_effective_stripe_price_id,
+)
 from app.modules.acceso_y_administracion.pricing_plans.schemas import PricingPlanRead
 
 _PUBLIC_PLANS_CACHE_TTL_S = 300
@@ -31,7 +35,7 @@ def _to_read(row: PricingPlan) -> PricingPlanRead:
         cta_label=row.cta_label,
         cta_router_link=row.cta_router_link,
         cta_href=row.cta_href,
-        stripe_price_id=row.stripe_price_id,
+        stripe_price_id=resolve_effective_stripe_price_id(row.stripe_price_id, row.slug),
         sort_order=row.sort_order,
         active=bool(row.active),
     )
@@ -74,6 +78,9 @@ async def get_plan_by_slug(db: AsyncSession, slug: str) -> PricingPlan:
 
 async def update_plan(db: AsyncSession, slug: str, data: dict) -> PricingPlanRead:
     row = await get_plan_by_slug(db, slug)
+    if "stripe_price_id" in data and data["stripe_price_id"] is not None:
+        raw = str(data["stripe_price_id"]).strip()
+        data["stripe_price_id"] = assert_valid_stripe_price_id(raw) if raw else None
     for key, val in data.items():
         if val is None:
             continue

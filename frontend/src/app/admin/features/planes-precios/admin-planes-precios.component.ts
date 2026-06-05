@@ -73,9 +73,11 @@ export class AdminPlanesPreciosComponent implements OnInit {
       });
   }
 
-  stripeStatus(plan: PricingPlanDto): 'free' | 'ready' | 'missing' {
+  stripeStatus(plan: PricingPlanDto): 'free' | 'ready' | 'missing' | 'invalid' {
     if (!plan.price_monthly_bob || plan.price_monthly_bob <= 0) return 'free';
-    return plan.stripe_price_id?.trim() ? 'ready' : 'missing';
+    const id = plan.stripe_price_id?.trim();
+    if (!id) return 'missing';
+    return id.startsWith('price_') ? 'ready' : 'invalid';
   }
 
   openEdit(plan: PricingPlanDto): void {

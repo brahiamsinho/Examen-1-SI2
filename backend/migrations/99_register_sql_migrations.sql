@@ -23,5 +23,6 @@ INSERT INTO app_sql_migrations (filename) VALUES
     ('0016_multitenancy_phase2.sql'),
     ('0017_saas_billing_phase3.sql'),
     ('0018_taller_acceso_permisos.sql'),
-    ('0019_pricing_plans.sql')
+    ('0019_pricing_plans.sql'),
+    ('0020_taller_bitacora_permiso.sql')
 ON CONFLICT (filename) DO NOTHING;

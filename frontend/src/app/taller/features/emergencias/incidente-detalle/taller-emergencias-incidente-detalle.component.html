@@ -10,9 +10,9 @@
 
   <div class="emg__alert" *ngIf="error" role="alert">{{ error }}</div>
   <div class="emg__ok" *ngIf="successMsg" role="status">{{ successMsg }}</div>
-  <p class="emg__muted" *ngIf="loading">Cargando…</p>
+  <p class="emg__muted" *ngIf="loading()">Cargando…</p>
 
-  <ng-container *ngIf="!loading && detalle">
+  <ng-container *ngIf="!loading() && detalle">
     <div class="emg__actionsbar">
       <span class="emg__pill">{{ detalle.estado_bandeja }}</span>
       <span class="emg__pill emg__pill--muted">{{ detalle.estado_solicitud }}</span>
@@ -124,8 +124,8 @@
 
       <section class="emg__card emg__card--wide" *ngIf="debeMostrarBloqueAsignacion(detalle)">
         <h3 class="emg__card-title">Asignación de técnico</h3>
-        <p class="emg__muted" *ngIf="loadingAsignData">Cargando técnicos e historial…</p>
-        <ng-container *ngIf="!loadingAsignData">
+        <p class="emg__muted" *ngIf="loadingAsignData()">Cargando técnicos e historial…</p>
+        <ng-container *ngIf="!loadingAsignData()">
           <p class="emg__text" *ngIf="asignaciones.length">
             Historial de asignaciones (más reciente primero):
           </p>
@@ -185,7 +185,7 @@
               </button>
             </div>
           </ng-container>
-          <p class="emg__muted" *ngIf="!puedeAsignarTecnico() && asignaciones.length === 0 && !loadingAsignData">
+          <p class="emg__muted" *ngIf="!puedeAsignarTecnico() && asignaciones.length === 0 && !loadingAsignData()">
             Aún no hay asignaciones. Se requiere el permiso <code>tecnicos:asignar</code> para asignar.
           </p>
         </ng-container>

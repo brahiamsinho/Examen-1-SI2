@@ -1,6 +1,17 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { TallerEmergenciasApiService } from '../../../../core/services/taller-emergencias-api.service';
 import type { ComisionTallerDto, ResumenComisionesDto } from '../../../../core/models/taller-emergencias.models';
 
@@ -10,37 +21,45 @@ import type { ComisionTallerDto, ResumenComisionesDto } from '../../../../core/m
   imports: [CommonModule, RouterLink],
   templateUrl: './taller-emergencias-comisiones.component.html',
   styleUrl: './taller-emergencias-comisiones.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerEmergenciasComisionesComponent implements OnInit {
   private readonly api = inject(TallerEmergenciasApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   resumen: ResumenComisionesDto | null = null;
   rows: ComisionTallerDto[] = [];
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
 
   ngOnInit(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.error = null;
-    this.api.getResumenComisiones().subscribe({
-      next: (r) => {
-        this.resumen = r;
-      },
-      error: (err) => {
-        this.resumen = null;
-        this.error = this.msg(err, 'No se pudo cargar el resumen de comisiones.');
-      },
-    });
-    this.api.listComisiones().subscribe({
-      next: (list) => {
-        this.rows = list;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        if (!this.error) this.error = this.msg(err, 'No se pudo cargar el listado de comisiones.');
-      },
-    });
+    forkJoin({
+      resumen: this.api.getResumenComisiones(),
+      rows: this.api.listComisiones(),
+    })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: ({ resumen, rows }) => {
+          this.resumen = resumen;
+          this.rows = rows;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.resumen = null;
+          this.rows = [];
+          this.error = this.msg(err, 'No se pudieron cargar las comisiones.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   parseDecimal(s: string): number {

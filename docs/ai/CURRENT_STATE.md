@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-04 — Admin planes/precios + Stripe landing ✅
+# Última actualización: 2026-06-05 — Fix panel taller "Cargando…" (OnPush + signals) ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
@@ -124,7 +124,15 @@
 - [x] **Push por pago confirmado:** backend `pagos/service.py` envía notificación in-app + push al cliente cuando el pago queda `PAGADO` (pasarela simulada y confirmación Stripe).
 - [x] **Push de bienvenida cliente (primer token):** al registrar el primer FCM token del cliente (`dispositivos_push` vía ruta `app/cliente/dispositivos/fcm`) se crea notificación/push de cuenta activa.
 - [x] **Hora Santa Cruz (BOT) unificada:** mobile reemplaza `.toLocal()` por util común `BoliviaTime` en vistas de cliente/técnico y chat/comunicaciones/pagos; Angular fija `LOCALE_ID='es-BO'` y `DATE_PIPE_DEFAULT_OPTIONS.timezone='-0400'` para que todos los `| date` muestren hora Bolivia por defecto.
-- [x] **Docker timezone BOT:** `docker-compose.yml` define `TZ=America/La_Paz` en `db`, `mailhog`, `backend`, `frontend` y `ai-inference`, y `PGTZ=America/La_Paz` en `db` para logs/fechas de contenedor alineadas a Santa Cruz.
+- [x] **Docker timezone BOT:** `docker-compose.yml` define `TZ=America/La_Paz` en `db`, `mailpit`, `backend`, `frontend` y `ai-inference`, y `PGTZ=America/La_Paz` en `db` para logs/fechas de contenedor alineadas a Santa Cruz.
+
+### Docker — optimización runtime y arranque (2026-06-04) ✅
+- [x] **Mailpit** reemplaza Mailhog (`axllent/mailpit`, alias de red `mailhog` para `SMTP_HOST` sin cambios).
+- [x] Initdb incluye **0018**, **0019** y **`99_register_sql_migrations.sql`** (bootstrap no re-ejecuta SQL ya aplicado).
+- [x] `frontend` espera `backend: service_healthy`; Stripe con `${VAR:-}` (sin warnings Compose).
+- [x] **ai-inference:** multi-stage, usuario `aiuser`, caché en `/home/aiuser/.cache`.
+- [x] `docker-compose.override.yml`: nota OneDrive + bind mount lento en Windows.
+- [x] Detalle: `docs/ai/DOCKER_BUILD_OPTIMIZATION.md`; sesión `docs/ai/sessions/2026-06-04-agent-docker-optimizacion.md`.
 
 ### Taller emergencias — prioridad y evidencias (2026-04-25) ✅
 - [x] **API** `GET /api/app/taller/emergencias/bandeja/disponibles` y `GET .../bandeja/{id}`: campo `nivel_prioridad` (desde `ai_payload.prioridad.nivel_prioridad`); en detalle, `evidencias[]` (filas de `solicitud_evidencias` para la solicitud).
@@ -153,6 +161,11 @@
 ### Taller web — navegación post-aceptación (2026-04-26) ✅
 - [x] **Historial / comisiones API:** respuestas de `GET .../historial-atenciones` y `GET .../comisiones` incluyen **`bandeja_id`** (join a `solicitud_taller_bandeja`) para poder abrir `GET .../bandeja/{id}` desde listados.
 - [x] **Angular panel taller:** rutas y menú **Mis solicitudes** (activas, fuera de bandeja disponible), **Historial de atenciones** (filtros fecha/estado), **Servicios asignados** (con técnico), **Comisiones** (resumen CU31 + tabla). Servicio `TallerEmergenciasApiService` extendido. Sesión: `docs/ai/sessions/2026-04-26-taller-web-sidebar-historial-comisiones.md`.
+
+### Taller web — fix "Cargando…" sidebar (2026-06-05) ✅
+- [x] **Síntoma:** vistas del panel taller atascadas en "Cargando…" con API 200 (mismo bug que admin organizaciones).
+- [x] **Fix:** componentes hijos migrados a OnPush + `loading` signal + `markForCheck` + `finalize`/`takeUntilDestroyed` (bandeja, historial, dashboard, mi-taller, técnicos, roles, clientes, disponibilidad, comisiones, detalle incidente).
+- [x] **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-taller-panel-loading.md`.
 
 ## Lo que existe
 

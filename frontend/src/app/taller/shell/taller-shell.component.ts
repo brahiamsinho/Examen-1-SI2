@@ -1,4 +1,11 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
@@ -42,6 +49,7 @@ export interface TallerNavGroup {
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './taller-shell.component.html',
   styleUrl: './taller-shell.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerShellComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
@@ -150,17 +158,17 @@ export class TallerShellComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.me = this.auth.getMe();
+    this.rebuildNavGroups();
+
     this.auth
       .refreshMeSiHaySesion()
-      .pipe(take(1))
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.me = this.auth.getMe();
         this.rebuildNavGroups();
         this.cdr.markForCheck();
       });
-
-    this.me = this.auth.getMe();
-    this.rebuildNavGroups();
 
     this.syncPageTitle(this.router.url);
     this.router.events

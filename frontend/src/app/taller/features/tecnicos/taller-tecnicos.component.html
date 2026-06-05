@@ -4,7 +4,7 @@
 
   <div class="tech__alert" *ngIf="error" role="alert">{{ error }}</div>
 
-  <div class="tech__toolbar" *ngIf="!loading">
+  <div class="tech__toolbar" *ngIf="!loading()">
     <input
       type="search"
       class="tech__search"
@@ -19,9 +19,9 @@
     <button type="button" class="tech__btn tech__btn--primary" (click)="openCreate()">Registrar técnico</button>
   </div>
 
-  <p class="tech__muted" *ngIf="loading">Cargando…</p>
+  <p class="tech__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="tech__tablewrap" *ngIf="!loading">
+  <div class="tech__tablewrap" *ngIf="!loading()">
     <table class="tech__table">
       <thead>
         <tr>

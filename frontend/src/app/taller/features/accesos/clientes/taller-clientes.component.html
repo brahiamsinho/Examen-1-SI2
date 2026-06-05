@@ -13,7 +13,7 @@
 
   <div class="pg__alert" *ngIf="error" role="alert">{{ error }}</div>
 
-  <div class="pg__toolbar" *ngIf="!loading">
+  <div class="pg__toolbar" *ngIf="!loading()">
     <input
       type="search"
       class="pg__search"
@@ -28,9 +28,9 @@
     <button type="button" class="pg__btn" (click)="reload()">Actualizar</button>
   </div>
 
-  <p class="pg__muted" *ngIf="loading">Cargando…</p>
+  <p class="pg__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="pg__tablewrap" *ngIf="!loading">
+  <div class="pg__tablewrap" *ngIf="!loading()">
     <table class="pg__table">
       <thead>
         <tr>

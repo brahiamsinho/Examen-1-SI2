@@ -1,8 +1,14 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-06-04 — Admin planes/precios + Stripe landing
+# Actualizado: 2026-06-05 — Fix panel taller "Cargando…"
 # =========================================================
+
+## ALTA — Verificar panel taller (2026-06-05)
+
+1. Hard refresh **Ctrl+Shift+R** en `http://localhost/taller/panel` como `luis.rivera@sc-demo.test`.
+2. Navegar sidebar: Resumen, Solicitudes, Mis solicitudes, Historial, Mi taller, Técnicos, Roles, Clientes.
+3. Si algo sigue en "Cargando…", revisar consola DevTools (Network debe ser 200) y el componente hijo de esa ruta.
 
 ## ALTA — Planes y precios + Stripe (2026-06-04)
 
@@ -58,7 +64,7 @@
 1. Leer **`AGENTS.md`** (raíz).
 2. Copiar **`.env.example` → `.env`** en la raíz del repo y ajustar `SECRET_KEY`, DB si hace falta. **IA:** definir **una sola vez** `AI_ENABLED` y `AI_INFERENCE_BASE_URL` (no duplicar bloques al pegar comentarios). Para Docker con worker en la misma red: `AI_ENABLED=true`, `AI_INFERENCE_BASE_URL=http://ai-inference:8080`.
 3. **`mobile/.env`** desde `mobile/.env.example` — `API_BASE_URL` (IP/puerto del host desde el dispositivo).
-4. **Docker — solo DB + backend + frontend + Mailhog:**  
+4. **Docker — solo DB + backend + frontend + Mailpit:**  
    `docker compose up -d --build`  
    (timezone contenedores: `TZ=America/La_Paz`; Postgres además `PGTZ=America/La_Paz`)
    **Docker — incluir worker de inferencia (Whisper + YOLO):**  

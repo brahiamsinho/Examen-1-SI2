@@ -60,7 +60,24 @@ El script `frontend/scripts/sync-from-root-env.cjs` corre en `prebuild`. En la i
 
 ## Postgres: `db` unhealthy en el primer `up`
 
-Si ves `dependency failed to start: container emergencias_db is unhealthy`, suele ser **carrera** entre init (scripts `01_*.sql`…`14_*.sql`) + reinicio de Postgres y el healthcheck. En `docker-compose.yml`, el servicio `db` define `healthcheck.start_period: 240s` para que los fallos de `pg_isready` en esa ventana no cuenten como unhealthy.
+Si ves `dependency failed to start: container emergencias_db is unhealthy`, suele ser **carrera** entre init (scripts `01_*.sql`…`19_*.sql` + `99_register_sql_migrations.sql`) + reinicio de Postgres y el healthcheck. En `docker-compose.yml`, el servicio `db` define `healthcheck.start_period: 240s` para que los fallos de `pg_isready` en esa ventana no cuenten como unhealthy.
+
+## Arranque backend sin SQL duplicado (2026-06-04)
+
+- Initdb monta **0018**, **0019** y **`99_register_sql_migrations.sql`** (marca en `app_sql_migrations` lo ya aplicado por Postgres).
+- `docker_bootstrap` solo ejecuta archivos `.sql` **no** registrados (p. ej. migraciones nuevas `0020+`).
+- `frontend` espera `backend: service_healthy` (evita 502 breves tras bootstrap).
+
+## Mailpit en lugar de Mailhog
+
+- Servicio `mailpit` (`axllent/mailpit`, ~25 MB vs ~572 MB). Healthcheck: `/mailpit readyz` (v1.22+).
+- Alias de red `mailhog` mantiene `SMTP_HOST=mailhog` en `.env` sin cambios.
+- Puertos y `MAILHOG_WEB_URL` iguales (1025 / 8025).
+
+## ai-inference endurecido
+
+- Multi-stage (`builder` + `runtime`), usuario `aiuser` (uid 1001), sin `git` en runtime.
+- Caché de modelos en volumen `ai_inference_cache` → `/home/aiuser/.cache`.
 
 ## Qué no optimiza este documento
 

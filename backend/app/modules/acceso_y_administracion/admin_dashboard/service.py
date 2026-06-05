@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import asyncio
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import AsyncSessionLocal
+from app.core.tenant_context import apply_postgres_tenant_session
 from app.modules.acceso_y_administracion.bitacora.models import Bitacora
 from app.modules.acceso_y_administracion.roles.models import Rol
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
@@ -41,15 +45,40 @@ async def _bitacora_reciente(
 
 
 async def get_panel_overview(
-    db: AsyncSession,
     *,
     tenant_id: int | None = None,
 ) -> dict:
-    # Consultas secuenciales en la misma sesión (AsyncSession no admite execute concurrente).
-    total_usuarios = await _count_usuarios(db, tenant_id)
-    total_talleres = await _count_talleres(db, tenant_id)
-    total_roles = await _count_roles(db)
-    actividad = await _bitacora_reciente(db, tenant_id)
+    """
+    Conteos y bitácora en paralelo (mismo patrón que admin_finanzas).
+    Cada consulta usa su propia AsyncSession.
+    """
+
+    async def usuarios_task() -> int:
+        async with AsyncSessionLocal() as session:
+            await apply_postgres_tenant_session(session)
+            return await _count_usuarios(session, tenant_id)
+
+    async def talleres_task() -> int:
+        async with AsyncSessionLocal() as session:
+            await apply_postgres_tenant_session(session)
+            return await _count_talleres(session, tenant_id)
+
+    async def roles_task() -> int:
+        async with AsyncSessionLocal() as session:
+            await apply_postgres_tenant_session(session)
+            return await _count_roles(session)
+
+    async def bitacora_task() -> list[Bitacora]:
+        async with AsyncSessionLocal() as session:
+            await apply_postgres_tenant_session(session)
+            return await _bitacora_reciente(session, tenant_id)
+
+    total_usuarios, total_talleres, total_roles, actividad = await asyncio.gather(
+        usuarios_task(),
+        talleres_task(),
+        roles_task(),
+        bitacora_task(),
+    )
     return {
         "total_usuarios": total_usuarios,
         "total_talleres": total_talleres,

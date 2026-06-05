@@ -104,7 +104,9 @@ def run_sql_migrations() -> None:
         }
 
     sql_files = sorted(
-        path for path in _MIGRATIONS_DIR.glob("*.sql") if path.name != "init.sql"
+        path
+        for path in _MIGRATIONS_DIR.glob("*.sql")
+        if path.name != "init.sql" and not path.name.startswith("99_")
     )
     for path in sql_files:
         if path.name in applied:

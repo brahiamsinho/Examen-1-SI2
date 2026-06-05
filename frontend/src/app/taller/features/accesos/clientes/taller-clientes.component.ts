@@ -1,6 +1,16 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { AdminApiService } from '../../../../core/services/admin-api.service';
 import type { ClienteListDto, EstadoUsuario } from '../../../../core/models/admin-api.models';
 
@@ -10,14 +20,17 @@ import type { ClienteListDto, EstadoUsuario } from '../../../../core/models/admi
   imports: [CommonModule, FormsModule],
   templateUrl: './taller-clientes.component.html',
   styleUrl: './taller-clientes.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerClientesComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   clientes: ClienteListDto[] = [];
   search = '';
   estado: EstadoUsuario | '' = '';
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
 
   readonly estados: EstadoUsuario[] = ['ACTIVO', 'INACTIVO', 'BLOQUEADO', 'PENDIENTE'];
@@ -27,18 +40,27 @@ export class TallerClientesComponent implements OnInit {
   }
 
   reload(): void {
-    this.loading = true;
-    this.api.listClientes().subscribe({
-      next: (rows) => {
-        this.clientes = rows;
-        this.loading = false;
-        this.error = null;
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudieron cargar las cuentas de clientes.';
-      },
-    });
+    this.loading.set(true);
+    this.api
+      .listClientes()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (rows) => {
+          this.clientes = rows;
+          this.error = null;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.error = 'No se pudieron cargar las cuentas de clientes.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   get filtered(): ClienteListDto[] {

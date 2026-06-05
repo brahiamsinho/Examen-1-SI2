@@ -1,7 +1,42 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-04 (Admin planes/precios + Stripe landing)
+# Fecha: 2026-06-05 (fix panel taller + organizaciones admin)
+
+## Cambios recientes (2026-06-05) — Fix panel taller atascado en "Cargando…" ✅
+
+- **Síntoma:** casi todo el sidebar del panel taller (`/taller/panel/*`) quedaba en "Cargando…" aunque las APIs respondían 200.
+- **Causa:** componentes hijos lazy-loaded sin migrar a OnPush + signals + `markForCheck` tras refactor Fase 1 del shell.
+- **Fix:** 10 componentes taller → OnPush, `loading` signal, `finalize` + `takeUntilDestroyed`, templates `loading()`.
+- **Build:** `docker compose build frontend && docker compose up -d frontend` — OK.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-taller-panel-loading.md`.
+
+## Cambios recientes (2026-06-05) — Fix organizaciones atascadas en "Cargando…" ✅
+
+- **Síntoma:** `/admin/panel/organizaciones` quedaba en "Cargando…" aunque `GET /api/admin/tenants` respondía 200.
+- **Causa:** `admin-organizaciones` no migrado al patrón OnPush + signals + `markForCheck` del refactor Fase 1; peticiones duplicadas shell + página.
+- **Fix:** `admin-organizaciones.component` OnPush, signals `loading`/`tenants`, `finalize` + `takeUntilDestroyed`; `AdminApiService.listTenants()` con `shareReplay` + `invalidateTenantsList()`; bootstrap excluye `99_*.sql`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-organizaciones-loading.md`.
+
+## Cambios recientes (2026-06-04) — Docker optimización ✅
+
+- **Mailpit** en lugar de Mailhog (imagen ~25 MB); alias `mailhog` en red Docker.
+- Initdb: migraciones **0018/0019** + `99_register_sql_migrations.sql` (arranque backend más rápido en BD nueva).
+- `frontend` → `depends_on: backend: condition: service_healthy`.
+- Stripe env con defaults vacíos; ai-inference multi-stage + `aiuser`.
+- Override dev: comentario OneDrive/bind mount.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-docker-optimizacion.md`.
+
+## Cambios recientes (2026-06-04) — Refactor rendimiento Fase 1 ✅
+
+- **Rama:** `feature/optimizando`.
+- **Landing:** OnPush, scroll throttled, forkJoin pricing API.
+- **Dashboard:** barras precalculadas, formatter money compartido.
+- **Listados:** signals/computed en permisos, roles, usuarios, talleres (admin + taller).
+- **Shells:** OnPush admin y taller.
+- **Utils:** `list-filter.util.ts`, `format-money.util.ts`.
+- **Backend:** overview admin en paralelo (`asyncio.gather`); cache planes públicos 5 min; `GET /api/public/pricing/bootstrap`; landing usa bootstrap.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-refactor-performance-fase1.md`.
 
 ## Cambios recientes (2026-06-04) — Admin planes y precios + Stripe ✅
 

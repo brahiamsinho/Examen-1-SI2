@@ -22,6 +22,11 @@ import type {
   BitacoraDto,
   TallerComisionFila,
 } from '../../../core/models/admin-api.models';
+import { formatMoneyBob, formatPct, toNumber } from '../../../core/utils/format-money.util';
+
+export interface SerieComisionBarRow extends AdminComisionSerieFila {
+  barWidthPct: number;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -46,7 +51,8 @@ export class AdminDashboardComponent implements OnInit {
   actividad: BitacoraDto[] = [];
   finanzas: AdminFinanzasResumen | null = null;
   topTalleres: TallerComisionFila[] = [];
-  serieComisiones: AdminComisionSerieFila[] = [];
+  serieComisiones: SerieComisionBarRow[] = [];
+  serieComisionTotal = 0;
   desde = '';
   hasta = '';
   loadingCounts = true;
@@ -55,10 +61,9 @@ export class AdminDashboardComponent implements OnInit {
   finanzasError: string | null = null;
 
   readonly quick = [
-    { path: '/admin/panel/usuarios', label: 'Usuarios' },
-    { path: '/admin/panel/roles', label: 'Roles' },
-    { path: '/admin/panel/permisos', label: 'Permisos' },
     { path: '/admin/panel/talleres', label: 'Talleres' },
+    { path: '/admin/panel/planes-precios', label: 'Planes y precios' },
+    { path: '/admin/panel/organizaciones', label: 'Organizaciones' },
     { path: '/admin/panel/bitacora', label: 'Bitácora' },
   ] as const;
 
@@ -105,37 +110,12 @@ export class AdminDashboardComponent implements OnInit {
     this.loadFinanzas();
   }
 
-  totalComisionSerie(): number {
-    return this.serieComisiones.reduce(
-      (acc, x) => acc + this.toNumber(x.total_comision_plataforma),
-      0,
-    );
-  }
-
-  maxComisionSerie(): number {
-    return this.serieComisiones.reduce((max, x) => {
-      const value = this.toNumber(x.total_comision_plataforma);
-      return value > max ? value : max;
-    }, 0);
-  }
-
-  barWidthPercent(value: string): number {
-    const max = this.maxComisionSerie();
-    if (max <= 0) return 0;
-    return Math.max(4, Math.round((this.toNumber(value) / max) * 100));
-  }
-
   money(value: string | number | null | undefined): string {
-    return new Intl.NumberFormat('es-BO', {
-      style: 'currency',
-      currency: 'BOB',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(this.toNumber(value));
+    return formatMoneyBob(value);
   }
 
   pct(value: string | number | null | undefined): string {
-    return `${this.toNumber(value).toFixed(2)}%`;
+    return formatPct(value);
   }
 
   /** Conteos primero (rápido); finanzas después para que el usuario vea tarjetas sin esperar SQL pesado. */
@@ -180,11 +160,11 @@ export class AdminDashboardComponent implements OnInit {
           if (reportes?.resumen) {
             this.finanzas = reportes.resumen;
             this.topTalleres = reportes.top_talleres ?? [];
-            this.serieComisiones = reportes.serie_diaria ?? [];
+            this.applySerieChart(reportes.serie_diaria ?? []);
           } else {
             this.finanzas = null;
             this.topTalleres = [];
-            this.serieComisiones = [];
+            this.applySerieChart([]);
             this.finanzasError = 'No se pudieron cargar las métricas financieras.';
           }
           this.loadingFinanzas = false;
@@ -212,10 +192,20 @@ export class AdminDashboardComponent implements OnInit {
     return `${y}-${m}-${d}`;
   }
 
-  private toNumber(value: string | number | null | undefined): number {
-    if (typeof value === 'number') return value;
-    if (!value) return 0;
-    const n = Number(value);
-    return Number.isFinite(n) ? n : 0;
+  private applySerieChart(rows: AdminComisionSerieFila[]): void {
+    let max = 0;
+    let total = 0;
+    for (const row of rows) {
+      const value = toNumber(row.total_comision_plataforma);
+      total += value;
+      if (value > max) max = value;
+    }
+    this.serieComisionTotal = total;
+    this.serieComisiones = rows.map((row) => {
+      const value = toNumber(row.total_comision_plataforma);
+      const barWidthPct =
+        max <= 0 ? 0 : Math.max(4, Math.round((value / max) * 100));
+      return { ...row, barWidthPct };
+    });
   }
 }

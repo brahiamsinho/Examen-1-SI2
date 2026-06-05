@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import anyio
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -15,8 +15,11 @@ from app.modules.acceso_y_administracion.pricing_plans.schemas import (
     PricingPlanRead,
     PricingPlanUpdate,
     PublicCheckoutIn,
+    PublicPricingBootstrapRead,
     StripeConfigPublicRead,
 )
+
+_PUBLIC_CACHE_CONTROL = "public, max-age=300"
 
 admin_router = APIRouter(prefix="/admin/pricing-plans", tags=["Admin - Planes y precios"])
 public_router = APIRouter(prefix="/public/pricing", tags=["Public - Planes y precios"])
@@ -40,9 +43,25 @@ async def actualizar_plan(
     return await service.update_plan(db, slug, body.model_dump(exclude_unset=True))
 
 
+@public_router.get("/bootstrap", response_model=PublicPricingBootstrapRead)
+async def bootstrap_pricing_publico(
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+) -> PublicPricingBootstrapRead:
+    plans = await service.list_public_plans_cached(db)
+    stripe = StripeConfigPublicRead(**service.stripe_public_config())
+    response.headers["Cache-Control"] = _PUBLIC_CACHE_CONTROL
+    return PublicPricingBootstrapRead(plans=plans, stripe=stripe)
+
+
 @public_router.get("/plans", response_model=list[PricingPlanRead])
-async def listar_planes_publicos(db: AsyncSession = Depends(get_db)) -> list[PricingPlanRead]:
-    return await service.list_plans(db, active_only=True)
+async def listar_planes_publicos(
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+) -> list[PricingPlanRead]:
+    plans = await service.list_public_plans_cached(db)
+    response.headers["Cache-Control"] = _PUBLIC_CACHE_CONTROL
+    return plans
 
 
 @public_router.get("/stripe-config", response_model=StripeConfigPublicRead)

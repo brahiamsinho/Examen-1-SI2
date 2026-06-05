@@ -1,7 +1,17 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { TallerApiService } from '../../../core/services/taller-api.service';
 import type {
   EspecialidadDto,
@@ -17,15 +27,18 @@ import type {
   imports: [CommonModule, FormsModule],
   templateUrl: './taller-tecnicos.component.html',
   styleUrl: './taller-tecnicos.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerTecnicosComponent implements OnInit {
   private readonly api = inject(TallerApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   tecnicos: TecnicoPortalDto[] = [];
   especialidades: EspecialidadDto[] = [];
   search = '';
   estado: EstadoTecnico | '' = '';
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
   busy = false;
 
@@ -60,19 +73,27 @@ export class TallerTecnicosComponent implements OnInit {
   }
 
   reload(): void {
-    this.loading = true;
-    forkJoin({ tecnicos: this.api.listTecnicos(), esp: this.api.listEspecialidades() }).subscribe({
-      next: ({ tecnicos, esp }) => {
-        this.tecnicos = tecnicos;
-        this.especialidades = esp;
-        this.loading = false;
-        this.error = null;
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudieron cargar los técnicos.';
-      },
-    });
+    this.loading.set(true);
+    forkJoin({ tecnicos: this.api.listTecnicos(), esp: this.api.listEspecialidades() })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: ({ tecnicos, esp }) => {
+          this.tecnicos = tecnicos;
+          this.especialidades = esp;
+          this.error = null;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.error = 'No se pudieron cargar los técnicos.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   get filtered(): TecnicoPortalDto[] {
@@ -94,6 +115,7 @@ export class TallerTecnicosComponent implements OnInit {
   openDetail(t: TecnicoPortalDto): void {
     this.selected = t;
     this.modalDetail = true;
+    this.cdr.markForCheck();
   }
 
   openEditFromDetail(): void {
@@ -115,25 +137,32 @@ export class TallerTecnicosComponent implements OnInit {
       estado: 'ACTIVO',
     };
     this.modalCreate = true;
+    this.cdr.markForCheck();
   }
 
   create(): void {
     if (!this.createForm.password || this.createForm.password.length < 4) {
       this.error = 'La contraseña del técnico debe tener al menos 4 caracteres.';
+      this.cdr.markForCheck();
       return;
     }
     this.busy = true;
-    this.api.createTecnico(this.createForm).subscribe({
-      next: () => {
-        this.modalCreate = false;
-        this.busy = false;
-        this.reload();
-      },
-      error: () => {
-        this.busy = false;
-        this.error = 'No se pudo registrar el técnico (email o teléfono duplicado).';
-      },
-    });
+    this.api
+      .createTecnico(this.createForm)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.modalCreate = false;
+          this.busy = false;
+          this.cdr.markForCheck();
+          this.reload();
+        },
+        error: () => {
+          this.busy = false;
+          this.error = 'No se pudo registrar el técnico (email o teléfono duplicado).';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   openEdit(t: TecnicoPortalDto): void {
@@ -146,6 +175,7 @@ export class TallerTecnicosComponent implements OnInit {
     this.editDisp = t.disponibilidad ?? '';
     this.editEstado = t.estado;
     this.modalEdit = true;
+    this.cdr.markForCheck();
   }
 
   saveEdit(): void {
@@ -160,36 +190,47 @@ export class TallerTecnicosComponent implements OnInit {
       estado: this.editEstado,
     };
     this.busy = true;
-    this.api.updateTecnico(this.selected.id, body).subscribe({
-      next: () => {
-        this.modalEdit = false;
-        this.busy = false;
-        this.reload();
-      },
-      error: () => {
-        this.busy = false;
-        this.error = 'No se pudo actualizar el técnico.';
-      },
-    });
+    this.api
+      .updateTecnico(this.selected.id, body)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.modalEdit = false;
+          this.busy = false;
+          this.cdr.markForCheck();
+          this.reload();
+        },
+        error: () => {
+          this.busy = false;
+          this.error = 'No se pudo actualizar el técnico.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   setEstado(t: TecnicoPortalDto, e: EstadoTecnico): void {
     this.busy = true;
-    this.api.updateTecnico(t.id, { estado: e }).subscribe({
-      next: () => {
-        this.busy = false;
-        this.reload();
-        this.closeModals();
-      },
-      error: () => {
-        this.busy = false;
-        this.error = 'No se pudo cambiar el estado.';
-      },
-    });
+    this.api
+      .updateTecnico(t.id, { estado: e })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.cdr.markForCheck();
+          this.reload();
+          this.closeModals();
+        },
+        error: () => {
+          this.busy = false;
+          this.error = 'No se pudo cambiar el estado.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   closeModals(): void {
     this.modalCreate = this.modalEdit = this.modalDetail = false;
     this.selected = null;
+    this.cdr.markForCheck();
   }
 }

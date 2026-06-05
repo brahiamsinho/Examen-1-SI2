@@ -25,24 +25,30 @@
     </p>
   </div>
 
-  <div class="tal__toolbar" *ngIf="!loading">
+  <div class="tal__toolbar" *ngIf="!loading()">
     <input
       type="search"
       class="tal__search"
-      [(ngModel)]="search"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
       placeholder="Buscar por nombre, ciudad o email…"
       aria-label="Buscar talleres"
     />
-    <select class="tal__select" [(ngModel)]="estado" aria-label="Filtrar por estado">
+    <select
+      class="tal__select"
+      [ngModel]="estado()"
+      (ngModelChange)="estado.set($event)"
+      aria-label="Filtrar por estado"
+    >
       <option value="">Todos los estados</option>
       <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
     </select>
     <button type="button" class="tal__btn tal__btn--primary" (click)="openCreateModal()">Nuevo taller</button>
   </div>
 
-  <p class="tal__muted" *ngIf="loading">Cargando…</p>
+  <p class="tal__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="tal__tablewrap" *ngIf="!loading">
+  <div class="tal__tablewrap" *ngIf="!loading()">
     <table class="tal__table">
       <thead>
         <tr>
@@ -54,7 +60,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let t of filtered">
+        <tr *ngFor="let t of filtered()">
           <td><strong>{{ t.nombre_comercial }}</strong></td>
           <td>{{ t.ciudad }}</td>
           <td>{{ t.email_contacto }}</td>
@@ -84,7 +90,7 @@
         </tr>
       </tbody>
     </table>
-    <p class="tal__empty" *ngIf="!filtered.length">Sin resultados.</p>
+    <p class="tal__empty" *ngIf="!filtered().length">Sin resultados.</p>
   </div>
 
   <div class="tal__backdrop" *ngIf="detail || modalEdit || modalCreate" (click)="closeModals()"></div>

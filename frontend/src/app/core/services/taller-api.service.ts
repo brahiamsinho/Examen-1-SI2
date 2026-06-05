@@ -21,6 +21,12 @@ import type {
   TallerBackupConfigUpdatePayload,
   TallerBackupDto,
   TallerBackupRestorePayload,
+  QbePayload,
+  ReportExecuteResultDto,
+  ReportExportFormat,
+  ReportNlQueryResultDto,
+  ReportTemplateCreatePayload,
+  ReportTemplateDto,
 } from '../models/taller-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -122,5 +128,38 @@ export class TallerApiService {
 
   deleteBackup(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/backups/${id}`);
+  }
+
+  listReportTemplates(isSystem?: boolean): Observable<ReportTemplateDto[]> {
+    let params = new HttpParams();
+    if (isSystem != null) params = params.set('is_system_report', String(isSystem));
+    return this.http.get<ReportTemplateDto[]>(`${this.base}/reportes/plantillas`, { params });
+  }
+
+  runReportTemplate(id: number): Observable<{ qbe: QbePayload; report: ReportExecuteResultDto }> {
+    return this.http.post<{ qbe: QbePayload; report: ReportExecuteResultDto }>(
+      `${this.base}/reportes/plantillas/${id}/run`,
+      {},
+    );
+  }
+
+  executeReport(qbe: QbePayload): Observable<ReportExecuteResultDto> {
+    return this.http.post<ReportExecuteResultDto>(`${this.base}/reportes/execute`, qbe);
+  }
+
+  nlReportQuery(query: string): Observable<ReportNlQueryResultDto> {
+    return this.http.post<ReportNlQueryResultDto>(`${this.base}/reportes/nl-query`, { query });
+  }
+
+  exportReport(fmt: ReportExportFormat, qbe: QbePayload): Observable<Blob> {
+    return this.http.post(`${this.base}/reportes/export/${fmt}`, qbe, { responseType: 'blob' });
+  }
+
+  createReportTemplate(body: ReportTemplateCreatePayload): Observable<ReportTemplateDto> {
+    return this.http.post<ReportTemplateDto>(`${this.base}/reportes/plantillas`, body);
+  }
+
+  deleteReportTemplate(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/reportes/plantillas/${id}`);
   }
 }

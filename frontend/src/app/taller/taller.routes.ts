@@ -119,15 +119,22 @@ export const TALLER_ROUTES: Routes = [
             (m) => m.TallerEmergenciasHistorialListComponent,
           ),
       },
-      {
-        path: 'emergencias/comisiones',
-        canActivate: [tallerPermisoGuard],
-        data: { permiso: 'comisiones:leer' },
-        loadComponent: () =>
-          import('./features/emergencias/comisiones/taller-emergencias-comisiones.component').then(
-            (m) => m.TallerEmergenciasComisionesComponent,
-          ),
-      },
+        {
+          path: 'emergencias/comisiones',
+          canActivate: [tallerPermisoGuard],
+          data: { permiso: 'comisiones:leer' },
+          loadComponent: () =>
+            import('./features/emergencias/comisiones/taller-emergencias-comisiones.component').then(
+              (m) => m.TallerEmergenciasComisionesComponent,
+            ),
+        },
+        {
+          path: 'reportes',
+          canActivate: [tallerPermisoGuard],
+          data: { permiso: 'reportes:leer' },
+          loadComponent: () =>
+            import('./features/reportes/taller-reportes.component').then((m) => m.TallerReportesComponent),
+        },
       {
         path: 'emergencias/disponibilidad',
         canActivate: [tallerPermisoGuard],

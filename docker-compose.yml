@@ -43,6 +43,7 @@ services:
       - ./backend/migrations/0022_taller_backup.sql:/docker-entrypoint-initdb.d/22_taller_backup.sql:ro
       - ./backend/migrations/0023_taller_clientes_crud_permisos.sql:/docker-entrypoint-initdb.d/23_taller_clientes_crud_permisos.sql:ro
       - ./backend/migrations/0024_taller_usuarios_eliminar_permiso.sql:/docker-entrypoint-initdb.d/24_taller_usuarios_eliminar_permiso.sql:ro
+      - ./backend/migrations/0025_reportes_modulo.sql:/docker-entrypoint-initdb.d/25_reportes_modulo.sql:ro
       - ./backend/migrations/99_register_sql_migrations.sql:/docker-entrypoint-initdb.d/99_register_sql_migrations.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"

@@ -216,3 +216,47 @@ export interface TallerBackupRestorePayload {
   confirmar: boolean;
   motivo: string;
 }
+
+export interface QbePayload {
+  model: string;
+  filters?: Record<string, unknown>;
+  fields?: string[] | null;
+  order_by?: string[];
+}
+
+export interface ReportTemplateDto {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  qbe_payload: QbePayload;
+  is_system_report: boolean;
+  tenant_id: number | null;
+  taller_id: number | null;
+  created_by_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportExecuteResultDto {
+  meta: {
+    model: string;
+    total_records: number;
+    columns: string[];
+    truncated?: boolean;
+  };
+  data: Record<string, unknown>[];
+}
+
+export interface ReportNlQueryResultDto {
+  qbe: QbePayload;
+  export_formats: Array<'excel' | 'pdf' | 'csv'>;
+  interpretation: string;
+}
+
+export interface ReportTemplateCreatePayload {
+  nombre: string;
+  descripcion?: string;
+  qbe_payload: QbePayload;
+}
+
+export type ReportExportFormat = 'excel' | 'pdf' | 'csv';

@@ -4,8 +4,18 @@
 # Actualizado: 2026-06-05 — Módulo backups
 # =========================================================
 
-# Actualizado: 2026-06-05 — CRUD técnicos + clientes portal taller
+# Actualizado: 2026-06-05 — Reportes personalizados QBE
 # =========================================================
+
+## ALTA — Reportes portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend frontend` (migración `0025_reportes_modulo.sql` + `openpyxl`/`reportlab`).
+2. **Cerrar sesión y volver a entrar** en `/taller` (permisos `reportes:*` en JWT).
+3. Ir a **Emergencias → Reportes** (`/taller/panel/reportes`).
+4. Probar texto: `comisiones pendientes de este mes en excel y pdf` → vista previa + descargas automáticas.
+5. Probar plantilla sistema «Comisiones pendientes» → Ejecutar → export manual Excel/PDF/CSV.
+6. Guardar plantilla personalizada y eliminarla.
+7. Micrófono: Chrome/Edge; si falla, usar textarea o `POST .../voice` con IA (`AI_ENABLED=true`).
 
 ## ALTA — Restore backup taller tras eliminar técnico (2026-06-05)
 

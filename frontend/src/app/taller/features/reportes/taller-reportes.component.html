@@ -1,0 +1,107 @@
+<div class="t-rep">
+  <h2 class="t-rep__h">Reportes personalizados</h2>
+  <p class="t-rep__lead">
+    Pide un reporte por voz o texto y expórtalo en Excel, PDF o CSV. Ejemplo:
+    <em>«comisiones pendientes de este mes en excel y pdf»</em>.
+  </p>
+
+  <div class="t-rep__alert t-rep__alert--error" *ngIf="error" role="alert">{{ error }}</div>
+  <div class="t-rep__alert t-rep__alert--ok" *ngIf="success" role="status">{{ success }}</div>
+
+  <section class="t-rep__card">
+    <h3 class="t-rep__sub">Consulta por voz o texto</h3>
+    <label class="t-rep__lbl">
+      ¿Qué reporte necesitas?
+      <textarea
+        class="t-rep__textarea"
+        rows="3"
+        [(ngModel)]="nlQuery"
+        placeholder="Ej.: solicitudes finalizadas de este mes en excel"
+      ></textarea>
+    </label>
+    <div class="t-rep__actions">
+      <button type="button" class="t-rep__btn t-rep__btn--primary" (click)="interpretAndRun()" [disabled]="loadingReport">
+        {{ loadingReport ? 'Procesando…' : 'Interpretar y ejecutar' }}
+      </button>
+      <button
+        type="button"
+        class="t-rep__btn"
+        (click)="toggleVoice()"
+        [disabled]="!speechSupported"
+        [class.t-rep__btn--active]="listening"
+      >
+        {{ listening ? 'Escuchando…' : 'Micrófono' }}
+      </button>
+    </div>
+    <p class="t-rep__muted" *ngIf="interpretation">{{ interpretation }}</p>
+  </section>
+
+  <section class="t-rep__card" *ngIf="report">
+    <div class="t-rep__headrow">
+      <h3 class="t-rep__sub">Vista previa</h3>
+      <div class="t-rep__exports">
+        <button type="button" class="t-rep__btn t-rep__btn--sm" (click)="export('excel')" [disabled]="exporting === 'excel'">
+          Excel
+        </button>
+        <button type="button" class="t-rep__btn t-rep__btn--sm" (click)="export('pdf')" [disabled]="exporting === 'pdf'">
+          PDF
+        </button>
+        <button type="button" class="t-rep__btn t-rep__btn--sm" (click)="export('csv')" [disabled]="exporting === 'csv'">
+          CSV
+        </button>
+      </div>
+    </div>
+    <p class="t-rep__muted">
+      {{ report.meta.total_records }} registros
+      <span *ngIf="report.meta.truncated"> (vista limitada a 500 filas)</span>
+    </p>
+    <div class="t-rep__tablewrap">
+      <table class="t-rep__table">
+        <thead>
+          <tr>
+            <th *ngFor="let col of report.meta.columns">{{ col }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of report.data">
+            <td *ngFor="let col of report.meta.columns">{{ row[col] ?? '—' }}</td>
+          </tr>
+          <tr *ngIf="!report.data.length">
+            <td [attr.colspan]="report.meta.columns.length || 1">Sin registros.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="t-rep__save">
+      <input class="t-rep__inp" [(ngModel)]="saveName" placeholder="Nombre para guardar plantilla (opcional)" />
+      <button type="button" class="t-rep__btn" (click)="saveTemplate()">Guardar plantilla</button>
+    </div>
+  </section>
+
+  <section class="t-rep__card">
+    <h3 class="t-rep__sub">Plantillas</h3>
+    <p class="t-rep__muted" *ngIf="loadingTemplates">Cargando plantillas…</p>
+    <ul class="t-rep__list" *ngIf="!loadingTemplates">
+      <li class="t-rep__item" *ngFor="let t of templates">
+        <div class="t-rep__itemmain">
+          <strong>{{ t.nombre }}</strong>
+          <span class="t-rep__badge" *ngIf="t.is_system_report">Sistema</span>
+          <p class="t-rep__muted">{{ t.descripcion }}</p>
+        </div>
+        <div class="t-rep__itemactions">
+          <button type="button" class="t-rep__btn t-rep__btn--sm t-rep__btn--primary" (click)="runTemplate(t)">
+            Ejecutar
+          </button>
+          <button
+            type="button"
+            class="t-rep__btn t-rep__btn--sm t-rep__btn--danger"
+            *ngIf="!t.is_system_report"
+            (click)="deleteTemplate(t)"
+          >
+            Eliminar
+          </button>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>

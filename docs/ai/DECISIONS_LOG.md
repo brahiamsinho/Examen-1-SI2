@@ -247,3 +247,9 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-06-05  
 **Decisión:** El export `TALLER` incluye `usuarios` y `usuario_rol` de los técnicos del taller (no todo el tenant). En restore se recrean esas cuentas antes de `COPY tecnicos`. Backups sin esos CSV omiten filas huérfanas en lugar de abortar.  
 **Por qué:** Hard-delete de técnico borra también `usuarios`; restore solo con `tecnicos.csv` violaba `fk_tecnicos_usuario`. Incluir cuentas permite deshacer eliminaciones; filtrar mantiene compatibilidad con backups ya creados.
+
+## DEC-036 — Reportes QBE en portal taller (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** Módulo `reportes` con motor QBE (whitelist SQLAlchemy), export Excel/PDF/CSV en memoria, traductor NL por reglas en español, micrófono Web Speech en frontend y endpoint `/voice` opcional vía Whisper. Scope automático `tenant_id` + `taller_id`.  
+**Por qué:** Reutiliza patrón probado en Oftalmología sin SQL generado por IA; aislamiento multi-tenant en el motor; tres formatos de exportación pedidos por voz (“en excel y pdf”).

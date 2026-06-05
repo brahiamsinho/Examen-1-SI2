@@ -1,7 +1,18 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-05 (Fix restore backup técnicos FK + CRUD portal taller)
+# Fecha: 2026-06-05 (Reportes QBE + voz + export + fix restore backup)
+
+## Cambios (2026-06-05) — Reportes personalizados (voz + Excel/PDF/CSV) ✅
+
+- **Origen referencia:** `Oftalmologia-Si2/backend/apps/reportes` (QBE engine, export engine, export intent).
+- **Adaptación:** FastAPI + SQLAlchemy async + multi-tenant (`tenant_id`/`taller_id` en scope QBE).
+- **Backend:** `app/modules/acceso_y_administracion/reportes/`; deps `openpyxl`, `reportlab`; migración `0025_reportes_modulo.sql`.
+- **API:** `/api/app/taller/reportes/plantillas`, `execute`, `nl-query`, `voice`, `export/{excel|pdf|csv}`.
+- **Plantillas sistema:** solicitudes recientes, finalizadas, comisiones pendientes, técnicos activos.
+- **Frontend:** `/taller/panel/reportes` — textarea + micrófono (Web Speech `es-BO`), vista previa, export, guardar plantilla.
+- **Permisos:** `reportes:leer|crear|actualizar|eliminar|exportar` — **re-login** en `/taller` tras migración.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-reportes-qbe-voz-export.md`.
 
 ## Fix (2026-06-05) — Restore backup taller `fk_tecnicos_usuario` ✅
 

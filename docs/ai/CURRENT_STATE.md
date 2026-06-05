@@ -1,10 +1,20 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-05 — Fix restore backup técnicos FK ✅
+# Última actualización: 2026-06-05 — Reportes personalizados QBE + voz + export ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
+
+### Reportes personalizados — QBE + voz + Excel/PDF/CSV (2026-06-05) ✅
+- [x] Módulo `backend/app/modules/acceso_y_administracion/reportes/` (adaptado de Oftalmología `apps/reportes`).
+- [x] Motor QBE seguro SQLAlchemy: `SolicitudEmergencia`, `ComisionTaller`, `Cliente`, `Tecnico` + scope `tenant_id`/`taller_id`.
+- [x] Exportación en memoria: **Excel** (`openpyxl`), **PDF** (`reportlab`), **CSV** (UTF-8 BOM).
+- [x] NL/voz: `POST .../nl-query` (traductor reglas ES); micrófono Web Speech en frontend; `POST .../voice` (Whisper vía `/api/ai` si IA habilitada).
+- [x] API taller: `/api/app/taller/reportes/*` — plantillas CRUD, execute, export, run predefinidas.
+- [x] Migración `0025_reportes_modulo.sql` + permisos `reportes:*` → `TALLER_RESPONSABLE` y `ADMIN`.
+- [x] UI: `/taller/panel/reportes` (sidebar Emergencias → Reportes).
+- [ ] Tests pytest QBE/export/NL; panel admin reportes (opcional).
 
 ### Fix restore backup taller — FK técnicos (2026-06-05) ✅
 - [x] Export taller incluye `usuarios` + `usuario_rol` de técnicos del taller.

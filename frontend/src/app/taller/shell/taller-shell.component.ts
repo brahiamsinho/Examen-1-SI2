@@ -112,6 +112,13 @@ export class TallerShellComponent implements OnInit {
           permiso: 'comisiones:leer',
         },
         {
+          path: '/taller/panel/reportes',
+          label: 'Reportes',
+          exact: true,
+          icon: 'chart',
+          permiso: 'reportes:leer',
+        },
+        {
           path: '/taller/panel/emergencias/disponibilidad',
           label: 'Disponibilidad',
           exact: true,

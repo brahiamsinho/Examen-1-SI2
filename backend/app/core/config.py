@@ -239,6 +239,21 @@ class Settings(BaseSettings):
         u = (self.APP_PUBLIC_URL or self.FRONTEND_PUBLIC_URL or "").strip()
         return u.rstrip("/")
 
+    # ── Backup / restore (pg_dump + scheduler Docker) ───────
+    BACKUP_ENABLED: bool = True
+    BACKUP_STORAGE_DIR: str = "backups"
+    BACKUP_TIMEOUT_SECONDS: int = 600
+    BACKUP_MAX_SIZE_MB: int = 2048
+    BACKUP_RETENTION_DAYS_DEFAULT: int = 7
+    BACKUP_SCHEDULER_INTERVAL_SECONDS: int = 3600
+
+    @property
+    def backup_storage_path(self) -> Path:
+        p = Path(self.BACKUP_STORAGE_DIR)
+        if not p.is_absolute():
+            p = _BACKEND_DIR / p
+        return p
+
     @property
     def evidencias_upload_dir(self) -> Path:
         return _BACKEND_DIR / "uploads" / "evidencias"

@@ -92,6 +92,13 @@ export class AdminShellComponent implements OnInit {
           icon: 'building',
           superadminOnly: true,
         },
+        {
+          path: '/admin/panel/backups',
+          label: 'Backups',
+          exact: true,
+          icon: 'shield',
+          superadminOnly: true,
+        },
       ],
     },
     {
@@ -207,6 +214,7 @@ export class AdminShellComponent implements OnInit {
       '/admin/panel': 'Resumen',
       '/admin/panel/finanzas': 'Finanzas',
       '/admin/panel/organizaciones': 'Organizaciones',
+      '/admin/panel/backups': 'Backups',
       '/admin/panel/planes-precios': 'Planes y precios',
       '/admin/panel/usuarios': 'Usuarios',
       '/admin/panel/roles': 'Roles',

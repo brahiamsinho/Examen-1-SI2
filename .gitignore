@@ -10,6 +10,12 @@ mobile/.env
 backend/.env
 frontend/.env
 
+# ── Backups locales (no versionar dumps) ───────────────────
+backend/backups/
+**/backups/*.sql
+**/backups/*.sql.gz
+**/backups/*.tar.gz
+
 # ── Python / FastAPI ──────────────────────────────────────
 __pycache__/
 *.py[cod]

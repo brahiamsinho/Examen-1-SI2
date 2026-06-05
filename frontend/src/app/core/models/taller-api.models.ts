@@ -169,3 +169,50 @@ export interface TallerBitacoraListParams {
   limit?: number;
   offset?: number;
 }
+
+export type TallerBackupEstado =
+  | 'PENDIENTE'
+  | 'EN_PROGRESO'
+  | 'COMPLETADO'
+  | 'FALLIDO'
+  | 'RESTAURADO'
+  | 'EXPIRADO';
+
+export interface TallerBackupDto {
+  id: number;
+  tenant_id: number | null;
+  taller_id: number | null;
+  tipo: string;
+  archivo: string;
+  tamano_mb: number | null;
+  estado: TallerBackupEstado;
+  incluye_evidencias: boolean;
+  creado_en: string;
+  expira_en: string | null;
+  error_mensaje: string | null;
+  restaurado_en: string | null;
+  motivo_restore: string | null;
+}
+
+export interface TallerBackupConfigDto {
+  id: number;
+  taller_id: number;
+  backup_automatico: boolean;
+  hora_backup: string;
+  frecuencia: 'daily' | 'weekly';
+  retencion_dias: number;
+  ultimo_backup_auto: string | null;
+  actualizado_en: string;
+}
+
+export interface TallerBackupConfigUpdatePayload {
+  backup_automatico?: boolean;
+  hora_backup?: string;
+  frecuencia?: 'daily' | 'weekly';
+  retencion_dias?: number;
+}
+
+export interface TallerBackupRestorePayload {
+  confirmar: boolean;
+  motivo: string;
+}

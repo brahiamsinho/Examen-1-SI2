@@ -126,6 +126,7 @@ export class TallerShellComponent implements OnInit {
         { path: '/taller/panel/mi-taller', label: 'Mi taller', exact: false, icon: 'wrench' },
         { path: '/taller/panel/tecnicos', label: 'Técnicos', exact: false, icon: 'wrench' },
         { path: '/taller/panel/bitacora', label: 'Bitácora', exact: true, icon: 'clipboard' },
+        { path: '/taller/panel/backups', label: 'Backups', exact: true, icon: 'shield' },
       ],
     },
     {
@@ -258,6 +259,7 @@ export class TallerShellComponent implements OnInit {
       '/taller/panel/accesos/permisos': 'Permisos',
       '/taller/panel/suscripcion': 'Planes SaaS',
       '/taller/panel/bitacora': 'Bitácora',
+      '/taller/panel/backups': 'Backups',
     };
     const match = Object.keys(titles)
       .sort((a, b) => b.length - a.length)

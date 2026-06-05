@@ -1,10 +1,31 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-05 — Stripe test `.env` + bootstrap automático Price IDs ✅
+# Última actualización: 2026-06-05 — Fix restore backup técnicos FK ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
+
+### Fix restore backup taller — FK técnicos (2026-06-05) ✅
+- [x] Export taller incluye `usuarios` + `usuario_rol` de técnicos del taller.
+- [x] Restore recrea cuentas de técnicos antes de `COPY tecnicos`.
+- [x] Backups antiguos (sin `usuarios.csv`): restore omiten técnicos huérfanos en lugar de fallar con FK.
+
+### Portal taller — CRUD técnicos y clientes (2026-06-05) ✅
+- [x] Técnicos: desactivar cuenta (`POST .../desactivar`) y eliminar físico (`DELETE`) si sin historial.
+- [x] Clientes: crear, editar, desactivar, eliminar vía `/api/clientes/` + permisos `clientes:*`.
+- [x] Migración `0023_taller_clientes_crud_permisos.sql`.
+- [x] UI: `/taller/panel/tecnicos` y `/taller/panel/accesos/clientes`.
+
+### Módulo backups plataforma (2026-06-05) ✅
+- [x] Adaptado desde proyecto Oftalmología (Django/schema-per-tenant) a **shared schema + `tenant_id`**.
+- [x] Migración `0021_backup_modulo.sql`: tablas `backups`, `backup_config`, permiso `backup:gestionar` → rol `ADMIN`.
+- [x] **Tipos:** `PLATAFORMA` (`pg_dump` → `.sql.gz`), `TENANT` (CSV por tablas filtradas por `tenant_id` → `.tar.gz`), `EVIDENCIAS` (`uploads/evidencias` → `.tar.gz`).
+- [x] API superadmin: `GET/POST/DELETE /api/admin/backups`, download, restore solo `PLATAFORMA` (requiere confirmación).
+- [x] Docker: `postgresql-client` en imagen backend; volumen `backup_data:/app/backups`; servicio **`backup-scheduler`** (loop `backup.runner` cada `BACKUP_SCHEDULER_INTERVAL_SECONDS`).
+- [x] Frontend admin: `/admin/panel/backups` (solo superadmin plataforma).
+- [x] **Portal taller (2026-06-05):** `/taller/panel/backups` — crear, descargar, restaurar, config automática (default **03:00** TZ servidor); permiso `backup_taller:gestionar`; tipo `TALLER` + tabla `taller_backup_config`; migración `0022_taller_backup.sql`.
+- [ ] Tests pytest del módulo backup.
 
 ### Ciclo 4 — CU36–CU40 (examen SI2; código 2026-06-02) ✅
 - [x] **CU37 Seleccionar taller (cliente):** `GET .../talleres-candidatos`, `POST .../seleccionar-taller`; servicio `incidentes/emergencias/service/seleccion_taller.py`; mobile `emergencia_seleccion_taller_screen.dart`, ruta `.../seleccionar-taller`; `crear_solicitud` ya no reparte bandeja a todos los talleres.

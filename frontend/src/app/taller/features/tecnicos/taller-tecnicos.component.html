@@ -60,9 +60,17 @@
               class="tech__mini"
               *ngIf="t.estado !== 'INACTIVO'"
               [disabled]="busy"
-              (click)="setEstado(t, 'INACTIVO')"
+              (click)="desactivar(t)"
             >
               Desactivar
+            </button>
+            <button
+              type="button"
+              class="tech__mini tech__mini--danger"
+              [disabled]="busy"
+              (click)="eliminar(t)"
+            >
+              Eliminar
             </button>
           </td>
         </tr>

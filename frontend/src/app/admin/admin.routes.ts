@@ -75,6 +75,11 @@ export const ADMIN_ROUTES: Routes = [
             (m) => m.AdminPlanesPreciosComponent,
           ),
       },
+      {
+        path: 'backups',
+        loadComponent: () =>
+          import('./features/backups/admin-backups.component').then((m) => m.AdminBackupsComponent),
+      },
     ],
   },
   {

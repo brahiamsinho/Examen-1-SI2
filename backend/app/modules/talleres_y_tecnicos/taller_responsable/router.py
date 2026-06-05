@@ -134,6 +134,26 @@ async def actualizar_tecnico(
     return await service.update_tecnico_portal(tecnico_id, taller.id, body, user.id, db)
 
 
+@router.post("/tecnicos/{tecnico_id}/desactivar", response_model=TecnicoPortalRead)
+async def desactivar_tecnico(
+    tecnico_id: int,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    user, taller = ctx
+    return await service.desactivar_tecnico_portal(tecnico_id, taller.id, user.id, db)
+
+
+@router.delete("/tecnicos/{tecnico_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_tecnico(
+    tecnico_id: int,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    user, taller = ctx
+    await service.delete_tecnico_portal(tecnico_id, taller.id, user.id, db)
+
+
 @router.get("/suscripcion", response_model=TallerSuscripcionRead)
 async def suscripcion_portal(
     ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),

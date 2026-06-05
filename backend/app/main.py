@@ -57,6 +57,8 @@ from app.modules.acceso_y_administracion.pricing_plans.router import (
     public_router as pricing_public_router,
 )
 from app.modules.acceso_y_administracion.billing.router import router as billing_webhooks_router
+from app.modules.acceso_y_administracion.backup.router import router as backup_admin_router
+from app.modules.acceso_y_administracion.backup.router_taller import router as backup_taller_router
 from app.modules.talleres_y_tecnicos.taller_responsable.router import router as taller_responsable_router
 from app.modules.atencion.taller_emergencias.router import router as taller_emergencias_router
 from app.modules.clientes_y_vehiculos.clientes.router import router as clientes_app_router
@@ -111,6 +113,8 @@ app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
 app.include_router(admin_finanzas_router, prefix=PREFIX)
 app.include_router(admin_dashboard_router, prefix=PREFIX)
+app.include_router(backup_admin_router, prefix=PREFIX)
+app.include_router(backup_taller_router, prefix=PREFIX)
 app.include_router(tenants_router, prefix=PREFIX)
 app.include_router(public_tenants_router, prefix=PREFIX)
 app.include_router(pricing_plans_admin_router, prefix=PREFIX)

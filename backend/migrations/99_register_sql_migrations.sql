@@ -24,5 +24,9 @@ INSERT INTO app_sql_migrations (filename) VALUES
     ('0017_saas_billing_phase3.sql'),
     ('0018_taller_acceso_permisos.sql'),
     ('0019_pricing_plans.sql'),
-    ('0020_taller_bitacora_permiso.sql')
+    ('0020_taller_bitacora_permiso.sql'),
+    ('0021_backup_modulo.sql'),
+    ('0022_taller_backup.sql'),
+    ('0023_taller_clientes_crud_permisos.sql'),
+    ('0024_taller_usuarios_eliminar_permiso.sql')
 ON CONFLICT (filename) DO NOTHING;

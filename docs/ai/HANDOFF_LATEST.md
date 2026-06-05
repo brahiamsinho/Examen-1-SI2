@@ -1,7 +1,53 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-05 (bitácora taller + Stripe confirm checkout)
+# Fecha: 2026-06-05 (Fix restore backup técnicos FK + CRUD portal taller)
+
+## Fix (2026-06-05) — Restore backup taller `fk_tecnicos_usuario` ✅
+
+- **Bug:** hard-delete de técnico borra `usuarios`; restore hacía `COPY tecnicos` con `usuario_id` huérfano → FK error.
+- **Fix:** export incluye `usuarios` + `usuario_rol` de técnicos; restore recrea cuentas antes de `tecnicos`; backups viejos omiten filas huérfanas (no fallan).
+- **Importante:** backups **anteriores** a este fix restauran sin error pero **no** recuperan técnicos ya eliminados; crear backup **nuevo** tras el fix.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-restore-backup-tecnicos-fk.md`.
+
+## Cambios (2026-06-05) — Usuarios del taller: desactivar y eliminar ✅
+
+- **Permiso:** `usuarios:eliminar` → `TALLER_RESPONSABLE` (migración `0024`).
+- **API:** `POST /usuarios/{id}/desactivar` (soft); `DELETE /usuarios/{id}` (hard, con validaciones).
+- **UI:** `/taller/panel/accesos/usuarios` — Activar, Desactivar, Eliminar (no sobre la propia cuenta).
+- **Admin:** desactivar usa `POST .../desactivar` (antes `DELETE` soft).
+
+## Cambios (2026-06-05) — CRUD técnicos y clientes en portal taller ✅
+
+- **Pedido:** desactivar/eliminar técnicos; crear/editar/desactivar/eliminar clientes del tenant.
+- **Backend:** migración `0023_taller_clientes_crud_permisos.sql`; endpoints técnicos `desactivar` + `DELETE`; API `/clientes/` CRUD con permisos.
+- **Frontend:** `taller-tecnicos` y `taller-clientes` con acciones completas.
+- **Importante:** tras migración, **cerrar sesión y volver a entrar** en `/taller` para refrescar permisos JWT.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-crud-tecnicos-clientes.md`.
+
+## Fix (2026-06-05) — Restore backup taller `talleres_pkey` ✅
+
+- **Bug:** restore hacía `COPY talleres` sobre fila existente → `duplicate key value violates unique constraint "talleres_pkey"`.
+- **Fix:** `_restore_taller_row_from_csv` hace **UPDATE** de metadatos del taller; tablas hijas siguen con DELETE + COPY.
+- **Scheduler:** `runner.py` importa `app.db_metadata` antes de usar SQLAlchemy (error `Cliente` no resuelto).
+- **Verificado:** restore manual OK; `backup-scheduler --force` → `2 ok, 0 errores` (rebuild imagen `backup-scheduler`).
+
+## Cambios recientes (2026-06-05) — Backups por taller (portal responsable) ✅
+
+- **Pedido:** cada taller gestiona sus backups (crear, descargar, restaurar) + hora automática (ej. 03:00).
+- **Backend:** tipo `TALLER`, `taller_backup_config`, API `/api/app/taller/backups`, restore CSV por taller.
+- **Scheduler:** `backup-scheduler` ejecuta backups automáticos de plataforma y de cada taller activo.
+- **UI:** `/taller/panel/backups` en sidebar «Equipo y taller».
+- **Migración:** `0022_taller_backup.sql` + permiso `backup_taller:gestionar`.
+
+## Cambios recientes (2026-06-05) — Módulo backups (adaptado Oftalmología → EmergenciasViales) ✅
+
+- **Origen:** `Oftalmologia-Si2/backend/apps/backup` (Django + `pg_dump --schema=`).
+- **Adaptación:** multi-tenant **shared schema** → export tenant por CSV filtrado; plataforma con `pg_dump` completo.
+- **Backend:** `app/modules/acceso_y_administracion/backup/` + migración `0021_backup_modulo.sql`.
+- **Docker:** servicio `backup-scheduler`, volumen `backup_data`, vars `BACKUP_*` en `.env.example`.
+- **Admin UI:** `/admin/panel/backups` — crear, listar, descargar, eliminar.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-backup-modulo.md`.
 
 ## Cambios recientes (2026-06-05) — Bitácora portal taller (multi-tenant seguro) ✅
 

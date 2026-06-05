@@ -1,8 +1,42 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-06-05 — Bitácora taller
+# Actualizado: 2026-06-05 — Módulo backups
 # =========================================================
+
+# Actualizado: 2026-06-05 — CRUD técnicos + clientes portal taller
+# =========================================================
+
+## ALTA — Restore backup taller tras eliminar técnico (2026-06-05)
+
+1. `docker compose up -d --build backend` (fix FK `tecnicos` → `usuarios`).
+2. Crear **backup manual nuevo** (los viejos no traen `usuarios.csv`).
+3. Eliminar un técnico sin historial → Restaurar el backup nuevo → debe reaparecer técnico + cuenta.
+4. Backup antiguo (#9 etc.): restore ya **no falla**, pero no recupera técnicos cuya cuenta fue borrada.
+
+## ALTA — CRUD técnicos y clientes (2026-06-05)
+
+1. Aplicar migración `0023_taller_clientes_crud_permisos.sql` (`docker compose exec db psql ...` o rebuild en volumen nuevo).
+2. `docker compose up -d --build backend frontend`.
+3. **Cerrar sesión y volver a entrar** en `/taller` (permisos `clientes:crear|actualizar|eliminar` en JWT).
+4. Probar **Técnicos**: desactivar / eliminar (409 si tiene atenciones).
+5. Probar **Cuentas clientes**: crear, editar, desactivar, eliminar (409 si tiene vehículos/solicitudes/pagos).
+
+## ALTA — Backups portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend backup-scheduler frontend` (migración `0022_taller_backup.sql`).
+2. Login `/taller` como responsable → **Equipo y taller → Backups**.
+3. Configurar hora **03:00**, activar automático, guardar.
+4. Crear backup manual → Descargar / Restaurar (con confirmación).
+5. Si 403: cerrar sesión y volver a entrar (permiso `backup_taller:gestionar` en JWT).
+
+## ALTA — Verificar backups plataforma (admin)
+
+1. `docker compose up -d --build backend backup-scheduler frontend` (migración `0021_backup_modulo.sql`).
+2. Login admin superadmin `patricio.mendez@sc-demo.test` / `scdemo1` → **Plataforma SaaS → Backups**.
+3. Crear backup **Plataforma** → estado `COMPLETADO` → Descargar `.sql.gz`.
+4. Verificar contenedor: `docker compose logs backup-scheduler --tail 50` (runner periódico + retención).
+5. Opcional: backup **TENANT** eligiendo org `demo-sc`; backup **EVIDENCIAS** si hay archivos en `uploads/evidencias`.
 
 ## ALTA — Bitácora portal taller (2026-06-05)
 

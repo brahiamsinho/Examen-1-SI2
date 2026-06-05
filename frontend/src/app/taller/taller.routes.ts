@@ -147,6 +147,11 @@ export const TALLER_ROUTES: Routes = [
         loadComponent: () =>
           import('./features/bitacora/taller-bitacora.component').then((m) => m.TallerBitacoraComponent),
       },
+      {
+        path: 'backups',
+        loadComponent: () =>
+          import('./features/backups/taller-backups.component').then((m) => m.TallerBackupsComponent),
+      },
     ],
   },
   {

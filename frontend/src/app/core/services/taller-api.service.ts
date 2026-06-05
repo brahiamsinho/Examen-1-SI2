@@ -17,6 +17,10 @@ import type {
   TecnicoPortalUpdatePayload,
   TallerBitacoraDto,
   TallerBitacoraListParams,
+  TallerBackupConfigDto,
+  TallerBackupConfigUpdatePayload,
+  TallerBackupDto,
+  TallerBackupRestorePayload,
 } from '../models/taller-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -56,6 +60,14 @@ export class TallerApiService {
     return this.http.put<TecnicoPortalDto>(`${this.base}/tecnicos/${id}`, body);
   }
 
+  desactivarTecnico(id: number): Observable<TecnicoPortalDto> {
+    return this.http.post<TecnicoPortalDto>(`${this.base}/tecnicos/${id}/desactivar`, {});
+  }
+
+  deleteTecnico(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/tecnicos/${id}`);
+  }
+
   listEspecialidades(): Observable<EspecialidadDto[]> {
     return this.http.get<EspecialidadDto[]>(`${environment.apiUrl}/especialidades`);
   }
@@ -82,5 +94,33 @@ export class TallerApiService {
     if (params.limit != null) httpParams = httpParams.set('limit', String(params.limit));
     if (params.offset != null) httpParams = httpParams.set('offset', String(params.offset));
     return this.http.get<TallerBitacoraDto[]>(`${this.base}/bitacora`, { params: httpParams });
+  }
+
+  listBackups(): Observable<TallerBackupDto[]> {
+    return this.http.get<TallerBackupDto[]>(`${this.base}/backups/`);
+  }
+
+  createBackup(): Observable<TallerBackupDto> {
+    return this.http.post<TallerBackupDto>(`${this.base}/backups/`, {});
+  }
+
+  getBackupConfig(): Observable<TallerBackupConfigDto> {
+    return this.http.get<TallerBackupConfigDto>(`${this.base}/backups/config`);
+  }
+
+  updateBackupConfig(payload: TallerBackupConfigUpdatePayload): Observable<TallerBackupConfigDto> {
+    return this.http.patch<TallerBackupConfigDto>(`${this.base}/backups/config`, payload);
+  }
+
+  downloadBackup(id: number): Observable<Blob> {
+    return this.http.get(`${this.base}/backups/${id}/download`, { responseType: 'blob' });
+  }
+
+  restoreBackup(id: number, payload: TallerBackupRestorePayload): Observable<TallerBackupDto> {
+    return this.http.post<TallerBackupDto>(`${this.base}/backups/${id}/restore`, payload);
+  }
+
+  deleteBackup(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/backups/${id}`);
   }
 }

@@ -44,6 +44,27 @@ export interface ClienteListDto {
   created_at: string | null;
 }
 
+export interface ClienteCreatePayload {
+  nombres: string;
+  apellidos: string;
+  email: string;
+  telefono: string;
+  password: string;
+  ciudad?: string | null;
+  direccion?: string | null;
+  estado?: EstadoUsuario;
+}
+
+export interface ClienteUpdatePayload {
+  nombres?: string;
+  apellidos?: string;
+  email?: string;
+  telefono?: string;
+  ciudad?: string | null;
+  direccion?: string | null;
+  estado?: EstadoUsuario;
+}
+
 export interface UsuarioListDto {
   id: number;
   nombres: string;
@@ -279,4 +300,38 @@ export interface TenantUpdatePayload {
   plan?: PlanTenant;
   dominio_custom?: string | null;
   subscription_status?: EstadoSuscripcionTenant;
+}
+
+export type BackupTipo = 'PLATAFORMA' | 'TENANT' | 'TALLER' | 'EVIDENCIAS';
+export type BackupEstado =
+  | 'PENDIENTE'
+  | 'EN_PROGRESO'
+  | 'COMPLETADO'
+  | 'FALLIDO'
+  | 'RESTAURADO'
+  | 'EXPIRADO';
+
+export interface BackupDto {
+  id: number;
+  tenant_id: number | null;
+  tenant_slug: string | null;
+  tenant_nombre: string | null;
+  tipo: BackupTipo;
+  archivo: string;
+  tamano_mb: number | null;
+  estado: BackupEstado;
+  incluye_evidencias: boolean;
+  creado_en: string;
+  expira_en: string | null;
+  creado_por_usuario_id: number | null;
+  error_mensaje: string | null;
+  restaurado_en: string | null;
+  restaurado_por_usuario_id: number | null;
+  motivo_restore: string | null;
+}
+
+export interface BackupCreatePayload {
+  tipo: BackupTipo;
+  tenant_id?: number;
+  incluir_evidencias?: boolean;
 }

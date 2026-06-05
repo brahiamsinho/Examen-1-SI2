@@ -71,6 +71,7 @@ def to_seguimiento(s: SolicitudEmergencia) -> SolicitudSeguimientoRead:
         tiene_evidencia_foto=tiene_foto,
         tiene_evidencia_audio=tiene_audio,
         presupuesto_bob=s.presupuesto_bob,
+        presupuesto_detalle=s.presupuesto_detalle,
         presupuesto_registrado_at=s.presupuesto_registrado_at,
     )
 

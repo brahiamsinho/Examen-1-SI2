@@ -98,6 +98,7 @@ final class EmergenciasRepository {
     required int vehiculoId,
     String? descripcionTexto,
     Map<String, dynamic>? ubicacionInicial,
+    String? clientRequestId,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -106,6 +107,7 @@ final class EmergenciasRepository {
           'vehiculo_id': vehiculoId,
           if (descripcionTexto != null) 'descripcion_texto': descripcionTexto,
           if (ubicacionInicial != null) 'ubicacion_inicial': ubicacionInicial,
+          if (clientRequestId != null) 'client_request_id': clientRequestId,
         },
       );
       final m = res.data;

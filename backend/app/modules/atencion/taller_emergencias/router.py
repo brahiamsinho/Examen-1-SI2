@@ -22,6 +22,8 @@ from .schemas import (
     ComisionTallerRead,
     HistorialAtencionRead,
     RechazarBandejaIn,
+    RegistrarPresupuestoIn,
+    PresupuestoSolicitudRead,
     ReporteTallerDashboardRead,
     ResumenComisionesRead,
     SolicitudBandejaDetalleRead,
@@ -151,6 +153,37 @@ async def listar_asignaciones_tecnico(
     """Historial de asignaciones de técnico para la solicitud (mismo taller)."""
     _, taller = ctx
     return await service.listar_asignaciones_tecnico(taller.id, solicitud_id, db)
+
+
+@router.get(
+    "/solicitudes/{solicitud_id}/presupuesto",
+    response_model=PresupuestoSolicitudRead,
+    dependencies=[Depends(require_permission("presupuestos:registrar"))],
+)
+async def obtener_presupuesto(
+    solicitud_id: int,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU42 — consultar cotización registrada en la solicitud del taller."""
+    _, taller = ctx
+    return await service.obtener_presupuesto_solicitud(taller.id, solicitud_id, db)
+
+
+@router.patch(
+    "/solicitudes/{solicitud_id}/presupuesto",
+    response_model=PresupuestoSolicitudRead,
+    dependencies=[Depends(require_permission("presupuestos:registrar"))],
+)
+async def registrar_presupuesto(
+    solicitud_id: int,
+    body: RegistrarPresupuestoIn,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU42 — registrar cotización (presupuesto BOB + detalle) para revisión del cliente."""
+    user, taller = ctx
+    return await service.registrar_presupuesto_solicitud(user, taller.id, solicitud_id, body, db)
 
 
 @router.get(

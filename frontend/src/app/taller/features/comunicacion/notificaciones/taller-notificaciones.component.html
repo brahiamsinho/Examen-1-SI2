@@ -20,7 +20,10 @@
   <ul *ngIf="!loading && items.length" class="list">
     <li *ngFor="let n of items" class="list__item" [class.list__item--unread]="!n.leida">
       <button type="button" class="list__btn" (click)="abrir(n)">
-        <span class="list__title">{{ n.titulo }}</span>
+        <span class="list__row">
+          <span class="list__title">{{ n.titulo }}</span>
+          <span class="list__tipo">{{ tipoLabel(n.tipo) }}</span>
+        </span>
         <span class="list__msg">{{ n.mensaje }}</span>
         <span class="list__meta">{{ n.created_at | date: 'short' }}</span>
       </button>

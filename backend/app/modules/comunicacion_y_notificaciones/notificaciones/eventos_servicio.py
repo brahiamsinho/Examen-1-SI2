@@ -50,6 +50,21 @@ async def _usuario_responsable_taller(db: AsyncSession, taller_id: int) -> int |
     return res.scalar_one_or_none()
 
 
+async def _nombre_cliente(db: AsyncSession, solicitud: SolicitudEmergencia) -> str:
+    from app.modules.acceso_y_administracion.usuarios.models import Usuario
+    from app.modules.clientes_y_vehiculos.clientes.models import Cliente
+
+    res = await db.execute(
+        select(Usuario.nombres, Usuario.apellidos)
+        .join(Cliente, Cliente.usuario_id == Usuario.id)
+        .where(Cliente.id == solicitud.cliente_id)
+    )
+    row = res.one_or_none()
+    if row is None:
+        return "Un cliente"
+    return f"{row[0]} {row[1]}".strip()
+
+
 async def on_solicitud_pendiente_taller(
     db: AsyncSession,
     *,
@@ -59,13 +74,14 @@ async def on_solicitud_pendiente_taller(
     uid = await _usuario_responsable_taller(db, taller_id)
     if uid is None:
         return
+    nombre = await _nombre_cliente(db, solicitud)
     await _emit(
         db,
         solicitud=solicitud,
         usuario_destino_id=uid,
         tipo=TipoNotificacionEnum.SOLICITUD_PENDIENTE_TALLER,
-        titulo="Nueva solicitud pendiente",
-        mensaje=f"Hay una emergencia #{solicitud.id} esperando respuesta de tu taller.",
+        titulo="Cliente eligió tu taller",
+        mensaje=f"{nombre} seleccionó tu taller para la emergencia #{solicitud.id}. Revisá la bandeja.",
         evento_suffix=f"taller{taller_id}:pendiente",
     )
 
@@ -187,3 +203,83 @@ async def on_estado_servicio(
                 mensaje=f"Emergencia #{solicitud.id}: {etiqueta_corta}.",
                 evento_suffix=f"taller{solicitud.taller_id}:estado:{solicitud.estado.value}",
             )
+
+
+async def on_mensaje_cliente(
+    db: AsyncSession,
+    *,
+    solicitud: SolicitudEmergencia,
+    mensaje_id: int,
+    texto_preview: str,
+) -> None:
+    """Cliente escribió en el chat: avisa al responsable del taller asignado."""
+    if solicitud.taller_id is None:
+        return
+    uid = await _usuario_responsable_taller(db, solicitud.taller_id)
+    if uid is None:
+        return
+    nombre = await _nombre_cliente(db, solicitud)
+    preview = texto_preview[:120] + ("…" if len(texto_preview) > 120 else "")
+    await _emit(
+        db,
+        solicitud=solicitud,
+        usuario_destino_id=uid,
+        tipo=TipoNotificacionEnum.MENSAJE_NUEVO,
+        titulo=f"Mensaje de {nombre}",
+        mensaje=f"Emergencia #{solicitud.id}: {preview}",
+        evento_suffix=f"taller{solicitud.taller_id}:msg:{mensaje_id}",
+    )
+
+
+async def on_pago_cliente(
+    db: AsyncSession,
+    *,
+    solicitud: SolicitudEmergencia,
+    pago_id: int,
+    monto_label: str | None = None,
+) -> None:
+    """Cliente confirmó un pago vinculado a la solicitud."""
+    if solicitud.taller_id is None:
+        return
+    uid = await _usuario_responsable_taller(db, solicitud.taller_id)
+    if uid is None:
+        return
+    nombre = await _nombre_cliente(db, solicitud)
+    extra = f" Monto: {monto_label}." if monto_label else ""
+    await _emit(
+        db,
+        solicitud=solicitud,
+        usuario_destino_id=uid,
+        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+        titulo="Pago confirmado por cliente",
+        mensaje=f"{nombre} confirmó el pago de la emergencia #{solicitud.id}.{extra}",
+        evento_suffix=f"taller{solicitud.taller_id}:pago:{pago_id}",
+    )
+
+
+async def on_presupuesto_registrado(
+    db: AsyncSession,
+    *,
+    solicitud: SolicitudEmergencia,
+    monto_label: str,
+    detalle: str | None = None,
+) -> None:
+    """Taller registró cotización: avisa al cliente (CU42 → CU41 opcional)."""
+    cli = await tenant_guard.validar_cliente_solicitud(db, solicitud=solicitud)
+    if cli is None:
+        return
+    preview = ""
+    if detalle:
+        preview = detalle[:160] + ("…" if len(detalle) > 160 else "")
+    mensaje = f"Tu taller registró una cotización de {monto_label} para la emergencia #{solicitud.id}."
+    if preview:
+        mensaje = f"{mensaje} Detalle: {preview}"
+    await _emit(
+        db,
+        solicitud=solicitud,
+        usuario_destino_id=cli.usuario_id,
+        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+        titulo="Cotización del servicio",
+        mensaje=mensaje,
+        evento_suffix="cliente:presupuesto_registrado",
+    )

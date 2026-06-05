@@ -1,7 +1,23 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-05 (Notificaciones + fixes panel taller/admin + optimización main)
+# Fecha: 2026-06-05 (CU43/CU45 offline + CU42 cotización + notificaciones)
+
+## Cambios recientes (2026-06-05) — CU43/CU45 sync offline mobile ✅
+
+- **CU45:** wizard guarda borrador en Hive si no hay red; pasos ubicación/foto/audio/texto offline.
+- **CU43:** `SyncOrquestador` escucha `connectivity_plus`, replay con backoff, pausa en 401.
+- **Backend:** `client_request_id` UUID en POST crear solicitud → idempotencia anti-duplicados.
+- **UI:** `EmergenciasMisSolicitudesScreen` — borradores + «Sincronizar ahora».
+- **Archivos clave:** `mobile/lib/cliente/emergencias/application/sync_orquestador.dart`, `solicitud_draft_repo.dart`, `backend/migrations/0022_client_request_id_cu43.sql`.
+- **Pendiente:** E2E modo avión; `docker compose restart backend` para migración 0022.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu43-cu45-sync-offline.md`.
+
+## Cambios recientes (2026-06-05) — CU42 Registrar cotización taller ✅
+
+- Backend `0021_presupuesto_taller_cu42.sql`, endpoints `GET/PATCH .../presupuesto`, notificación cliente.
+- Frontend taller: formulario en detalle incidente.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu42-registrar-cotizacion.md`.
 
 ## Cambios recientes (2026-06-05) — Notificaciones inmediatas del servicio ✅
 

@@ -51,6 +51,10 @@ export class TallerEmergenciasBandejaComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
       const ok = q.get('ok');
+      const busqueda = q.get('q');
+      if (busqueda) {
+        this.search = busqueda;
+      }
       if (ok === 'aceptada') {
         this.successFlash = 'Solicitud aceptada correctamente.';
         void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, TipoEvidenciaSolicitudEnum
 from app.modules.pagos_y_comisiones.pagos.models import EstadoPagoEnum
@@ -64,7 +64,57 @@ class SolicitudBandejaDetalleRead(BandejaIncidenteBaseRead):
     motivo_rechazo: str | None
     creado_at: datetime
     respondido_at: datetime | None
+    presupuesto_bob: Decimal | None = None
+    presupuesto_detalle: str | None = None
+    presupuesto_registrado_at: datetime | None = None
     evidencias: list[SolicitudEvidenciaTallerRead] = Field(default_factory=list)
+
+
+def _validar_monto_presupuesto_bob(valor: Decimal) -> Decimal:
+    normalizado = valor.normalize()
+    if normalizado <= 0:
+        raise ValueError("presupuesto_bob debe ser mayor que cero.")
+    decimales = max(0, -normalizado.as_tuple().exponent)
+    if decimales > 2:
+        raise ValueError("presupuesto_bob debe tener como máximo 2 decimales.")
+    if len(normalizado.as_tuple().digits) > 12:
+        raise ValueError("presupuesto_bob excede el máximo de 12 dígitos.")
+    return normalizado.quantize(Decimal("0.01"))
+
+
+class RegistrarPresupuestoIn(BaseModel):
+    """CU42 — cotización del taller para una solicitud asignada."""
+
+    presupuesto_bob: Decimal = Field(..., gt=0, description="Monto total en BOB.")
+    detalle: str = Field(
+        ...,
+        min_length=3,
+        max_length=4000,
+        description="Descripción de trabajo, repuestos o servicios incluidos.",
+    )
+    observaciones: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def _validar_campos(self) -> "RegistrarPresupuestoIn":
+        self.presupuesto_bob = _validar_monto_presupuesto_bob(self.presupuesto_bob)
+        self.detalle = self.detalle.strip()
+        if len(self.detalle) < 3:
+            raise ValueError("detalle es obligatorio (mínimo 3 caracteres).")
+        if self.observaciones is not None:
+            obs = self.observaciones.strip()
+            self.observaciones = obs if obs else None
+        return self
+
+
+class PresupuestoSolicitudRead(BaseModel):
+    """Lectura de cotización registrada en la solicitud."""
+
+    solicitud_id: int
+    estado_solicitud: EstadoSolicitudSeguimientoEnum
+    presupuesto_bob: Decimal
+    presupuesto_detalle: str
+    presupuesto_registrado_at: datetime
+    observaciones_registro: str | None = None
 
 
 class TallerDisponibilidadRead(BaseModel):

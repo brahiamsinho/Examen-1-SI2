@@ -29,6 +29,22 @@ async def crear_solicitud(
     body: SolicitudEmergenciaCreateIn,
     db: AsyncSession,
 ) -> SolicitudEmergenciaDetailRead:
+    if body.client_request_id is not None:
+        existing = await repository.get_solicitud_by_client_request_id(
+            db,
+            cliente_id=cliente_id,
+            client_request_id=body.client_request_id,
+        )
+        if existing is not None:
+            s_existing = await repository.get_solicitud_for_cliente(
+                db,
+                solicitud_id=existing.id,
+                cliente_id=cliente_id,
+                with_children=True,
+            )
+            assert s_existing is not None
+            return helpers.to_detail(s_existing)
+
     v = await repository.get_vehiculo_if_cliente(db, vehiculo_id=body.vehiculo_id, cliente_id=cliente_id)
     if v is None:
         raise HTTPException(
@@ -53,6 +69,7 @@ async def crear_solicitud(
         estado=EstadoSolicitudSeguimientoEnum.REGISTRADA,
         created_at=now,
         updated_at=now,
+        client_request_id=body.client_request_id,
     )
     await repository.insert_historial_estado(
         db,

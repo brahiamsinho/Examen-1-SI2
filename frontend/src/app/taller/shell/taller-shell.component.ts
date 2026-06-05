@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -16,8 +17,9 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { take } from 'rxjs';
+import { catchError, interval, of, startWith, switchMap, take } from 'rxjs';
 import { TallerAuthService } from '../../core/services/taller-auth.service';
+import { TallerComunicacionApiService } from '../../core/services/taller-comunicacion-api.service';
 import type { MeResponse } from '../../core/models/auth.models';
 
 export type TallerNavIcon =
@@ -54,6 +56,7 @@ export interface TallerNavGroup {
 })
 export class TallerShellComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
+  private readonly comunicacion = inject(TallerComunicacionApiService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -63,6 +66,9 @@ export class TallerShellComponent implements OnInit {
   sidebarCollapsed = false;
   mobileNavOpen = false;
   navGroups: TallerNavGroup[] = [];
+  readonly unreadNotificaciones = signal(0);
+  showNotificaciones = true;
+  private notifPollStarted = false;
 
   private readonly navGroupsBase: TallerNavGroup[] = [
     {
@@ -167,14 +173,18 @@ export class TallerShellComponent implements OnInit {
 
   ngOnInit(): void {
     this.me = this.auth.getMe();
+    this.actualizarAccesoNotificaciones();
     this.rebuildNavGroups();
+    this.iniciarPollingNotificaciones();
 
     this.auth
       .refreshMeSiHaySesion()
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.me = this.auth.getMe();
+        this.actualizarAccesoNotificaciones();
         this.rebuildNavGroups();
+        this.iniciarPollingNotificaciones();
         this.cdr.markForCheck();
       });
 
@@ -233,14 +243,42 @@ export class TallerShellComponent implements OnInit {
       '/taller/panel/emergencias/servicios-asignados': 'Servicios asignados',
       '/taller/panel/emergencias/comisiones': 'Comisiones',
       '/taller/panel/emergencias/disponibilidad': 'Disponibilidad',
+      '/taller/panel/comunicacion/notificaciones': 'Notificaciones',
       '/taller/panel/accesos/usuarios': 'Usuarios del taller',
       '/taller/panel/accesos/clientes': 'Cuentas clientes',
       '/taller/panel/accesos/roles': 'Roles',
       '/taller/panel/accesos/permisos': 'Permisos',
     };
+    if (titles[path]) {
+      this.pageTitle = titles[path];
+      return;
+    }
     const match = Object.keys(titles)
+      .filter((p) => p !== '/taller/panel')
       .sort((a, b) => b.length - a.length)
-      .find((p) => path === p || path.startsWith(p + '/'));
-    this.pageTitle = match ? titles[match] : 'Panel taller';
+      .find((p) => path.startsWith(p + '/'));
+    this.pageTitle = match ? titles[match] : path === '/taller/panel' ? 'Resumen' : 'Panel taller';
+  }
+
+  private actualizarAccesoNotificaciones(): void {
+    this.showNotificaciones =
+      !this.auth.getMe()?.permisos?.length || this.auth.tienePermiso('notificaciones:leer');
+  }
+
+  private iniciarPollingNotificaciones(): void {
+    if (this.notifPollStarted || !this.showNotificaciones) return;
+    this.notifPollStarted = true;
+    interval(30_000)
+      .pipe(
+        startWith(0),
+        switchMap(() =>
+          this.comunicacion.listNotificaciones({ soloNoLeidas: true, limit: 99 }).pipe(catchError(() => of([]))),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((list) => {
+        this.unreadNotificaciones.set(list.length);
+        this.cdr.markForCheck();
+      });
   }
 }

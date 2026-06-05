@@ -12,6 +12,7 @@ from app.modules.comunicacion_y_notificaciones.mensajes_solicitud import reposit
 from app.modules.comunicacion_y_notificaciones.mensajes_solicitud.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.notificaciones.service import crear_notificacion_y_push
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.clientes_y_vehiculos.clientes.service import get_cliente_row_for_usuario, require_cliente_rol
 from app.modules.talleres_y_tecnicos.tecnico.service import get_tecnico_row_for_usuario, require_tecnico_rol
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
@@ -122,6 +123,13 @@ async def enviar_mensaje(
         titulo="Nuevo mensaje",
         mensaje=texto[:120] + ("…" if len(texto) > 120 else ""),
     )
+    if actor == "cliente" and sol.taller_id is not None:
+        await eventos_servicio.on_mensaje_cliente(
+            db,
+            solicitud=sol,
+            mensaje_id=msg.id,
+            texto_preview=texto,
+        )
     await db.commit()
     await db.refresh(msg)
     return MensajeSolicitudRead.model_validate(msg)

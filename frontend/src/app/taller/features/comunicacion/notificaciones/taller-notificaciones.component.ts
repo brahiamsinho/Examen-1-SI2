@@ -2,7 +2,7 @@ import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TallerComunicacionApiService } from '../../../../core/services/taller-comunicacion-api.service';
-import type { NotificacionDto } from '../../../../core/models/comunicacion.models';
+import type { NotificacionDto, TipoNotificacion } from '../../../../core/models/comunicacion.models';
 
 @Component({
   selector: 'app-taller-notificaciones',
@@ -62,9 +62,25 @@ export class TallerNotificacionesComponent implements OnInit, OnDestroy {
       });
     }
     if (notif.solicitud_id != null) {
-      void this.router.navigate(['/taller/panel/emergencias/solicitudes'], {
+      const route =
+        notif.tipo === 'SOLICITUD_PENDIENTE_TALLER'
+          ? '/taller/panel/emergencias/solicitudes'
+          : '/taller/panel/emergencias/mis-solicitudes';
+      void this.router.navigate([route], {
         queryParams: { q: String(notif.solicitud_id) },
       });
     }
+  }
+
+  tipoLabel(tipo: TipoNotificacion): string {
+    const labels: Record<TipoNotificacion, string> = {
+      SOLICITUD_CREADA: 'Emergencia registrada',
+      ESTADO_ACTUALIZADO: 'Estado / pago',
+      TALLER_ASIGNADO: 'Taller asignado',
+      TECNICO_ASIGNADO: 'Técnico asignado',
+      MENSAJE_NUEVO: 'Mensaje del cliente',
+      SOLICITUD_PENDIENTE_TALLER: 'Nueva solicitud',
+    };
+    return labels[tipo] ?? tipo;
   }
 }

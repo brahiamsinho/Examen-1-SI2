@@ -1,15 +1,28 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-05 — Notificaciones inmediatas + fix panel taller OnPush ✅
+# Última actualización: 2026-06-05 — CU43/CU45 sync offline mobile + CU42 cotización ✅
 # =========================================================
+
+### CU43/CU45 — Emergencia offline + sync al reconectar (2026-06-05) ✅
+- [x] Backend: migración `0022_client_request_id_cu43.sql`; idempotencia en `crear_solicitud` por `client_request_id`.
+- [x] Mobile: `SolicitudDraft` (Hive), wizard con rama offline, `SyncOrquestador` + `connectivity_plus`.
+- [x] UI: Mis solicitudes con borradores pendientes + «Sincronizar ahora».
+- [ ] Verificar E2E modo avión en dispositivo; migración en Docker local.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu43-cu45-sync-offline.md`.
+
+### CU42 — Registrar cotización taller (2026-06-05) ✅
+- [x] Backend: `presupuesto_detalle`, permiso `presupuestos:registrar`, endpoints taller presupuesto.
+- [x] Frontend taller: formulario cotización en detalle incidente.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu42-registrar-cotizacion.md`.
 
 ### Notificaciones inmediatas (2026-06-05) ✅
 - [x] Backend: `eventos_servicio.py`, `tenant_guard.py`, migración `0020`, hooks en selección/ bandeja/ asignación/ estado.
 - [x] API taller: `GET/PATCH /api/app/taller/notificaciones`.
-- [x] Frontend taller: `/taller/panel/comunicacion/notificaciones` (polling 30s).
+- [x] Frontend taller: `/taller/panel/comunicacion/notificaciones` (polling 30s) + **campana con badge** en topbar del shell.
+- [x] Taller recibe avisos in-app del **cliente**: elegir taller, mensajes de chat, pago confirmado (sin push FCM por ahora).
 - [x] Mobile técnico: `/tecnico/app/notificaciones`.
-- Sesión: `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`, `2026-06-05-agent-taller-notificaciones-cliente.md`.
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
 

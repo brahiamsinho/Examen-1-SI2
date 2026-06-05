@@ -311,6 +311,46 @@ $tl-gradient-cta: linear-gradient(135deg, #22c55e 0%, #059669 100%);
   justify-content: flex-end;
 }
 
+.shell__notif-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    color: #bbf7d0;
+    border-color: rgba(34, 197, 94, 0.65);
+    background: rgba(34, 197, 94, 0.18);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+  }
+}
+
+.shell__notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  border: 2px solid t.$ev-surface;
+}
+
 .shell__user-card {
   display: flex;
   align-items: center;

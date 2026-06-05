@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -23,11 +24,15 @@ class UbicacionCreateIn(BaseModel):
 
 
 class SolicitudEmergenciaCreateIn(BaseModel):
-    """CU11 + opcional CU12 inicial + CU15."""
+    """CU11 + opcional CU12 inicial + CU15 + CU43/CU45 idempotencia."""
 
     vehiculo_id: int = Field(..., gt=0)
     descripcion_texto: str | None = Field(None, max_length=8000)
     ubicacion_inicial: UbicacionCreateIn | None = None
+    client_request_id: UUID | None = Field(
+        None,
+        description="UUID del dispositivo; replay seguro al sincronizar borrador offline.",
+    )
 
 
 class SolicitudEmergenciaUpdateTextoIn(BaseModel):
@@ -113,11 +118,15 @@ class SolicitudEmergenciaRead(BaseModel):
     tecnico_ult_ubicacion_at: datetime | None = None
     presupuesto_bob: Decimal | None = Field(
         default=None,
-        description="Monto en bolivianos (BOB) informado por el técnico al iniciar atención en sitio.",
+        description="Monto en bolivianos (BOB) de la cotización del servicio.",
+    )
+    presupuesto_detalle: str | None = Field(
+        default=None,
+        description="Detalle de trabajo/repuestos de la cotización.",
     )
     presupuesto_registrado_at: datetime | None = Field(
         default=None,
-        description="Momento en que el técnico registró el presupuesto.",
+        description="Momento en que se registró la cotización.",
     )
 
 
@@ -200,11 +209,15 @@ class SolicitudSeguimientoRead(BaseModel):
     )
     presupuesto_bob: Decimal | None = Field(
         default=None,
-        description="Monto en bolivianos (BOB) informado por el técnico al iniciar atención en sitio.",
+        description="Monto en bolivianos (BOB) de la cotización del servicio.",
+    )
+    presupuesto_detalle: str | None = Field(
+        default=None,
+        description="Detalle de trabajo/repuestos de la cotización.",
     )
     presupuesto_registrado_at: datetime | None = Field(
         default=None,
-        description="Momento en que el técnico registró el presupuesto.",
+        description="Momento en que se registró la cotización.",
     )
 
 

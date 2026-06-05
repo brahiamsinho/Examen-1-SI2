@@ -14,6 +14,8 @@ import type {
   SolicitudBandejaDetalleDto,
   TallerDisponibilidadDto,
   TallerDisponibilidadUpdatePayload,
+  PresupuestoSolicitudDto,
+  RegistrarPresupuestoPayload,
   ReporteTallerDashboardDto,
   EstadoSolicitudSeguimiento,
 } from '../models/taller-emergencias.models';
@@ -57,6 +59,17 @@ export class TallerEmergenciasApiService {
 
   listarAsignacionesTecnico(solicitudId: number): Observable<AsignacionTecnicoDto[]> {
     return this.http.get<AsignacionTecnicoDto[]>(`${this.base}/solicitudes/${solicitudId}/asignaciones`);
+  }
+
+  getPresupuesto(solicitudId: number): Observable<PresupuestoSolicitudDto> {
+    return this.http.get<PresupuestoSolicitudDto>(`${this.base}/solicitudes/${solicitudId}/presupuesto`);
+  }
+
+  registrarPresupuesto(
+    solicitudId: number,
+    body: RegistrarPresupuestoPayload,
+  ): Observable<PresupuestoSolicitudDto> {
+    return this.http.patch<PresupuestoSolicitudDto>(`${this.base}/solicitudes/${solicitudId}/presupuesto`, body);
   }
 
   getReporteDashboard(params?: { desde?: string; hasta?: string }): Observable<ReporteTallerDashboardDto> {

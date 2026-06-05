@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../emergencias/presentation/widgets/offline_sync_bootstrap.dart';
+
 /// Bottom navigation + área de contenido para el área autenticada `/cliente/app/*`.
 class ClienteAppShell extends StatelessWidget {
   const ClienteAppShell({super.key, required this.child});
@@ -26,7 +28,9 @@ class ClienteAppShell extends StatelessWidget {
     final index = _indexForPath(loc);
 
     return Scaffold(
-      body: SafeArea(child: child),
+      body: SafeArea(
+        child: OfflineSyncBootstrap(child: child),
+      ),
       bottomNavigationBar: showNav
           ? NavigationBar(
               selectedIndex: index,

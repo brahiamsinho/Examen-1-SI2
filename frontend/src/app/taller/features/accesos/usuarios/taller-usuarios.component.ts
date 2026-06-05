@@ -92,6 +92,14 @@ export class TallerUsuariosComponent implements OnInit {
     return this.auth.tienePermiso('usuarios:actualizar');
   }
 
+  get puedeEliminar(): boolean {
+    return this.auth.tienePermiso('usuarios:eliminar');
+  }
+
+  esYo(u: UsuarioListDto): boolean {
+    return this.auth.getMe()?.id === u.id;
+  }
+
   reload(): void {
     this.loading.set(true);
     forkJoin({
@@ -231,5 +239,72 @@ export class TallerUsuariosComponent implements OnInit {
     this.selected = null;
     this.rolIds = new Set();
     this.cdr.markForCheck();
+  }
+
+  desactivar(u: UsuarioListDto): void {
+    if (!this.puedeEliminar || this.esYo(u)) return;
+    if (!confirm(`¿Desactivar la cuenta de ${u.email}? No podrá iniciar sesión.`)) return;
+    this.busy = true;
+    this.api.desactivarUsuario(u.id).subscribe({
+      next: () => {
+        this.busy = false;
+        this.reload();
+        this.closeModals();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.busy = false;
+        const msg = err?.error?.detail;
+        this.error = typeof msg === 'string' ? msg : 'No se pudo desactivar el usuario.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  activar(u: UsuarioListDto): void {
+    if (!this.puedeEditar || this.esYo(u)) return;
+    this.busy = true;
+    this.api.updateUsuario(u.id, { estado: 'ACTIVO' }).subscribe({
+      next: () => {
+        this.busy = false;
+        this.reload();
+        this.closeModals();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.busy = false;
+        this.error = 'No se pudo activar el usuario.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  eliminar(u: UsuarioListDto): void {
+    if (!this.puedeEliminar || this.esYo(u)) return;
+    if (
+      !confirm(
+        `¿Eliminar permanentemente a ${u.email}? Solo es posible si no es responsable de taller ni tiene atenciones como técnico.`,
+      )
+    ) {
+      return;
+    }
+    this.busy = true;
+    this.api.deleteUsuario(u.id).subscribe({
+      next: () => {
+        this.busy = false;
+        this.reload();
+        this.closeModals();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.busy = false;
+        const msg = err?.error?.detail;
+        this.error =
+          typeof msg === 'string'
+            ? msg
+            : 'No se pudo eliminar el usuario (puede tener historial o ser responsable de taller).';
+        this.cdr.markForCheck();
+      },
+    });
   }
 }

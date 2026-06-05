@@ -59,6 +59,11 @@ def crear_portal_facturacion(
     return {"url": session.url}
 
 
+def obtener_sesion_checkout(*, secret_key: str, session_id: str) -> Any:
+    stripe.api_key = secret_key
+    return stripe.checkout.Session.retrieve(session_id)
+
+
 def construir_evento_webhook(
     *, payload: bytes, sig_header: str, webhook_secret: str
 ) -> Any:

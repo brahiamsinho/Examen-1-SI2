@@ -18,7 +18,9 @@ import {
 import { filter } from 'rxjs/operators';
 import { take } from 'rxjs';
 import { TallerAuthService } from '../../core/services/taller-auth.service';
+import { TallerApiService } from '../../core/services/taller-api.service';
 import type { MeResponse } from '../../core/models/auth.models';
+import type { TallerSuscripcionDto } from '../../core/models/taller-api.models';
 
 export type TallerNavIcon =
   | 'home'
@@ -28,7 +30,8 @@ export type TallerNavIcon =
   | 'users'
   | 'shield'
   | 'key'
-  | 'inbox';
+  | 'inbox'
+  | 'layers';
 
 export interface TallerNavItem {
   path: string;
@@ -53,11 +56,13 @@ export interface TallerNavGroup {
 })
 export class TallerShellComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
+  private readonly tallerApi = inject(TallerApiService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
   me: MeResponse | null = null;
+  subscription: TallerSuscripcionDto | null = null;
   pageTitle = 'Resumen';
   sidebarCollapsed = false;
   mobileNavOpen = false;
@@ -107,6 +112,13 @@ export class TallerShellComponent implements OnInit {
           permiso: 'comisiones:leer',
         },
         {
+          path: '/taller/panel/reportes',
+          label: 'Reportes',
+          exact: true,
+          icon: 'chart',
+          permiso: 'reportes:leer',
+        },
+        {
           path: '/taller/panel/emergencias/disponibilidad',
           label: 'Disponibilidad',
           exact: true,
@@ -120,6 +132,19 @@ export class TallerShellComponent implements OnInit {
       items: [
         { path: '/taller/panel/mi-taller', label: 'Mi taller', exact: false, icon: 'wrench' },
         { path: '/taller/panel/tecnicos', label: 'Técnicos', exact: false, icon: 'wrench' },
+        { path: '/taller/panel/bitacora', label: 'Bitácora', exact: true, icon: 'clipboard' },
+        { path: '/taller/panel/backups', label: 'Backups', exact: true, icon: 'shield' },
+      ],
+    },
+    {
+      label: 'Suscripción',
+      items: [
+        {
+          path: '/taller/panel/suscripcion',
+          label: 'Planes SaaS',
+          exact: true,
+          icon: 'layers',
+        },
       ],
     },
     {
@@ -158,8 +183,7 @@ export class TallerShellComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.me = this.auth.getMe();
-    this.rebuildNavGroups();
+    this.loadSubscription();
 
     this.auth
       .refreshMeSiHaySesion()
@@ -169,6 +193,10 @@ export class TallerShellComponent implements OnInit {
         this.rebuildNavGroups();
         this.cdr.markForCheck();
       });
+
+    // Mientras llega /auth/me, usa caché local para no dejar el menú vacío.
+    this.me = this.auth.getMe();
+    this.rebuildNavGroups();
 
     this.syncPageTitle(this.router.url);
     this.router.events
@@ -196,6 +224,13 @@ export class TallerShellComponent implements OnInit {
   closeMobileNav(): void {
     this.mobileNavOpen = false;
     this.cdr.markForCheck();
+  }
+
+  goUpgrade(slug: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    void this.router.navigate(['/taller/panel/suscripcion'], { queryParams: { upgrade: slug } });
+    this.closeMobileNav();
   }
 
   userInitials(email: string | undefined): string {
@@ -229,10 +264,29 @@ export class TallerShellComponent implements OnInit {
       '/taller/panel/accesos/clientes': 'Cuentas clientes',
       '/taller/panel/accesos/roles': 'Roles',
       '/taller/panel/accesos/permisos': 'Permisos',
+      '/taller/panel/suscripcion': 'Planes SaaS',
+      '/taller/panel/bitacora': 'Bitácora',
+      '/taller/panel/backups': 'Backups',
     };
     const match = Object.keys(titles)
       .sort((a, b) => b.length - a.length)
       .find((p) => path === p || path.startsWith(p + '/'));
     this.pageTitle = match ? titles[match] : 'Panel taller';
+  }
+
+  private loadSubscription(): void {
+    this.tallerApi
+      .getSuscripcion()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.subscription = data;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.subscription = null;
+          this.cdr.markForCheck();
+        },
+      });
   }
 }

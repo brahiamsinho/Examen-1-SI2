@@ -1,0 +1,123 @@
+<div class="t-bk">
+  <h2 class="t-bk__h">Copias de seguridad del taller</h2>
+  <p class="t-bk__lead">
+    Respaldá técnicos, bandeja, comisiones y solicitudes de <strong>tu taller</strong>. Podés programar un backup
+    automático diario (por defecto <strong>03:00</strong> hora del servidor).
+  </p>
+
+  <div class="t-bk__alert" *ngIf="error" role="alert">{{ error }}</div>
+  <div class="t-bk__ok" *ngIf="success" role="status">{{ success }}</div>
+
+  <section class="t-bk__card" *ngIf="config">
+    <h3>Backup automático</h3>
+    <div class="t-bk__form">
+      <label class="t-bk__lbl t-bk__lbl--check">
+        <input type="checkbox" [(ngModel)]="config.backup_automatico" />
+        Activar backup automático
+      </label>
+      <label class="t-bk__lbl">
+        Hora (24 h)
+        <input
+          type="time"
+          class="t-bk__inp"
+          [ngModel]="configHoraValue()"
+          (ngModelChange)="onHoraChange($event)"
+        />
+      </label>
+      <label class="t-bk__lbl">
+        Frecuencia
+        <select class="t-bk__inp" [(ngModel)]="config.frecuencia">
+          <option value="daily">Diario</option>
+          <option value="weekly">Semanal (domingos)</option>
+        </select>
+      </label>
+      <label class="t-bk__lbl">
+        Retención (días)
+        <input type="number" class="t-bk__inp" min="1" max="90" [(ngModel)]="config.retencion_dias" />
+      </label>
+      <button type="button" class="t-bk__btn t-bk__btn--primary" [disabled]="savingConfig" (click)="saveConfig()">
+        {{ savingConfig ? 'Guardando…' : 'Guardar configuración' }}
+      </button>
+    </div>
+    <p class="t-bk__hint" *ngIf="config.ultimo_backup_auto">
+      Último backup automático: {{ config.ultimo_backup_auto | date : 'medium' }}
+    </p>
+  </section>
+
+  <section class="t-bk__card">
+    <div class="t-bk__rowhead">
+      <h3>Backups manuales</h3>
+      <button type="button" class="t-bk__btn t-bk__btn--primary" [disabled]="creating" (click)="crear()">
+        {{ creating ? 'Creando…' : 'Crear backup ahora' }}
+      </button>
+    </div>
+  </section>
+
+  <p class="t-bk__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="t-bk__tablewrap" *ngIf="!loading">
+    <table class="t-bk__table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Estado</th>
+          <th>Tamaño</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows">
+          <td>{{ row.id }}</td>
+          <td><span class="t-bk__pill">{{ row.estado }}</span></td>
+          <td>{{ row.tamano_mb != null ? row.tamano_mb + ' MB' : '—' }}</td>
+          <td>{{ row.creado_en | date : 'medium' }}</td>
+          <td class="t-bk__actions">
+            <button
+              type="button"
+              class="t-bk__mini"
+              (click)="descargar(row)"
+              [disabled]="row.estado !== 'COMPLETADO' && row.estado !== 'RESTAURADO'"
+            >
+              Descargar
+            </button>
+            <button
+              type="button"
+              class="t-bk__mini"
+              (click)="openRestore(row)"
+              [disabled]="row.estado !== 'COMPLETADO' && row.estado !== 'RESTAURADO'"
+            >
+              Restaurar
+            </button>
+            <button type="button" class="t-bk__mini t-bk__mini--danger" (click)="eliminar(row)">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="t-bk__empty" *ngIf="!rows.length">Sin backups registrados para este taller.</p>
+  </div>
+
+  <div class="t-bk__modal" *ngIf="restoreTarget" role="dialog" aria-modal="true">
+    <div class="t-bk__modalbox">
+      <h3>Restaurar backup #{{ restoreTarget.id }}</h3>
+      <p class="t-bk__warn">
+        Esto reemplazará datos operativos del taller (técnicos, bandeja, comisiones, solicitudes vinculadas). Usá solo
+        si sabés lo que hacés.
+      </p>
+      <label class="t-bk__lbl t-bk__lbl--check">
+        <input type="checkbox" [(ngModel)]="restoreConfirm" />
+        Confirmo que quiero restaurar este backup
+      </label>
+      <label class="t-bk__lbl">
+        Motivo
+        <textarea class="t-bk__inp t-bk__inp--area" rows="3" [(ngModel)]="restoreMotivo"></textarea>
+      </label>
+      <div class="t-bk__modalactions">
+        <button type="button" class="t-bk__btn" (click)="closeRestore()">Cancelar</button>
+        <button type="button" class="t-bk__btn t-bk__btn--danger" [disabled]="restoring" (click)="confirmRestore()">
+          {{ restoring ? 'Restaurando…' : 'Restaurar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

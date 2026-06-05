@@ -1,0 +1,70 @@
+<header class="sub__head">
+  <h1 class="sub__title">Planes SaaS</h1>
+  <p class="sub__lead">
+    Organización <strong>{{ data?.tenant_nombre }}</strong> ({{ data?.tenant_slug }}). Solo podés
+    <strong>ascender</strong> de plan; no se permite degradar desde este panel.
+  </p>
+</header>
+
+<p class="sub__alert sub__alert--ok" *ngIf="success" role="status">{{ success }}</p>
+<p class="sub__alert" *ngIf="error" role="alert">{{ error }}</p>
+
+<div class="sub__toolbar" *ngIf="!loading() && data">
+  <div class="sub__current">
+    <span class="sub__current-label">Plan actual</span>
+    <span class="sub__current-name">{{ data.current_plan_name }}</span>
+    <span class="sub__status">{{ statusLabel(data.subscription_status) }}</span>
+  </div>
+  <button type="button" class="sub__btn sub__btn--ghost" (click)="reload()">Actualizar</button>
+</div>
+
+<p class="sub__muted" *ngIf="loading()">Cargando planes…</p>
+
+<div class="sub__grid" *ngIf="!loading() && data">
+  <article
+    class="sub__card"
+    *ngFor="let plan of data.plans"
+    [class.sub__card--current]="plan.is_current"
+    [class.sub__card--featured]="plan.featured"
+  >
+    <div class="sub__card-head">
+      <div>
+        <span class="sub__slug">{{ plan.slug }}</span>
+        <h2 class="sub__name">{{ plan.name }}</h2>
+      </div>
+      <span class="sub__badge" *ngIf="plan.badge">{{ plan.badge }}</span>
+      <span class="sub__badge sub__badge--current" *ngIf="plan.is_current">Tu plan</span>
+    </div>
+
+    <p class="sub__desc">{{ plan.description || '—' }}</p>
+    <p class="sub__price">{{ priceLabel(plan) }}</p>
+
+    <ul class="sub__benefits">
+      <li *ngFor="let b of plan.benefits">{{ b }}</li>
+    </ul>
+
+    <div class="sub__actions">
+      <button
+        type="button"
+        class="sub__btn"
+        *ngIf="plan.can_upgrade"
+        [disabled]="!!upgradingSlug"
+        (click)="startUpgrade(plan)"
+      >
+        {{ upgradingSlug === plan.slug ? 'Redirigiendo a Stripe…' : 'Upgrade a ' + plan.name }}
+      </button>
+      <span class="sub__hint" *ngIf="plan.is_current">Plan en uso</span>
+      <span class="sub__hint" *ngIf="!plan.is_current && !plan.can_upgrade && plan.price_monthly_bob > 0">
+        Plan inferior o igual al actual
+      </span>
+      <span class="sub__hint" *ngIf="!plan.stripe_checkout_available && plan.price_monthly_bob > 0 && !plan.is_current">
+        Sin Price ID en Stripe (configura en admin)
+      </span>
+    </div>
+  </article>
+</div>
+
+<p class="sub__foot" *ngIf="!loading() && data && !data.stripe_enabled">
+  Stripe no está habilitado en el backend. Configura <code>STRIPE_SECRET_KEY</code> y
+  <code>STRIPE_PUBLISHABLE_KEY</code> en el <code>.env</code>.
+</p>

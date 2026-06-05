@@ -1,0 +1,124 @@
+@use '../../admin-theme' as t;
+@use '../../admin-ui' as ui;
+
+.bk__h {
+  @include ui.ev-page-title;
+}
+
+.bk__lead {
+  margin: -1rem 0 1rem;
+  color: t.$ev-muted;
+  font-size: 0.875rem;
+  max-width: 52rem;
+}
+
+.bk__alert {
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+
+  &--error {
+    @include ui.ev-alert-error;
+  }
+
+  &--ok {
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    background: rgba(34, 197, 94, 0.1);
+    color: #86efac;
+  }
+}
+
+.bk__card {
+  @include ui.ev-card;
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+  }
+}
+
+.bk__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.bk__lbl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: t.$ev-muted;
+
+  &--check {
+    flex-direction: row;
+    align-items: center;
+    text-transform: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: t.$ev-text;
+  }
+}
+
+.bk__inp {
+  @include ui.ev-input;
+}
+
+.bk__btn {
+  @include ui.ev-btn-ghost;
+  height: fit-content;
+
+  &--primary {
+    @include ui.ev-btn-primary;
+  }
+}
+
+.bk__muted {
+  color: t.$ev-muted;
+}
+
+.bk__tablewrap {
+  @include ui.ev-card;
+  padding: 0;
+  overflow: auto;
+}
+
+.bk__table {
+  @include ui.ev-table;
+}
+
+.bk__pill {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  background: rgba(76, 201, 240, 0.12);
+  color: t.$ev-cyan;
+}
+
+.bk__actions {
+  white-space: nowrap;
+}
+
+.bk__mini {
+  @include ui.ev-btn-ghost;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.75rem;
+  margin-right: 0.25rem;
+
+  &--danger:hover {
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+}
+
+.bk__empty {
+  padding: 1rem;
+  color: t.$ev-muted;
+}

@@ -1,8 +1,59 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-06-05 — Fix panel taller "Cargando…"
+# Actualizado: 2026-06-05 — Módulo backups
 # =========================================================
+
+# Actualizado: 2026-06-05 — Reportes personalizados QBE
+# =========================================================
+
+## ALTA — Reportes portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend frontend` (migración `0025_reportes_modulo.sql` + `openpyxl`/`reportlab`).
+2. **Cerrar sesión y volver a entrar** en `/taller` (permisos `reportes:*` en JWT).
+3. Ir a **Emergencias → Reportes** (`/taller/panel/reportes`).
+4. Probar texto: `comisiones pendientes de este mes en excel y pdf` → vista previa + descargas automáticas.
+5. Probar plantilla sistema «Comisiones pendientes» → Ejecutar → export manual Excel/PDF/CSV.
+6. Guardar plantilla personalizada y eliminarla.
+7. Micrófono: Chrome/Edge; si falla, usar textarea o `POST .../voice` con IA (`AI_ENABLED=true`).
+
+## ALTA — Restore backup taller tras eliminar técnico (2026-06-05)
+
+1. `docker compose up -d --build backend` (fix FK `tecnicos` → `usuarios`).
+2. Crear **backup manual nuevo** (los viejos no traen `usuarios.csv`).
+3. Eliminar un técnico sin historial → Restaurar el backup nuevo → debe reaparecer técnico + cuenta.
+4. Backup antiguo (#9 etc.): restore ya **no falla**, pero no recupera técnicos cuya cuenta fue borrada.
+
+## ALTA — CRUD técnicos y clientes (2026-06-05)
+
+1. Aplicar migración `0023_taller_clientes_crud_permisos.sql` (`docker compose exec db psql ...` o rebuild en volumen nuevo).
+2. `docker compose up -d --build backend frontend`.
+3. **Cerrar sesión y volver a entrar** en `/taller` (permisos `clientes:crear|actualizar|eliminar` en JWT).
+4. Probar **Técnicos**: desactivar / eliminar (409 si tiene atenciones).
+5. Probar **Cuentas clientes**: crear, editar, desactivar, eliminar (409 si tiene vehículos/solicitudes/pagos).
+
+## ALTA — Backups portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend backup-scheduler frontend` (migración `0022_taller_backup.sql`).
+2. Login `/taller` como responsable → **Equipo y taller → Backups**.
+3. Configurar hora **03:00**, activar automático, guardar.
+4. Crear backup manual → Descargar / Restaurar (con confirmación).
+5. Si 403: cerrar sesión y volver a entrar (permiso `backup_taller:gestionar` en JWT).
+
+## ALTA — Verificar backups plataforma (admin)
+
+1. `docker compose up -d --build backend backup-scheduler frontend` (migración `0021_backup_modulo.sql`).
+2. Login admin superadmin `patricio.mendez@sc-demo.test` / `scdemo1` → **Plataforma SaaS → Backups**.
+3. Crear backup **Plataforma** → estado `COMPLETADO` → Descargar `.sql.gz`.
+4. Verificar contenedor: `docker compose logs backup-scheduler --tail 50` (runner periódico + retención).
+5. Opcional: backup **TENANT** eligiendo org `demo-sc`; backup **EVIDENCIAS** si hay archivos en `uploads/evidencias`.
+
+## ALTA — Bitácora portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend frontend` (aplica migración `0020_taller_bitacora_permiso.sql`).
+2. Login `/taller` como responsable demo → **Equipo y taller → Bitácora**.
+3. Verificar: aparecen login, técnicos, bandeja, suscripción; no aparecen acciones de clientes ni otros talleres.
+4. Si el menú no muestra Bitácora: cerrar sesión y volver a entrar (permisos en JWT/`/auth/me`).
 
 ## ALTA — Verificar panel taller (2026-06-05)
 
@@ -10,13 +61,14 @@
 2. Navegar sidebar: Resumen, Solicitudes, Mis solicitudes, Historial, Mi taller, Técnicos, Roles, Clientes.
 3. Si algo sigue en "Cargando…", revisar consola DevTools (Network debe ser 200) y el componente hijo de esa ruta.
 
-## ALTA — Planes y precios + Stripe (2026-06-04)
+## ALTA — Planes y precios + Stripe (2026-06-05)
 
-1. Reiniciar backend: `docker compose up -d --build backend` (migración `0019_pricing_plans.sql`).
-2. Admin superadmin → **Comercial → Planes y precios** → editar plan Pro → pegar `stripe_price_id` de Stripe.
-3. Configurar `.env`: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`.
-4. Landing `#precios` → plan de pago → email → redirect Stripe Checkout.
-5. Rebuild frontend si usas Docker: `docker compose up -d --build frontend`.
+1. `.env` raíz: `STRIPE_SECRET_KEY=sk_test_...`, `STRIPE_PUBLISHABLE_KEY=pk_test_...` (y opcional `STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES=true`).
+2. `docker compose up -d --build backend` — al arrancar crea/sincroniza `price_...` en Stripe test y en `pricing_plans`.
+3. Panel taller → **Planes SaaS** → Upgrade Pro/Max → Stripe Checkout → tarjeta test `4242...` → vuelta con plan actualizado (confirm por `session_id`, sin webhook en local).
+4. **Producción:** configurar webhook Stripe → `/api/webhooks/stripe-saas` + `STRIPE_SAAS_WEBHOOK_SECRET`.
+5. **Dev alternativo:** `stripe listen --forward-to localhost:8000/api/webhooks/stripe-saas`.
+6. Opcional override manual: `STRIPE_SAAS_PRICE_PRO` / `STRIPE_SAAS_PRICE_MAX` o Admin → Planes y precios.
 
 ## ALTA — Login panel admin (verificado 2026-06-04)
 

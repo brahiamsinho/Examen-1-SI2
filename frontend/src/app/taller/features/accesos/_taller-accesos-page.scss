@@ -87,6 +87,15 @@
     padding: 0.35rem 0.55rem;
     font-size: 0.75rem;
     cursor: pointer;
+
+    &--danger {
+      color: #fca5a5;
+      border-color: rgba(248, 113, 113, 0.35);
+
+      &:hover:not(:disabled) {
+        background: rgba(248, 113, 113, 0.12);
+      }
+    }
   }
 
   .pg__backdrop {

@@ -1,0 +1,99 @@
+<div class="t-bit">
+  <h2 class="t-bit__h">Bitácora del taller</h2>
+  <p class="t-bit__lead">
+    Registro de actividades de tu equipo (responsable y técnicos). No incluye datos de otros talleres ni de
+    clientes.
+  </p>
+
+  <div class="t-bit__alert" *ngIf="error" role="alert">{{ error }}</div>
+
+  <div class="t-bit__filters">
+    <label class="t-bit__lbl">
+      Miembro del equipo
+      <select class="t-bit__inp" [(ngModel)]="usuarioId">
+        <option value="">Todos</option>
+        <option *ngIf="me" [value]="me.id">{{ responsableLabel() }} (responsable)</option>
+        <option *ngFor="let t of tecnicos" [value]="t.usuario_id">
+          {{ t.nombres }} {{ t.apellidos }}
+        </option>
+      </select>
+    </label>
+    <label class="t-bit__lbl">
+      Módulo
+      <select class="t-bit__inp" [(ngModel)]="modulo">
+        <option value="">Todos</option>
+        <option *ngFor="let m of modulos" [value]="m">{{ m }}</option>
+      </select>
+    </label>
+    <label class="t-bit__lbl">
+      Acción
+      <select class="t-bit__inp" [(ngModel)]="accion">
+        <option value="">Todas</option>
+        <option *ngFor="let a of acciones" [value]="a">{{ a }}</option>
+      </select>
+    </label>
+    <label class="t-bit__lbl">
+      Desde
+      <input class="t-bit__inp" type="datetime-local" [(ngModel)]="desde" />
+    </label>
+    <label class="t-bit__lbl">
+      Hasta
+      <input class="t-bit__inp" type="datetime-local" [(ngModel)]="hasta" />
+    </label>
+    <button type="button" class="t-bit__btn t-bit__btn--primary" (click)="fetch()">Aplicar filtros</button>
+  </div>
+
+  <p class="t-bit__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="t-bit__tablewrap" *ngIf="!loading">
+    <table class="t-bit__table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Usuario</th>
+          <th>Módulo</th>
+          <th>Acción</th>
+          <th>Entidad</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows">
+          <td>{{ row.created_at | date : 'medium' }}</td>
+          <td>{{ row.usuario_nombre || '—' }}</td>
+          <td>{{ row.modulo }}</td>
+          <td><span class="t-bit__pill">{{ row.accion }}</span></td>
+          <td>
+            {{ row.entidad }}
+            <ng-container *ngIf="row.entidad_id != null"> #{{ row.entidad_id }}</ng-container>
+          </td>
+          <td><button type="button" class="t-bit__mini" (click)="openDetail(row)">Detalle</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="t-bit__empty" *ngIf="!rows.length">Sin registros con estos filtros.</p>
+  </div>
+
+  <div class="t-bit__backdrop" *ngIf="detail" (click)="closeDetail()"></div>
+  <div class="t-bit__modal" *ngIf="detail" role="dialog" aria-modal="true">
+    <h3>Detalle de registro</h3>
+    <dl class="t-bit__dl">
+      <dt>ID</dt>
+      <dd>{{ detail.id }}</dd>
+      <dt>Fecha</dt>
+      <dd>{{ detail.created_at | date : 'medium' }}</dd>
+      <dt>Usuario</dt>
+      <dd>{{ detail.usuario_nombre || '—' }}</dd>
+      <dt>Módulo / entidad</dt>
+      <dd>
+        {{ detail.modulo }} / {{ detail.entidad
+        }}<ng-container *ngIf="detail.entidad_id != null"> #{{ detail.entidad_id }}</ng-container>
+      </dd>
+      <dt>Acción</dt>
+      <dd>{{ detail.accion }}</dd>
+      <dt>Descripción</dt>
+      <dd>{{ detail.descripcion || '—' }}</dd>
+    </dl>
+    <button type="button" class="t-bit__btn t-bit__btn--primary" (click)="closeDetail()">Cerrar</button>
+  </div>
+</div>

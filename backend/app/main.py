@@ -17,6 +17,18 @@ _log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if settings.stripe_enabled:
+        try:
+            from app.core.database import AsyncSessionLocal
+            from app.modules.acceso_y_administracion.billing.stripe_saas_bootstrap import (
+                ensure_saas_stripe_prices,
+            )
+
+            async with AsyncSessionLocal() as session:
+                await ensure_saas_stripe_prices(session)
+        except Exception as exc:
+            _log.warning("Bootstrap Stripe SaaS omitido o falló: %s", exc)
+
     if settings.RUN_SEEDS_IN_LIFESPAN:
         from app.seeds.runner import run_startup_seeds, seeds_enabled_for_startup
 
@@ -45,6 +57,8 @@ from app.modules.acceso_y_administracion.pricing_plans.router import (
     public_router as pricing_public_router,
 )
 from app.modules.acceso_y_administracion.billing.router import router as billing_webhooks_router
+from app.modules.acceso_y_administracion.backup.router import router as backup_admin_router
+from app.modules.acceso_y_administracion.backup.router_taller import router as backup_taller_router
 from app.modules.talleres_y_tecnicos.taller_responsable.router import router as taller_responsable_router
 from app.modules.atencion.taller_emergencias.router import router as taller_emergencias_router
 from app.modules.clientes_y_vehiculos.clientes.router import router as clientes_app_router
@@ -57,6 +71,9 @@ from app.modules.comunicacion_y_notificaciones.comunicaciones.router import (
 from app.modules.talleres_y_tecnicos.tecnico.router import router as tecnico_router
 from app.modules.pagos_y_comisiones.pagos.router import emergencias_pagos_cliente_router
 from app.modules.ai.router import router as ai_router
+from app.modules.acceso_y_administracion.reportes.router_taller import (
+    router as reportes_taller_router,
+)
 
 # ── Crear aplicación ─────────────────────────────────────────
 app = FastAPI(
@@ -99,6 +116,8 @@ app.include_router(tecnicos_router, prefix=PREFIX)
 app.include_router(bitacora_router, prefix=PREFIX)
 app.include_router(admin_finanzas_router, prefix=PREFIX)
 app.include_router(admin_dashboard_router, prefix=PREFIX)
+app.include_router(backup_admin_router, prefix=PREFIX)
+app.include_router(backup_taller_router, prefix=PREFIX)
 app.include_router(tenants_router, prefix=PREFIX)
 app.include_router(public_tenants_router, prefix=PREFIX)
 app.include_router(pricing_plans_admin_router, prefix=PREFIX)
@@ -114,6 +133,7 @@ app.include_router(comunicaciones_tecnico_router, prefix=PREFIX)
 app.include_router(tecnico_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 app.include_router(ai_router, prefix=PREFIX)
+app.include_router(reportes_taller_router, prefix=PREFIX)
 
 # Archivos de evidencia (foto/audio) servidos en HTTPS/HTTP según el entorno. si
 _evid_dir = settings.evidencias_upload_dir

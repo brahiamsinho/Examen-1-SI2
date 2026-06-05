@@ -134,6 +134,11 @@
       color: #fcd34d;
     }
 
+    &[data-status='invalid'] {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+    }
+
     &[data-status='free'] {
       background: rgba(148, 163, 184, 0.15);
       color: #cbd5e1;

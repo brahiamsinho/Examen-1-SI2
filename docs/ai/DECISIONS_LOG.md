@@ -223,3 +223,33 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-06-04  
 **Decisión:** El contenedor `backend` usa ENTRYPOINT en `Dockerfile` → `python -m app.db.docker_bootstrap` → uvicorn. Migraciones: Alembic (`stamp head` si initdb ya creó esquema; si no `upgrade head`) + SQL incremental vía tabla `app_sql_migrations`. Seeds compartidos en `app/seeds/runner.py`; en Compose `RUN_SEEDS_IN_LIFESPAN=false` y seeds vía flags `SEED_*` en entrypoint (override dev).  
 **Por qué:** Elimina pasos manuales (`alembic stamp`, `python -m app.seeds`) tras `docker compose up`; aplica SQL 0007–0017 en volúmenes antiguos; evita doble seed con `--reload`. Producción: `RUN_MIGRATIONS_ON_START=true`, seeds off salvo control explícito.
+
+## DEC-032 — Bitácora portal taller: endpoint dedicado + permiso acotado (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** No reutilizar `GET /api/bitacora/` para el taller. Nuevo `GET /api/app/taller/bitacora` con permiso `bitacora_taller:leer`, filtro obligatorio por `tenant_id`, actores (responsable + técnicos del `taller_id`) y whitelist de módulos operativos. Respuesta sin `ip_address`.  
+**Por qué:** El endpoint admin filtra solo por tenant y expondría acciones de clientes u otros talleres de la misma organización. Tres capas (tenant + equipo + módulo) garantizan aislamiento sin `tenant_id` en la tabla `bitacora`.
+
+## DEC-033 — Backups: pg_dump plataforma + export CSV por tenant (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** Módulo `backup` en FastAPI (no Django). **Plataforma:** `pg_dump` completo comprimido. **Tenant:** export lógico CSV de tablas con `tenant_id` (shared schema, sin `--schema=`). **Evidencias:** tarball de `uploads/evidencias`. Scheduler en contenedor Docker aparte (`backup-scheduler`) con volumen `backup_data`. Restore automático solo para dumps `PLATAFORMA` (destructivo, requiere confirmación).  
+**Por qué:** Oftalmología usaba schema-per-tenant; EmergenciasViales usa RLS/shared schema — un dump por schema no aplica. CSV por tenant permite respaldo selectivo sin romper otras orgs; `pg_dump` global cubre desastre total de plataforma.
+
+## DEC-034 — Portal taller: CRUD técnicos y clientes (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** El responsable de taller puede **desactivar** (baja lógica técnico + usuario) y **eliminar** (físico solo sin historial) técnicos vía `/api/app/taller/tecnicos`. Puede **CRUD clientes** de su tenant vía `/api/clientes/` con permisos `clientes:crear|actualizar|eliminar` (migración `0023`). Eliminar físico bloqueado con 409 si hay solicitudes, vehículos, pagos o asignaciones.  
+**Por qué:** Requerimiento explícito de operación desde el panel web; se mantiene integridad referencial y trazabilidad (desactivar como vía segura cuando hay historial).
+
+## DEC-035 — Backup taller incluye cuentas de técnicos (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** El export `TALLER` incluye `usuarios` y `usuario_rol` de los técnicos del taller (no todo el tenant). En restore se recrean esas cuentas antes de `COPY tecnicos`. Backups sin esos CSV omiten filas huérfanas en lugar de abortar.  
+**Por qué:** Hard-delete de técnico borra también `usuarios`; restore solo con `tecnicos.csv` violaba `fk_tecnicos_usuario`. Incluir cuentas permite deshacer eliminaciones; filtrar mantiene compatibilidad con backups ya creados.
+
+## DEC-036 — Reportes QBE en portal taller (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** Módulo `reportes` con motor QBE (whitelist SQLAlchemy), export Excel/PDF/CSV en memoria, traductor NL por reglas en español, micrófono Web Speech en frontend y endpoint `/voice` opcional vía Whisper. Scope automático `tenant_id` + `taller_id`.  
+**Por qué:** Reutiliza patrón probado en Oftalmología sin SQL generado por IA; aislamiento multi-tenant en el motor; tres formatos de exportación pedidos por voz (“en excel y pdf”).

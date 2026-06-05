@@ -274,7 +274,7 @@ export class AdminUsuariosComponent implements OnInit {
   deactivate(u: UsuarioListDto): void {
     if (!confirm(`¿Desactivar a ${u.email}?`)) return;
     this.busy = true;
-    this.api.deleteUsuario(u.id).subscribe({
+    this.api.desactivarUsuario(u.id).subscribe({
       next: () => {
         this.usuarios.update((list) => list.filter((x) => x.id !== u.id));
         this.busy = false;

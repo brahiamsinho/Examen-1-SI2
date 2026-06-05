@@ -83,24 +83,42 @@ async def checkout_plan_publico(
     plan = await service.get_plan_by_slug(db, body.plan_slug)
     if not plan.active:
         raise HTTPException(status_code=400, detail="Plan no disponible.")
-    price_id = (plan.stripe_price_id or "").strip()
+    from app.modules.acceso_y_administracion.billing.stripe_price_id import assert_valid_stripe_price_id
+    from app.modules.acceso_y_administracion.billing.stripe_price_resolver import (
+        resolve_effective_stripe_price_id,
+    )
+
+    price_id = resolve_effective_stripe_price_id(plan.stripe_price_id, plan.slug)
     if not price_id:
         if plan.price_monthly_bob and float(plan.price_monthly_bob) > 0:
             raise HTTPException(
                 status_code=400,
-                detail="Este plan aún no tiene Price ID de Stripe configurado en el panel admin.",
+                detail=(
+                    "Este plan no tiene Price ID de Stripe. Configurá .env (STRIPE_SAAS_PRICE_*) "
+                    "o Admin → Planes y precios."
+                ),
             )
         raise HTTPException(status_code=400, detail="El plan gratuito no usa checkout Stripe.")
 
+    price_id = assert_valid_stripe_price_id(price_id)
+
     def _run() -> dict:
-        return stripe_saas_client.crear_checkout_suscripcion_publica(
-            secret_key=settings.STRIPE_SECRET_KEY,
-            price_id=price_id,
-            customer_email=str(body.email),
-            success_url=body.success_url,
-            cancel_url=body.cancel_url,
-            metadata={"plan_slug": plan.slug, "source": "landing"},
-        )
+        import stripe
+
+        try:
+            return stripe_saas_client.crear_checkout_suscripcion_publica(
+                secret_key=settings.STRIPE_SECRET_KEY,
+                price_id=price_id,
+                customer_email=str(body.email),
+                success_url=body.success_url,
+                cancel_url=body.cancel_url,
+                metadata={"plan_slug": plan.slug, "source": "landing"},
+            )
+        except stripe.InvalidRequestError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Stripe rechazó el checkout: {exc.user_message or str(exc)}",
+            ) from exc
 
     out = await anyio.to_thread.run_sync(_run)
     if not out.get("url"):

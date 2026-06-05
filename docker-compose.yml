@@ -38,6 +38,12 @@ services:
       - ./backend/migrations/0017_saas_billing_phase3.sql:/docker-entrypoint-initdb.d/17_saas_billing_phase3.sql:ro
       - ./backend/migrations/0018_taller_acceso_permisos.sql:/docker-entrypoint-initdb.d/18_taller_acceso_permisos.sql:ro
       - ./backend/migrations/0019_pricing_plans.sql:/docker-entrypoint-initdb.d/19_pricing_plans.sql:ro
+      - ./backend/migrations/0020_taller_bitacora_permiso.sql:/docker-entrypoint-initdb.d/20_taller_bitacora_permiso.sql:ro
+      - ./backend/migrations/0021_backup_modulo.sql:/docker-entrypoint-initdb.d/21_backup_modulo.sql:ro
+      - ./backend/migrations/0022_taller_backup.sql:/docker-entrypoint-initdb.d/22_taller_backup.sql:ro
+      - ./backend/migrations/0023_taller_clientes_crud_permisos.sql:/docker-entrypoint-initdb.d/23_taller_clientes_crud_permisos.sql:ro
+      - ./backend/migrations/0024_taller_usuarios_eliminar_permiso.sql:/docker-entrypoint-initdb.d/24_taller_usuarios_eliminar_permiso.sql:ro
+      - ./backend/migrations/0025_reportes_modulo.sql:/docker-entrypoint-initdb.d/25_reportes_modulo.sql:ro
       - ./backend/migrations/99_register_sql_migrations.sql:/docker-entrypoint-initdb.d/99_register_sql_migrations.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
@@ -139,6 +145,11 @@ services:
       PAGO_PROVEEDOR_DEFAULT: ${PAGO_PROVEEDOR_DEFAULT:-SIMULADO}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_SAAS_WEBHOOK_SECRET: ${STRIPE_SAAS_WEBHOOK_SECRET:-}
+      STRIPE_SAAS_PRICE_STARTER: ${STRIPE_SAAS_PRICE_STARTER:-}
+      STRIPE_SAAS_PRICE_PRO: ${STRIPE_SAAS_PRICE_PRO:-}
+      STRIPE_SAAS_PRICE_MAX: ${STRIPE_SAAS_PRICE_MAX:-}
+      STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES: ${STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES:-true}
       EVIDENCIAS_PUBLIC_BASE_URL: ${EVIDENCIAS_PUBLIC_BASE_URL}
       EVIDENCIA_MAX_UPLOAD_BYTES: ${EVIDENCIA_MAX_UPLOAD_BYTES}
       SMTP_HOST: ${SMTP_HOST}
@@ -160,6 +171,11 @@ services:
       AI_INFERENCE_STUB: ${AI_INFERENCE_STUB:-false}
       AI_MAX_AUDIO_BYTES: ${AI_MAX_AUDIO_BYTES:-15728640}
       AI_MAX_IMAGE_BYTES: ${AI_MAX_IMAGE_BYTES:-12582912}
+      BACKUP_ENABLED: ${BACKUP_ENABLED:-true}
+      BACKUP_STORAGE_DIR: ${BACKUP_STORAGE_DIR:-backups}
+      BACKUP_TIMEOUT_SECONDS: ${BACKUP_TIMEOUT_SECONDS:-600}
+      BACKUP_MAX_SIZE_MB: ${BACKUP_MAX_SIZE_MB:-2048}
+      BACKUP_RETENTION_DAYS_DEFAULT: ${BACKUP_RETENTION_DAYS_DEFAULT:-7}
       TZ: ${TZ:-America/La_Paz}
     ports:
       - "${BACKEND_HOST_PORT:-8000}:${UVICORN_PORT:-8000}"
@@ -180,6 +196,51 @@ services:
     volumes:
       - ./backend/firebase-credentials.json:/app/firebase-credentials.json:ro
       - ./backend/uploads:/app/uploads
+      - backup_data:/app/backups
+
+  backup-scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: emergencias_backup_scheduler
+    restart: unless-stopped
+    command:
+      [
+        "sh",
+        "-c",
+        "while true; do python -m app.modules.acceso_y_administracion.backup.runner; sleep $${BACKUP_SCHEDULER_INTERVAL_SECONDS:-3600}; done",
+      ]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-db}:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      RUN_MIGRATIONS_ON_START: "false"
+      RUN_SEEDS_ON_START: "false"
+      RUN_SEEDS_IN_LIFESPAN: "false"
+      BACKUP_ENABLED: ${BACKUP_ENABLED:-true}
+      BACKUP_STORAGE_DIR: ${BACKUP_STORAGE_DIR:-backups}
+      BACKUP_TIMEOUT_SECONDS: ${BACKUP_TIMEOUT_SECONDS:-600}
+      BACKUP_MAX_SIZE_MB: ${BACKUP_MAX_SIZE_MB:-2048}
+      BACKUP_RETENTION_DAYS_DEFAULT: ${BACKUP_RETENTION_DAYS_DEFAULT:-7}
+      BACKUP_SCHEDULER_INTERVAL_SECONDS: ${BACKUP_SCHEDULER_INTERVAL_SECONDS:-3600}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      MAIL_FROM: ${MAIL_FROM}
+      EMAIL_LINK_BASE_URL: ${EMAIL_LINK_BASE_URL}
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL}
+      TZ: ${TZ:-America/La_Paz}
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    volumes:
+      - backup_data:/app/backups
+      - ./backend/uploads:/app/uploads:ro
+    networks:
+      - emergencias_net
 
   ai-inference:
     profiles: ["ai"]
@@ -226,6 +287,8 @@ services:
 volumes:
   postgres_data:
     name: emergencias_postgres_data
+  backup_data:
+    name: emergencias_backup_data
   ai_inference_cache:
     name: emergencias_ai_inference_cache
 

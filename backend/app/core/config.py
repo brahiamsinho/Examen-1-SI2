@@ -39,6 +39,7 @@ class Settings(BaseSettings):
         "STRIPE_SAAS_WEBHOOK_SECRET",
         "STRIPE_SAAS_PRICE_STARTER",
         "STRIPE_SAAS_PRICE_PRO",
+        "STRIPE_SAAS_PRICE_MAX",
         "SAAS_PLATFORM_BASE_DOMAIN",
         "SMTP_USER",
         "SMTP_PASSWORD",
@@ -154,6 +155,9 @@ class Settings(BaseSettings):
     STRIPE_SAAS_WEBHOOK_SECRET: str | None = None
     STRIPE_SAAS_PRICE_STARTER: str | None = None
     STRIPE_SAAS_PRICE_PRO: str | None = None
+    STRIPE_SAAS_PRICE_MAX: str | None = None
+    # true (default en dev): crea price_... en Stripe test si faltan en BD y .env
+    STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES: bool = True
     # Subdominio: demo-sc.<SAAS_PLATFORM_BASE_DOMAIN>
     SAAS_PLATFORM_BASE_DOMAIN: str | None = None
 
@@ -164,6 +168,14 @@ class Settings(BaseSettings):
     @property
     def stripe_saas_price_id(self) -> str | None:
         return (self.STRIPE_SAAS_PRICE_STARTER or "").strip() or None
+
+    def stripe_saas_price_id_for_slug(self, slug: str) -> str | None:
+        """Price ID opcional por plan desde `.env` (pro/max/starter)."""
+        from app.modules.acceso_y_administracion.billing.stripe_price_resolver import (
+            env_stripe_price_id_for_slug,
+        )
+
+        return env_stripe_price_id_for_slug(slug)
 
     # ── Firebase Cloud Messaging (CU19) — opcional; ruta al JSON de cuenta de servicio ──
     FCM_ENABLED: bool = False
@@ -226,6 +238,21 @@ class Settings(BaseSettings):
         """URL pública del front (SPA Angular): `APP_PUBLIC_URL` o `FRONTEND_PUBLIC_URL`."""
         u = (self.APP_PUBLIC_URL or self.FRONTEND_PUBLIC_URL or "").strip()
         return u.rstrip("/")
+
+    # ── Backup / restore (pg_dump + scheduler Docker) ───────
+    BACKUP_ENABLED: bool = True
+    BACKUP_STORAGE_DIR: str = "backups"
+    BACKUP_TIMEOUT_SECONDS: int = 600
+    BACKUP_MAX_SIZE_MB: int = 2048
+    BACKUP_RETENTION_DAYS_DEFAULT: int = 7
+    BACKUP_SCHEDULER_INTERVAL_SECONDS: int = 3600
+
+    @property
+    def backup_storage_path(self) -> Path:
+        p = Path(self.BACKUP_STORAGE_DIR)
+        if not p.is_absolute():
+            p = _BACKEND_DIR / p
+        return p
 
     @property
     def evidencias_upload_dir(self) -> Path:

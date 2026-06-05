@@ -223,6 +223,9 @@ async def create_tecnico_portal(
     if dup_tel.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="El teléfono ya está registrado.")
 
+    responsable = await usuarios_service.get_usuario_by_id(ejecutor_id, db)
+    tenant_id = responsable.tenant_id
+
     user = await usuarios_service.create_usuario(
         {
             "nombres": nombres,
@@ -232,6 +235,7 @@ async def create_tecnico_portal(
             "password": body.password,
             "username": None,
             "estado": EstadoUsuarioEnum.ACTIVO,
+            "tenant_id": tenant_id,
         },
         db,
         ejecutor_id=ejecutor_id,
@@ -273,6 +277,7 @@ async def update_tecnico_portal(
     await get_tecnico_portal(tecnico_id, taller_id, db)
     res_t = await db.execute(select(Tecnico).where(Tecnico.id == tecnico_id, Tecnico.taller_id == taller_id))
     tecnico = res_t.scalar_one()
+    user = await usuarios_service.get_usuario_by_id(tecnico.usuario_id, db)
 
     if body.documento is not None:
         tecnico.documento_identidad = body.documento
@@ -282,9 +287,12 @@ async def update_tecnico_portal(
         tecnico.especialidad_id = body.especialidad_id
     if body.estado is not None:
         tecnico.estado = body.estado
+        if body.estado == EstadoTecnicoEnum.INACTIVO:
+            user.estado = EstadoUsuarioEnum.INACTIVO
+        elif body.estado == EstadoTecnicoEnum.ACTIVO:
+            user.estado = EstadoUsuarioEnum.ACTIVO
     tecnico.updated_at = utc_now_naive()
 
-    user = await usuarios_service.get_usuario_by_id(tecnico.usuario_id, db)
     if body.nombre_completo:
         n, a = _split_nombre_completo(body.nombre_completo)
         user.nombres = n
@@ -313,6 +321,80 @@ async def update_tecnico_portal(
         descripcion=f"Técnico actualizado: {tecnico_id}",
     )
     return await get_tecnico_portal(tecnico_id, taller_id, db)
+
+
+async def desactivar_tecnico_portal(
+    tecnico_id: int,
+    taller_id: int,
+    ejecutor_id: int,
+    db: AsyncSession,
+) -> TecnicoPortalRead:
+    return await update_tecnico_portal(
+        tecnico_id,
+        taller_id,
+        TecnicoPortalUpdate(estado=EstadoTecnicoEnum.INACTIVO),
+        ejecutor_id,
+        db,
+    )
+
+
+async def delete_tecnico_portal(
+    tecnico_id: int,
+    taller_id: int,
+    ejecutor_id: int,
+    db: AsyncSession,
+) -> None:
+    from sqlalchemy import delete as sql_delete
+
+    from app.modules.atencion.taller_emergencias.models import SolicitudAsignacionTecnico
+    from app.modules.incidentes.emergencias.models import SolicitudEmergencia
+    from app.modules.acceso_y_administracion.auth.models import Sesion
+
+    await get_tecnico_portal(tecnico_id, taller_id, db)
+    res_t = await db.execute(select(Tecnico).where(Tecnico.id == tecnico_id, Tecnico.taller_id == taller_id))
+    tecnico = res_t.scalar_one()
+    uid = tecnico.usuario_id
+
+    asig = int(
+        (
+            await db.execute(
+                select(func.count())
+                .select_from(SolicitudAsignacionTecnico)
+                .where(SolicitudAsignacionTecnico.tecnico_id == tecnico_id)
+            )
+        ).scalar_one()
+        or 0
+    )
+    sol = int(
+        (
+            await db.execute(
+                select(func.count())
+                .select_from(SolicitudEmergencia)
+                .where(SolicitudEmergencia.tecnico_id == tecnico_id)
+            )
+        ).scalar_one()
+        or 0
+    )
+    if asig or sol:
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede eliminar: el técnico tiene historial de atenciones. Desactívalo en su lugar.",
+        )
+
+    await db.execute(sql_delete(UsuarioRol).where(UsuarioRol.usuario_id == uid))
+    await db.execute(sql_delete(Sesion).where(Sesion.usuario_id == uid))
+    await db.execute(sql_delete(Tecnico).where(Tecnico.id == tecnico_id))
+    await db.execute(sql_delete(Usuario).where(Usuario.id == uid))
+
+    await registrar_accion(
+        db=db,
+        usuario_id=ejecutor_id,
+        modulo="taller_responsable",
+        entidad="tecnicos",
+        entidad_id=tecnico_id,
+        accion=AccionBitacoraEnum.ELIMINAR,
+        descripcion=f"Técnico eliminado: {tecnico_id}",
+    )
 
 
 async def dashboard_taller(usuario_id: int, db: AsyncSession) -> TallerDashboardRead:

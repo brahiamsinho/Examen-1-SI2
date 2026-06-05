@@ -1,10 +1,41 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-05 — Fix panel taller "Cargando…" (OnPush + signals) ✅
+# Última actualización: 2026-06-05 — Reportes personalizados QBE + voz + export ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
+
+### Reportes personalizados — QBE + voz + Excel/PDF/CSV (2026-06-05) ✅
+- [x] Módulo `backend/app/modules/acceso_y_administracion/reportes/` (adaptado de Oftalmología `apps/reportes`).
+- [x] Motor QBE seguro SQLAlchemy: `SolicitudEmergencia`, `ComisionTaller`, `Cliente`, `Tecnico` + scope `tenant_id`/`taller_id`.
+- [x] Exportación en memoria: **Excel** (`openpyxl`), **PDF** (`reportlab`), **CSV** (UTF-8 BOM).
+- [x] NL/voz: `POST .../nl-query` (traductor reglas ES); micrófono Web Speech en frontend; `POST .../voice` (Whisper vía `/api/ai` si IA habilitada).
+- [x] API taller: `/api/app/taller/reportes/*` — plantillas CRUD, execute, export, run predefinidas.
+- [x] Migración `0025_reportes_modulo.sql` + permisos `reportes:*` → `TALLER_RESPONSABLE` y `ADMIN`.
+- [x] UI: `/taller/panel/reportes` (sidebar Emergencias → Reportes).
+- [ ] Tests pytest QBE/export/NL; panel admin reportes (opcional).
+
+### Fix restore backup taller — FK técnicos (2026-06-05) ✅
+- [x] Export taller incluye `usuarios` + `usuario_rol` de técnicos del taller.
+- [x] Restore recrea cuentas de técnicos antes de `COPY tecnicos`.
+- [x] Backups antiguos (sin `usuarios.csv`): restore omiten técnicos huérfanos en lugar de fallar con FK.
+
+### Portal taller — CRUD técnicos y clientes (2026-06-05) ✅
+- [x] Técnicos: desactivar cuenta (`POST .../desactivar`) y eliminar físico (`DELETE`) si sin historial.
+- [x] Clientes: crear, editar, desactivar, eliminar vía `/api/clientes/` + permisos `clientes:*`.
+- [x] Migración `0023_taller_clientes_crud_permisos.sql`.
+- [x] UI: `/taller/panel/tecnicos` y `/taller/panel/accesos/clientes`.
+
+### Módulo backups plataforma (2026-06-05) ✅
+- [x] Adaptado desde proyecto Oftalmología (Django/schema-per-tenant) a **shared schema + `tenant_id`**.
+- [x] Migración `0021_backup_modulo.sql`: tablas `backups`, `backup_config`, permiso `backup:gestionar` → rol `ADMIN`.
+- [x] **Tipos:** `PLATAFORMA` (`pg_dump` → `.sql.gz`), `TENANT` (CSV por tablas filtradas por `tenant_id` → `.tar.gz`), `EVIDENCIAS` (`uploads/evidencias` → `.tar.gz`).
+- [x] API superadmin: `GET/POST/DELETE /api/admin/backups`, download, restore solo `PLATAFORMA` (requiere confirmación).
+- [x] Docker: `postgresql-client` en imagen backend; volumen `backup_data:/app/backups`; servicio **`backup-scheduler`** (loop `backup.runner` cada `BACKUP_SCHEDULER_INTERVAL_SECONDS`).
+- [x] Frontend admin: `/admin/panel/backups` (solo superadmin plataforma).
+- [x] **Portal taller (2026-06-05):** `/taller/panel/backups` — crear, descargar, restaurar, config automática (default **03:00** TZ servidor); permiso `backup_taller:gestionar`; tipo `TALLER` + tabla `taller_backup_config`; migración `0022_taller_backup.sql`.
+- [ ] Tests pytest del módulo backup.
 
 ### Ciclo 4 — CU36–CU40 (examen SI2; código 2026-06-02) ✅
 - [x] **CU37 Seleccionar taller (cliente):** `GET .../talleres-candidatos`, `POST .../seleccionar-taller`; servicio `incidentes/emergencias/service/seleccion_taller.py`; mobile `emergencia_seleccion_taller_screen.dart`, ruta `.../seleccionar-taller`; `crear_solicitud` ya no reparte bandeja a todos los talleres.
@@ -26,6 +57,7 @@
 - [x] **Admin SaaS — login panel (2026-06-04):** fix seeds CLIENTE en arranque (`asignar_roles_usuario_seed`); startup rápido sin 502; login demo admin `patricio.mendez@sc-demo.test` / `scdemo1`.
 - [x] Angular: selector organización (superadmin), `/admin/panel/organizaciones`, APIs tenants en `AdminApiService`.
 - [x] **Admin SaaS — planes y precios (2026-06-04):** sidebar Comercial → `/admin/panel/planes-precios`; tabla `pricing_plans` (migración 0019); landing consume API pública; checkout Stripe desde landing con `stripe_price_id` configurado en admin.
+- [x] **Stripe SaaS bootstrap (2026-06-05):** con `STRIPE_SECRET_KEY`/`pk_test_` en `.env`, el backend crea o sincroniza `price_...` en arranque (`stripe_saas_bootstrap`); upgrade taller `/taller/panel/suscripcion` sin pegar IDs a mano.
 - [x] Fase 3 (2026-05-24): API pública tenants, billing Stripe SaaS (checkout/webhook), subdominio Host, tests unitarios, mobile/taller login por org, bloqueo escritura por suscripción vencida.
 
 ### SaaS multi-tenant — fase 1 (2026-05-24) ✅
@@ -167,6 +199,13 @@
 - [x] **Fix:** componentes hijos migrados a OnPush + `loading` signal + `markForCheck` + `finalize`/`takeUntilDestroyed` (bandeja, historial, dashboard, mi-taller, técnicos, roles, clientes, disponibilidad, comisiones, detalle incidente).
 - [x] **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-taller-panel-loading.md`.
 
+### Taller web — bitácora de auditoría (2026-06-05) ✅
+- [x] **API:** `GET /api/app/taller/bitacora` — permiso `bitacora_taller:leer` (migración `0020`).
+- [x] **Aislamiento:** mismo `tenant_id` + solo usuarios responsable/técnicos del taller + módulos operativos (sin `emergencias` cliente, `pagos`, etc.).
+- [x] **UI:** `/taller/panel/bitacora` en nav «Equipo y taller»; filtros por miembro, módulo, acción y fechas.
+- [x] **Logging:** checkout/confirm suscripción SaaS (`taller_portal`).
+- [x] **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-bitacora.md`.
+
 ## Lo que existe
 
 ### Backend FastAPI ✅
@@ -176,7 +215,7 @@
 - [x] `modules/clientes_y_vehiculos/vehiculos/` — catálogos + CRUD vehículos `/api/vehiculos`
 - [x] `modules/incidentes/emergencias/` — solicitudes, seguimiento, ubicaciones, evidencias (cliente); `/api/app/cliente/emergencias`; **CU37** `talleres-candidatos` + `seleccionar-taller`; **CU36** `ubicacion-tecnico`
 - [x] `modules/talleres_y_tecnicos/talleres/` — CRUD talleres, especialidades, técnicos (`/api/talleres`, `/api/especialidades`, `/api/tecnicos`)
-- [x] `modules/talleres_y_tecnicos/taller_responsable/` — registro taller, mi-taller, técnicos (responsable); `/api/app/taller`
+- [x] `modules/talleres_y_tecnicos/taller_responsable/` — registro taller, mi-taller, técnicos, bitácora acotada, suscripción; `/api/app/taller`
 - [x] `modules/talleres_y_tecnicos/tecnico/` — app técnico emergencias; `/api/app/tecnico/emergencias`
 - [x] `modules/atencion/taller_emergencias/` — bandeja PENDIENTE, detalle, aceptar/rechazar, disponibilidad, asignar técnico, historial y comisiones; prefijo `/api/app/taller/emergencias`
 - [x] `modules/comunicacion_y_notificaciones/` — `comunicaciones`, `notificaciones`, `dispositivos_push`, `mensajes_solicitud`; notificaciones in-app, FCM, chat por solicitud (CU19/CU21/CU35)

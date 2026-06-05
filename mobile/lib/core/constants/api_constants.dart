@@ -95,6 +95,12 @@ class ApiConstants {
 
   static String get appTecnicoFcm => '${AppEnv.apiBaseUrl}/app/tecnico/dispositivos/fcm';
 
+  static String get appTecnicoNotificaciones =>
+      '${AppEnv.apiBaseUrl}/app/tecnico/notificaciones';
+
+  static String appTecnicoNotificacionLeida(int id) =>
+      '${AppEnv.apiBaseUrl}/app/tecnico/notificaciones/$id/leida';
+
   static String get usuarios => '${AppEnv.apiBaseUrl}/usuarios';
   static String get vehiculos => '${AppEnv.apiBaseUrl}/vehiculos';
   static String get vehiculosMarcas => '${AppEnv.apiBaseUrl}/vehiculos/marcas';

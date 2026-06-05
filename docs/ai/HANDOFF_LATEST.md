@@ -1,7 +1,17 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-04 (Admin planes/precios + Stripe landing)
+# Fecha: 2026-06-05 (Notificaciones inmediatas del servicio)
+
+## Cambios recientes (2026-06-05) — Notificaciones inmediatas del servicio ✅
+
+- **Paquete:** `comunicacion_y_notificaciones`.
+- **Backend:** `eventos_servicio.py`, `tenant_guard.py`, migración `0020`.
+- **Eventos:** selección taller → taller; aceptar/rechazar bandeja; asignación técnico; cambio estado.
+- **API taller:** `GET/PATCH /api/app/taller/notificaciones`.
+- **Frontend:** `/taller/panel/comunicacion/notificaciones`.
+- **Mobile técnico:** `/tecnico/app/notificaciones`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`.
 
 ## Cambios recientes (2026-06-04) — Admin planes y precios + Stripe ✅
 

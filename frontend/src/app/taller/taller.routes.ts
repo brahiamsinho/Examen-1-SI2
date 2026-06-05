@@ -137,6 +137,15 @@ export const TALLER_ROUTES: Routes = [
             (m) => m.TallerEmergenciasDisponibilidadComponent,
           ),
       },
+      {
+        path: 'comunicacion/notificaciones',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'notificaciones:leer' },
+        loadComponent: () =>
+          import('./features/comunicacion/notificaciones/taller-notificaciones.component').then(
+            (m) => m.TallerNotificacionesComponent,
+          ),
+      },
     ],
   },
   {

@@ -2,17 +2,15 @@
 from __future__ import annotations
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.timeutil import utc_now_naive
 from app.modules.comunicacion_y_notificaciones.dispositivos_push.push_notify import send_fcm_to_usuario
 from app.modules.incidentes.emergencias.models import SolicitudEmergencia
 from app.modules.comunicacion_y_notificaciones.notificaciones import repository as notif_repository
+from app.modules.comunicacion_y_notificaciones.notificaciones import tenant_guard
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.notificaciones.schemas import NotificacionRead
-from app.modules.talleres_y_tecnicos.talleres.models import Tecnico
-from app.modules.clientes_y_vehiculos.clientes.models import Cliente
 
 
 async def crear_notificacion_y_push(
@@ -23,6 +21,7 @@ async def crear_notificacion_y_push(
     tipo: TipoNotificacionEnum,
     titulo: str,
     mensaje: str,
+    evento_id: str | None = None,
 ) -> NotificacionRead:
     now = utc_now_naive()
     row = await notif_repository.insert_notificacion(
@@ -33,6 +32,7 @@ async def crear_notificacion_y_push(
         titulo=titulo,
         mensaje=mensaje,
         created_at=now,
+        evento_id=evento_id,
     )
     data = {
         "tipo": tipo.value,
@@ -58,8 +58,7 @@ async def notificar_cliente_solicitud_emergencia(
     titulo: str,
     mensaje: str,
 ) -> None:
-    res = await db.execute(select(Cliente).where(Cliente.id == solicitud.cliente_id))
-    cli = res.scalar_one_or_none()
+    cli = await tenant_guard.validar_cliente_solicitud(db, solicitud=solicitud)
     if cli is None:
         return
     await crear_notificacion_y_push(
@@ -80,10 +79,7 @@ async def notificar_tecnico_solicitud_emergencia(
     titulo: str,
     mensaje: str,
 ) -> None:
-    if solicitud.tecnico_id is None:
-        return
-    res = await db.execute(select(Tecnico).where(Tecnico.id == solicitud.tecnico_id))
-    tec = res.scalar_one_or_none()
+    tec = await tenant_guard.validar_tecnico_solicitud(db, solicitud=solicitud)
     if tec is None:
         return
     await crear_notificacion_y_push(
@@ -99,14 +95,20 @@ async def notificar_tecnico_solicitud_emergencia(
 async def listar_notificaciones(
     user, db: AsyncSession, *, solo_no_leidas: bool, limit: int
 ) -> list[NotificacionRead]:
-    rows = await notif_repository.list_notificaciones_usuario(
-        db, usuario_id=user.id, solo_no_leidas=solo_no_leidas, limit=limit
+    rows = await notif_repository.list_notificaciones_usuario_por_tenant(
+        db,
+        usuario_id=user.id,
+        tenant_id=user.tenant_id,
+        solo_no_leidas=solo_no_leidas,
+        limit=limit,
     )
     return [NotificacionRead.model_validate(x) for x in rows]
 
 
 async def marcar_notificacion_leida(user, notif_id: int, db: AsyncSession) -> NotificacionRead:
-    n = await notif_repository.get_notificacion_propia(db, notif_id=notif_id, usuario_id=user.id)
+    n = await notif_repository.get_notificacion_propia(
+        db, notif_id=notif_id, usuario_id=user.id, tenant_id=user.tenant_id
+    )
     if n is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notificación no encontrada")
     await notif_repository.marcar_notificacion_leida(db, n=n, leida_at=utc_now_naive())

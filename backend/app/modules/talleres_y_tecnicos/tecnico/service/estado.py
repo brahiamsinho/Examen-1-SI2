@@ -11,8 +11,7 @@ from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEn
 from app.modules.acceso_y_administracion.bitacora.service import registrar_accion
 from app.modules.incidentes.emergencias import repository as emergencias_repository
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
-from app.modules.comunicacion_y_notificaciones.notificaciones import service as notificaciones_service
-from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 
 from .. import repository
@@ -119,12 +118,11 @@ async def actualizar_estado_servicio(
         if monto_txt
         else f"Te informamos: {etiqueta}."
     )
-    await notificaciones_service.notificar_cliente_solicitud_emergencia(
+    await eventos_servicio.on_estado_servicio(
         db,
         solicitud=se,
-        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
-        titulo="Estado de tu servicio",
-        mensaje=mensaje_cliente,
+        mensaje_cliente=mensaje_cliente,
+        etiqueta_corta=etiqueta,
     )
 
     row = await repository.get_servicio_asignado_detalle(db, solicitud_id=solicitud_id, tecnico_id=t.id)

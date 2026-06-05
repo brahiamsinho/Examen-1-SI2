@@ -15,6 +15,7 @@ class TipoNotificacionEnum(str, enum.Enum):
     TALLER_ASIGNADO = "TALLER_ASIGNADO"
     TECNICO_ASIGNADO = "TECNICO_ASIGNADO"
     MENSAJE_NUEVO = "MENSAJE_NUEVO"
+    SOLICITUD_PENDIENTE_TALLER = "SOLICITUD_PENDIENTE_TALLER"
 
 
 _tipo_notif_sa = SAEnum(TipoNotificacionEnum, name="tipo_notificacion")
@@ -34,5 +35,6 @@ class Notificacion(Base):
     titulo: Mapped[str] = mapped_column(String(150), nullable=False)
     mensaje: Mapped[str] = mapped_column(Text, nullable=False)
     leida: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    evento_id: Mapped[str | None] = mapped_column(String(120))
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     leida_at: Mapped[datetime | None] = mapped_column(DateTime)

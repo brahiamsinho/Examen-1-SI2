@@ -44,6 +44,7 @@ import '../../../tecnico/emergencias/presentation/screens/tecnico_servicios_list
 import '../../../tecnico/presentation/screens/tecnico_placeholder_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_perfil_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_recover_screen.dart';
+import '../../../tecnico/comunicacion/presentation/screens/tecnico_notificaciones_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_splash_screen.dart';
 import '../../../tecnico/presentation/shell/tecnico_app_shell.dart';
 
@@ -194,6 +195,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 initial: extra is ServicioAsignadoTecnico ? extra : null,
               );
             },
+          ),
+          GoRoute(
+            path: '/tecnico/app/notificaciones',
+            builder: (context, state) => const TecnicoNotificacionesScreen(),
           ),
           GoRoute(
             path: '/tecnico/app/historial',

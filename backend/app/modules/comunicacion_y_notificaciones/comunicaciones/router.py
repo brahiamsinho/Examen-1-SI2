@@ -15,6 +15,8 @@ from app.modules.comunicacion_y_notificaciones.notificaciones import service as 
 from app.modules.comunicacion_y_notificaciones.notificaciones.schemas import NotificacionRead
 from app.modules.clientes_y_vehiculos.clientes.service import require_cliente_rol
 from app.modules.talleres_y_tecnicos.tecnico.service import require_tecnico_rol
+from app.modules.talleres_y_tecnicos.taller_responsable.router import require_taller_responsable
+from app.modules.talleres_y_tecnicos.talleres.models import Taller
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 
 
@@ -42,6 +44,8 @@ emergencias_mensajes_cliente_router = APIRouter(
 )
 
 tecnico_router = APIRouter(prefix="/app/tecnico", tags=["Comunicaciones (técnico)"])
+
+taller_router = APIRouter(prefix="/app/taller", tags=["Comunicaciones (taller)"])
 
 
 @cliente_router.post(
@@ -180,3 +184,34 @@ async def tecnico_marcar_leida(
     db: AsyncSession = Depends(get_db),
 ):
     return await notif_service.marcar_notificacion_leida(current_user, notificacion_id, db)
+
+
+@taller_router.get(
+    "/notificaciones",
+    response_model=list[NotificacionRead],
+    dependencies=[Depends(require_permission("notificaciones:leer"))],
+)
+async def taller_listar_notificaciones(
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+    no_leidas: bool = Query(False),
+    limit: int = Query(100, ge=1, le=200),
+):
+    user, _taller = ctx
+    return await notif_service.listar_notificaciones(
+        user, db, solo_no_leidas=no_leidas, limit=limit
+    )
+
+
+@taller_router.patch(
+    "/notificaciones/{notificacion_id}/leida",
+    response_model=NotificacionRead,
+    dependencies=[Depends(require_permission("notificaciones:leer"))],
+)
+async def taller_marcar_leida(
+    notificacion_id: int,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    user, _taller = ctx
+    return await notif_service.marcar_notificacion_leida(user, notificacion_id, db)

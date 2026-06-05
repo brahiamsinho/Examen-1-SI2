@@ -21,7 +21,8 @@ export type TallerNavIcon =
   | 'users'
   | 'shield'
   | 'key'
-  | 'inbox';
+  | 'inbox'
+  | 'bell';
 
 export interface TallerNavItem {
   path: string;
@@ -104,6 +105,13 @@ export class TallerShellComponent implements OnInit {
           exact: true,
           icon: 'chart',
           permiso: 'disponibilidad:gestionar',
+        },
+        {
+          path: '/taller/panel/comunicacion/notificaciones',
+          label: 'Notificaciones',
+          exact: true,
+          icon: 'bell',
+          permiso: 'notificaciones:leer',
         },
       ],
     },

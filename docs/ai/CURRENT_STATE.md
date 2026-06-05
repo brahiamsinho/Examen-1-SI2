@@ -1,8 +1,15 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-04 — Admin planes/precios + Stripe landing ✅
+# Última actualización: 2026-06-05 — Notificaciones inmediatas del servicio ✅
 # =========================================================
+
+### Notificaciones inmediatas (2026-06-05) ✅
+- [x] Backend: `eventos_servicio.py`, `tenant_guard.py`, migración `0020`, hooks en selección/ bandeja/ asignación/ estado.
+- [x] API taller: `GET/PATCH /api/app/taller/notificaciones`.
+- [x] Frontend taller: `/taller/panel/comunicacion/notificaciones` (polling 30s).
+- [x] Mobile técnico: `/tecnico/app/notificaciones`.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`.
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
 

@@ -9,6 +9,7 @@ class TecnicoAppShell extends StatelessWidget {
 
   static bool _showBottomNav(String path) {
     if (path.startsWith('/tecnico/app/historial')) return false;
+    if (path.startsWith('/tecnico/app/notificaciones')) return false;
     // Detalle / ubicación / estado / chat: pantalla completa sin barra inferior.
     if (path.startsWith('/tecnico/app/servicios/')) return false;
     return true;

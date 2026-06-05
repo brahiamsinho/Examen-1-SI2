@@ -1,0 +1,98 @@
+.page {
+  max-width: 720px;
+}
+
+.page__head h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.page__sub {
+  margin: 0 0 1.25rem;
+  color: var(--taller-muted, #64748b);
+  font-size: 0.95rem;
+}
+
+.page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chip {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.chip--active {
+  background: #059669;
+  border-color: #059669;
+  color: #fff;
+}
+
+.chip--ghost {
+  margin-left: auto;
+}
+
+.page__error {
+  color: #b91c1c;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.list__item {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.list__item--unread {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.list__btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.list__title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.list__msg {
+  display: block;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.list__meta {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #64748b;
+}

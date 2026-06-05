@@ -1,8 +1,18 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import type { PricingPlanDto, PricingPlanUpdatePayload } from '../../../core/models/admin-api.models';
 
@@ -12,12 +22,15 @@ import type { PricingPlanDto, PricingPlanUpdatePayload } from '../../../core/mod
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-planes-precios.component.html',
   styleUrl: './admin-planes-precios.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminPlanesPreciosComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  plans: PricingPlanDto[] = [];
-  loading = true;
+  readonly plans = signal<PricingPlanDto[]>([]);
+  readonly loading = signal(true);
   error: string | null = null;
   busy = false;
   modalEdit = false;
@@ -29,22 +42,35 @@ export class AdminPlanesPreciosComponent implements OnInit {
     this.reload();
   }
 
-  reload(): void {
-    this.loading = true;
-    this.api.listPricingPlans().subscribe({
-      next: (rows) => {
-        this.plans = rows.sort((a, b) => a.sort_order - b.sort_order);
-        this.loading = false;
-        this.error = null;
-      },
-      error: (err: HttpErrorResponse) => {
-        this.loading = false;
-        this.error =
-          err.status === 403
-            ? 'Solo superadmin de plataforma puede gestionar planes y precios.'
-            : 'No se pudieron cargar los planes.';
-      },
-    });
+  reload(force = false): void {
+    if (force) {
+      this.api.invalidatePricingPlansList();
+    }
+    this.loading.set(true);
+    this.api
+      .listPricingPlans()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (rows) => {
+          const sorted = (Array.isArray(rows) ? rows : []).sort((a, b) => a.sort_order - b.sort_order);
+          this.plans.set(sorted);
+          this.error = null;
+          this.cdr.markForCheck();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.error =
+            err.status === 403
+              ? 'Solo superadmin de plataforma puede gestionar planes y precios.'
+              : 'No se pudieron cargar los planes.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   stripeStatus(plan: PricingPlanDto): 'free' | 'ready' | 'missing' {
@@ -71,11 +97,13 @@ export class AdminPlanesPreciosComponent implements OnInit {
     };
     this.modalEdit = true;
     this.error = null;
+    this.cdr.markForCheck();
   }
 
   closeModal(): void {
     this.modalEdit = false;
     this.selected = null;
+    this.cdr.markForCheck();
   }
 
   save(): void {
@@ -88,19 +116,26 @@ export class AdminPlanesPreciosComponent implements OnInit {
         .filter(Boolean),
     };
     this.busy = true;
-    this.api.updatePricingPlan(this.selected.slug, payload).subscribe({
-      next: (updated) => {
-        this.plans = this.plans.map((p) => (p.slug === updated.slug ? updated : p));
-        this.busy = false;
-        this.closeModal();
-      },
-      error: (err: HttpErrorResponse) => {
-        this.busy = false;
-        this.error =
-          typeof err.error?.detail === 'string'
-            ? err.error.detail
-            : 'No se pudo guardar el plan.';
-      },
-    });
+    this.api
+      .updatePricingPlan(this.selected.slug, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.plans.update((list) =>
+            list.map((p) => (p.slug === updated.slug ? updated : p)).sort((a, b) => a.sort_order - b.sort_order),
+          );
+          this.busy = false;
+          this.closeModal();
+          this.cdr.markForCheck();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.busy = false;
+          this.error =
+            typeof err.error?.detail === 'string'
+              ? err.error.detail
+              : 'No se pudo guardar el plan.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 }

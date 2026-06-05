@@ -1,4 +1,13 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +22,7 @@ import type {
   UsuarioListDto,
   UsuarioUpdatePayload,
 } from '../../../core/models/admin-api.models';
+import { filterRowsByQuery } from '../../../core/utils/list-filter.util';
 
 @Component({
   selector: 'app-admin-usuarios',
@@ -20,23 +30,25 @@ import type {
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-usuarios.component.html',
   styleUrl: './admin-usuarios.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminUsuariosComponent implements OnInit {
   private readonly api = inject(AdminApiService);
   readonly tenantCtx = inject(AdminTenantContextService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  usuarios: UsuarioListDto[] = [];
-  roles: RolDto[] = [];
+  readonly usuarios = signal<UsuarioListDto[]>([]);
+  readonly roles = signal<RolDto[]>([]);
   tenants: TenantDto[] = [];
   /** Organización en modal crear (superadmin, si no es cuenta plataforma). */
   createTenantId: number | null = null;
   /** Solo superadmin: alta sin tenant_id (admin global de plataforma). */
   createPlatformAccount = false;
-  search = '';
-  estado: EstadoUsuario | '' = '';
-  rolFilter = '';
-  loading = true;
+  readonly search = signal('');
+  readonly estado = signal<EstadoUsuario | ''>('');
+  readonly rolFilter = signal('');
+  readonly loading = signal(true);
   error: string | null = null;
   busy = false;
 
@@ -74,13 +86,25 @@ export class AdminUsuariosComponent implements OnInit {
       .subscribe(() => this.reload());
   }
 
-  get assignableRoles(): RolDto[] {
-    return this.roles.filter((r) => r.nombre !== 'CLIENTE');
-  }
+  readonly assignableRoles = computed(() =>
+    this.roles().filter((r) => r.nombre !== 'CLIENTE'),
+  );
 
-  get rolesForFilter(): RolDto[] {
-    return this.assignableRoles;
-  }
+  readonly rolesForFilter = this.assignableRoles;
+
+  readonly filtered = computed(() => {
+    let rows = this.usuarios();
+    const estado = this.estado();
+    if (estado) rows = rows.filter((u) => u.estado === estado);
+    const rol = this.rolFilter();
+    if (rol) rows = rows.filter((u) => (u.roles || []).includes(rol));
+    return filterRowsByQuery(rows, this.search(), (u) => [
+      u.email,
+      u.nombres,
+      u.apellidos,
+      u.username,
+    ]);
+  });
 
   onPageTenantFilterChange(id: number | null): void {
     this.tenantCtx.setSelectedTenantId(id);
@@ -96,41 +120,26 @@ export class AdminUsuariosComponent implements OnInit {
   }
 
   reload(): void {
-    this.loading = true;
+    this.loading.set(true);
     forkJoin({
       usuarios: this.api.listUsuarios(this.tenantCtx.tenantQueryParam()),
       roles: this.api.listRoles(),
-    }).subscribe({
-      next: ({ usuarios, roles }) => {
-        this.usuarios = usuarios;
-        this.roles = roles;
-        this.loading = false;
-        this.error = null;
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudieron cargar los usuarios.';
-      },
-    });
-  }
-
-  get filtered(): UsuarioListDto[] {
-    let rows = this.usuarios;
-    if (this.estado) rows = rows.filter((u) => u.estado === this.estado);
-    if (this.rolFilter) {
-      rows = rows.filter((u) => (u.roles || []).includes(this.rolFilter));
-    }
-    const q = this.search.trim().toLowerCase();
-    if (q) {
-      rows = rows.filter(
-        (u) =>
-          u.email.toLowerCase().includes(q) ||
-          u.nombres.toLowerCase().includes(q) ||
-          u.apellidos.toLowerCase().includes(q) ||
-          (u.username && u.username.toLowerCase().includes(q)),
-      );
-    }
-    return rows;
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ usuarios, roles }) => {
+          this.usuarios.set(usuarios);
+          this.roles.set(roles);
+          this.loading.set(false);
+          this.error = null;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.loading.set(false);
+          this.error = 'No se pudieron cargar los usuarios.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   openDetail(u: UsuarioListDto): void {
@@ -156,11 +165,14 @@ export class AdminUsuariosComponent implements OnInit {
     this.api.updateUsuario(this.selected.id, this.editForm).subscribe({
       next: (u) => {
         const prevRoles = this.selected?.roles || [];
-        this.usuarios = this.usuarios.map((x) =>
-          x.id === u.id ? { ...(u as UsuarioListDto), roles: prevRoles } : x,
+        this.usuarios.update((list) =>
+          list.map((x) =>
+            x.id === u.id ? { ...(u as UsuarioListDto), roles: prevRoles } : x,
+          ),
         );
         this.closeModals();
         this.busy = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;
@@ -215,7 +227,9 @@ export class AdminUsuariosComponent implements OnInit {
   openRoles(u: UsuarioListDto): void {
     this.selected = u;
     const names = new Set(u.roles || []);
-    this.rolIds = new Set(this.assignableRoles.filter((r) => names.has(r.nombre)).map((r) => r.id));
+    this.rolIds = new Set(
+      this.assignableRoles().filter((r) => names.has(r.nombre)).map((r) => r.id),
+    );
     this.modalRoles = true;
   }
 
@@ -244,10 +258,11 @@ export class AdminUsuariosComponent implements OnInit {
     this.busy = true;
     this.api.updateUsuario(u.id, { estado }).subscribe({
       next: (x) => {
-        this.usuarios = this.usuarios.map((row) =>
-          row.id === x.id ? { ...x, roles: row.roles } : row,
+        this.usuarios.update((list) =>
+          list.map((row) => (row.id === x.id ? { ...x, roles: row.roles } : row)),
         );
         this.busy = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;
@@ -261,9 +276,10 @@ export class AdminUsuariosComponent implements OnInit {
     this.busy = true;
     this.api.deleteUsuario(u.id).subscribe({
       next: () => {
-        this.usuarios = this.usuarios.filter((x) => x.id !== u.id);
+        this.usuarios.update((list) => list.filter((x) => x.id !== u.id));
         this.busy = false;
         this.closeModals();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.busy = false;

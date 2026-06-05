@@ -9,21 +9,32 @@
 
   <div class="pg__alert" *ngIf="error" role="alert">{{ error }}</div>
 
-  <div class="pg__toolbar" *ngIf="!loading">
+  <div class="pg__toolbar" *ngIf="!loading()">
     <input
       type="search"
       class="pg__search"
-      [(ngModel)]="search"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
       placeholder="Buscar por nombre o email…"
       aria-label="Buscar usuarios"
     />
-    <select class="pg__select" [(ngModel)]="estado" aria-label="Filtrar por estado">
+    <select
+      class="pg__select"
+      [ngModel]="estado()"
+      (ngModelChange)="estado.set($event)"
+      aria-label="Filtrar por estado"
+    >
       <option value="">Todos los estados</option>
       <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
     </select>
-    <select class="pg__select" [(ngModel)]="rolFilter" aria-label="Filtrar por rol">
+    <select
+      class="pg__select"
+      [ngModel]="rolFilter()"
+      (ngModelChange)="rolFilter.set($event)"
+      aria-label="Filtrar por rol"
+    >
       <option value="">Todos los roles</option>
-      <option *ngFor="let r of rolesForFilter" [value]="r.nombre">{{ r.nombre }}</option>
+      <option *ngFor="let r of rolesForFilter()" [value]="r.nombre">{{ r.nombre }}</option>
     </select>
     <button
       type="button"
@@ -35,9 +46,9 @@
     </button>
   </div>
 
-  <p class="pg__muted" *ngIf="loading">Cargando…</p>
+  <p class="pg__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="pg__tablewrap" *ngIf="!loading">
+  <div class="pg__tablewrap" *ngIf="!loading()">
     <table class="pg__table">
       <thead>
         <tr>
@@ -49,7 +60,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let u of filtered">
+        <tr *ngFor="let u of filtered()">
           <td>{{ u.email }}</td>
           <td>{{ u.nombres }} {{ u.apellidos }}</td>
           <td>{{ (u.roles || []).join(', ') || '—' }}</td>
@@ -62,7 +73,7 @@
         </tr>
       </tbody>
     </table>
-    <p class="pg__empty" *ngIf="!filtered.length">Sin usuarios en tu organización.</p>
+    <p class="pg__empty" *ngIf="!filtered().length">Sin usuarios en tu organización.</p>
   </div>
 
   <div class="pg__backdrop" *ngIf="modalCreate || modalEdit || modalDetail || modalRoles" (click)="closeModals()"></div>
@@ -125,7 +136,7 @@
 
   <div class="pg__modal pg__modal--wide" *ngIf="modalRoles && selected" role="dialog" aria-modal="true">
     <h3>Roles — {{ selected.email }}</h3>
-    <label class="pg__check" *ngFor="let r of assignableRoles">
+    <label class="pg__check" *ngFor="let r of assignableRoles()">
       <input type="checkbox" [checked]="rolIds.has(r.id)" (change)="toggleRol(r.id)" />
       <span>{{ r.nombre }}</span>
     </label>

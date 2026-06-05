@@ -1,4 +1,14 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -21,6 +31,7 @@ function toIsoDateLocal(d: Date): string {
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './taller-dashboard.component.html',
   styleUrl: './taller-dashboard.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerDashboardComponent implements OnInit {
   private readonly api = inject(TallerApiService);
@@ -28,14 +39,16 @@ export class TallerDashboardComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   data: TallerDashboardDto | null = null;
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
   permisoDenegado: string | null = null;
 
   reporte: ReporteTallerDashboardDto | null = null;
-  reporteLoading = false;
+  readonly reporteLoading = signal(false);
   reporteError: string | null = null;
   estadosReporte: { label: string; n: number }[] = [];
 
@@ -58,43 +71,60 @@ export class TallerDashboardComponent implements OnInit {
     this.desdeStr = toIsoDateLocal(desde);
     this.hastaStr = toIsoDateLocal(hasta);
 
-    this.api.getDashboard().subscribe({
-      next: (d) => {
-        this.data = d;
-        this.loading = false;
-        if (this.puedeVerReportesFinancieros()) {
-          this.cargarReporte();
-        }
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudo cargar el resumen del taller.';
-      },
-    });
+    this.api
+      .getDashboard()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (d) => {
+          this.data = d;
+          this.error = null;
+          if (this.puedeVerReportesFinancieros()) {
+            this.cargarReporte();
+          }
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.error = 'No se pudo cargar el resumen del taller.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   cargarReporte(): void {
     if (!this.puedeVerReportesFinancieros()) return;
-    this.reporteLoading = true;
+    this.reporteLoading.set(true);
     this.reporteError = null;
     this.emergenciasApi
       .getReporteDashboard({
         desde: this.desdeStr || undefined,
         hasta: this.hastaStr || undefined,
       })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.reporteLoading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
       .subscribe({
         next: (r) => {
           this.reporte = r;
           this.estadoChipsDe(r);
-          this.reporteLoading = false;
+          this.cdr.markForCheck();
         },
         error: (e: { status?: number }) => {
-          this.reporteLoading = false;
           if (e?.status === 403) {
             this.reporteError = 'Tu rol no incluye permiso para ver reportes financieros (`comisiones:leer`).';
           } else {
             this.reporteError = 'No se pudo cargar el reporte inteligente del taller.';
           }
+          this.cdr.markForCheck();
         },
       });
   }

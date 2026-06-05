@@ -5,9 +5,9 @@
   </header>
 
   <div class="mt__alert" *ngIf="error" role="alert">{{ error }}</div>
-  <p class="mt__muted" *ngIf="loading">Cargando…</p>
+  <p class="mt__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="mt__card" *ngIf="!loading && m">
+  <div class="mt__card" *ngIf="!loading() && m">
     <p class="mt__badge">Estado: {{ m.estado }}</p>
     <p class="mt__note">Correo de acceso (responsable): <strong>{{ m.responsable_email }}</strong> — no editable aquí.</p>
 

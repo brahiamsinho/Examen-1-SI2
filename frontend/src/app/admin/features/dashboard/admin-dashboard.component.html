@@ -145,10 +145,10 @@
           <span>{{ money(row.total_comision_plataforma) }}</span>
         </div>
         <div class="dash__bartrack">
-          <div class="dash__bar" [style.width.%]="barWidthPercent(row.total_comision_plataforma)"></div>
+          <div class="dash__bar" [style.width.%]="row.barWidthPct"></div>
         </div>
       </div>
-      <p class="dash__hint">Total rango: {{ money(totalComisionSerie()) }}</p>
+      <p class="dash__hint">Total rango: {{ money(serieComisionTotal) }}</p>
     </div>
     <ng-template #emptySerie>
       <p class="dash__empty">Sin datos diarios de comisiones para el rango actual.</p>

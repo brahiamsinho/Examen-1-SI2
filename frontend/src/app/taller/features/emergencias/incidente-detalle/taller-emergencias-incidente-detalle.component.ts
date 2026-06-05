@@ -1,8 +1,18 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { TallerEmergenciasApiService } from '../../../../core/services/taller-emergencias-api.service';
 import { TallerApiService } from '../../../../core/services/taller-api.service';
 import { TallerAuthService } from '../../../../core/services/taller-auth.service';
@@ -19,17 +29,20 @@ import type { TecnicoPortalDto } from '../../../../core/models/taller-api.models
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './taller-emergencias-incidente-detalle.component.html',
   styleUrl: './taller-emergencias-incidente-detalle.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
   private readonly api = inject(TallerEmergenciasApiService);
   private readonly tallerApi = inject(TallerApiService);
-  private readonly auth = inject(TallerAuthService);
+  readonly auth = inject(TallerAuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   bandejaId: number | null = null;
   detalle: SolicitudBandejaDetalleDto | null = null;
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
   busy = false;
 
@@ -37,10 +50,9 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
 
   tecnicos: TecnicoPortalDto[] = [];
   asignaciones: AsignacionTecnicoDto[] = [];
-  loadingAsignData = false;
+  readonly loadingAsignData = signal(false);
   selectedTecnicoId: number | null = null;
   observacionAsignacion = '';
-  /** ETA en minutos (opcional) al asignar técnico. */
   tiempoEstimadoMin: number | null = null;
 
   modalAceptar = false;
@@ -48,20 +60,21 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
   motivoRechazo = '';
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((p) => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((p) => {
       const id = Number(p.get('bandejaId'));
       this.bandejaId = Number.isFinite(id) && id > 0 ? id : null;
       if (this.bandejaId) this.load();
       else {
-        this.loading = false;
+        this.loading.set(false);
         this.error = 'Identificador de bandeja inválido.';
+        this.cdr.markForCheck();
       }
     });
   }
 
   load(): void {
     if (!this.bandejaId) return;
-    this.loading = true;
+    this.loading.set(true);
     this.error = null;
     this.successMsg = null;
     this.tecnicos = [];
@@ -69,47 +82,63 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
     this.selectedTecnicoId = null;
     this.observacionAsignacion = '';
     this.tiempoEstimadoMin = null;
-    this.api.getBandejaDetalle(this.bandejaId).subscribe({
-      next: (d) => {
-        this.detalle = d;
-        this.loading = false;
-        this.cargarDatosAsignacion(d);
-      },
-      error: (err) => {
-        this.loading = false;
-        this.detalle = null;
-        this.error = this.msg(err, 'No se pudo cargar el detalle del incidente.');
-      },
-    });
+    this.api
+      .getBandejaDetalle(this.bandejaId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (d) => {
+          this.detalle = d;
+          this.cargarDatosAsignacion(d);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.detalle = null;
+          this.error = this.msg(err, 'No se pudo cargar el detalle del incidente.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private cargarDatosAsignacion(d: SolicitudBandejaDetalleDto): void {
     if (!this.debeMostrarBloqueAsignacion(d)) {
-      this.loadingAsignData = false;
+      this.loadingAsignData.set(false);
       return;
     }
-    this.loadingAsignData = true;
+    this.loadingAsignData.set(true);
     forkJoin({
       tecnicos: this.tallerApi.listTecnicos(),
       asignaciones: this.api.listarAsignacionesTecnico(d.solicitud_id),
-    }).subscribe({
-      next: ({ tecnicos, asignaciones }) => {
-        this.tecnicos = tecnicos;
-        this.asignaciones = [...asignaciones].sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
-        const ultimo = this.asignaciones.find((r) => r.estado === 'ASIGNADO');
-        this.selectedTecnicoId = ultimo?.tecnico_id ?? null;
-        this.loadingAsignData = false;
-      },
-      error: (err) => {
-        this.loadingAsignData = false;
-        this.error = this.msg(err, 'No se pudieron cargar técnicos o el historial de asignaciones.');
-      },
-    });
+    })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loadingAsignData.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: ({ tecnicos, asignaciones }) => {
+          this.tecnicos = tecnicos;
+          this.asignaciones = [...asignaciones].sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+          );
+          const ultimo = this.asignaciones.find((r) => r.estado === 'ASIGNADO');
+          this.selectedTecnicoId = ultimo?.tecnico_id ?? null;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.error = this.msg(err, 'No se pudieron cargar técnicos o el historial de asignaciones.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
-  /** Tras aceptar la bandeja: asignar o reasignar técnico. */
   debeMostrarBloqueAsignacion(d: SolicitudBandejaDetalleDto | null): boolean {
     if (!d || d.estado_bandeja !== 'ACEPTADA') return false;
     return d.estado_solicitud === 'TALLER_ASIGNADO' || d.estado_solicitud === 'TECNICO_ASIGNADO';
@@ -137,7 +166,6 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
     return `https://www.openstreetmap.org/?mlat=${d.latitud}&mlon=${d.longitud}#map=16/${d.latitud}/${d.longitud}`;
   }
 
-  /** `ai_payload` v1: hay algo útil para mostrar (resumen, clasificación, etc.). */
   aiTieneContenido(d: SolicitudBandejaDetalleDto | null): boolean {
     if (!d?.ai_payload || typeof d.ai_payload !== 'object') return false;
     const p = d.ai_payload as Record<string, unknown>;
@@ -223,15 +251,11 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
     return h.map((x) => String(x));
   }
 
-  /** Lista segura (evita undefined si el backend aún no envía el campo). */
   evidenciasSafe(d: SolicitudBandejaDetalleDto | null): SolicitudEvidenciaTallerDto[] {
     if (!d?.evidencias?.length) return [];
     return d.evidencias;
   }
 
-  /**
-   * Las URLs se guardan con el host del backend; en el navegador se sirve por el mismo sitio bajo /api/...
-   */
   evidenciaSrc(url: string): string {
     if (!url) return '';
     if (url.startsWith('/')) return url;
@@ -248,59 +272,73 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
 
   openAceptar(): void {
     this.modalAceptar = true;
+    this.cdr.markForCheck();
   }
 
   openRechazar(): void {
     this.motivoRechazo = '';
     this.modalRechazar = true;
+    this.cdr.markForCheck();
   }
 
   closeModals(): void {
     this.modalAceptar = this.modalRechazar = false;
+    this.cdr.markForCheck();
   }
 
   confirmAceptar(): void {
     if (!this.bandejaId) return;
     this.busy = true;
-    this.api.aceptarBandeja(this.bandejaId).subscribe({
-      next: () => {
-        this.busy = false;
-        this.closeModals();
-        this.successMsg = 'Solicitud aceptada. Podés asignar un técnico a continuación.';
-        this.load();
-      },
-      error: (err) => {
-        this.busy = false;
-        this.error = this.msg(err, 'No se pudo aceptar la solicitud.');
-      },
-    });
+    this.api
+      .aceptarBandeja(this.bandejaId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.closeModals();
+          this.successMsg = 'Solicitud aceptada. Podés asignar un técnico a continuación.';
+          this.cdr.markForCheck();
+          this.load();
+        },
+        error: (err) => {
+          this.busy = false;
+          this.error = this.msg(err, 'No se pudo aceptar la solicitud.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   confirmRechazar(): void {
     const m = this.motivoRechazo.trim();
     if (m.length < 3) {
       this.error = 'El motivo de rechazo debe tener al menos 3 caracteres.';
+      this.cdr.markForCheck();
       return;
     }
     if (!this.bandejaId) return;
     this.busy = true;
-    this.api.rechazarBandeja(this.bandejaId, { motivo_rechazo: m }).subscribe({
-      next: () => {
-        this.busy = false;
-        this.closeModals();
-        void this.router.navigate(['/taller/panel/emergencias/solicitudes'], { queryParams: { ok: 'rechazada' } });
-      },
-      error: (err) => {
-        this.busy = false;
-        this.error = this.msg(err, 'No se pudo rechazar la solicitud.');
-      },
-    });
+    this.api
+      .rechazarBandeja(this.bandejaId, { motivo_rechazo: m })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.closeModals();
+          void this.router.navigate(['/taller/panel/emergencias/solicitudes'], { queryParams: { ok: 'rechazada' } });
+        },
+        error: (err) => {
+          this.busy = false;
+          this.error = this.msg(err, 'No se pudo rechazar la solicitud.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   confirmarAsignarTecnico(): void {
     const d = this.detalle;
     if (!d || this.selectedTecnicoId == null || this.selectedTecnicoId < 1) {
       this.error = 'Seleccioná un técnico.';
+      this.cdr.markForCheck();
       return;
     }
     const obs = this.observacionAsignacion.trim();
@@ -312,15 +350,18 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
         observacion: obs.length ? obs : null,
         tiempo_estimado_min: this.tiempoEstimadoMin != null && this.tiempoEstimadoMin > 0 ? this.tiempoEstimadoMin : null,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.busy = false;
           this.successMsg = 'Técnico asignado correctamente.';
+          this.cdr.markForCheck();
           this.load();
         },
         error: (err) => {
           this.busy = false;
           this.error = this.msg(err, 'No se pudo asignar el técnico.');
+          this.cdr.markForCheck();
         },
       });
   }

@@ -5,9 +5,9 @@
   <div class="emg__alert" *ngIf="error" role="alert">{{ error }}</div>
   <div class="emg__success" *ngIf="success" role="status">{{ success }}</div>
 
-  <p class="emg__muted" *ngIf="loading">Cargando…</p>
+  <p class="emg__muted" *ngIf="loading()">Cargando…</p>
 
-  <form class="emg__form" *ngIf="!loading && data" (ngSubmit)="guardar()">
+  <form class="emg__form" *ngIf="!loading() && data" (ngSubmit)="guardar()">
     <section class="emg__card">
       <label class="emg__switch">
         <input type="checkbox" [(ngModel)]="acepta" name="acepta" />

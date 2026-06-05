@@ -8,9 +8,9 @@
 
   <div class="dash__alert" *ngIf="permisoDenegado" role="status">{{ permisoDenegado }}</div>
   <div class="dash__alert" *ngIf="error" role="alert">{{ error }}</div>
-  <p class="dash__muted" *ngIf="loading">Cargando…</p>
+  <p class="dash__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="dash__grid" *ngIf="!loading && data">
+  <div class="dash__grid" *ngIf="!loading() && data">
     <article class="dash__card">
       <h3 class="dash__card-title">Técnicos registrados</h3>
       <p class="dash__metric">{{ data.tecnicos_registrados }}</p>
@@ -47,7 +47,7 @@
     </article>
   </div>
 
-  <section class="dash__section" *ngIf="!loading && data">
+  <section class="dash__section" *ngIf="!loading() && data">
     <h3 class="dash__section-title">Accesos rápidos</h3>
     <div class="dash__chips">
       <a routerLink="/taller/panel/mi-taller" class="dash__chip">Mi taller</a>
@@ -70,7 +70,7 @@
     </div>
   </section>
 
-  <section class="dash__section dash__section--report" *ngIf="!loading && data && puedeVerReportesFinancieros()">
+  <section class="dash__section dash__section--report" *ngIf="!loading() && data && puedeVerReportesFinancieros()">
     <h3 class="dash__section-title">Reportes e inteligencia operativa</h3>
     <p class="dash__section-lead">
       Comisiones y rendimiento neto se calculan con base en comisiones registradas en el rango. Las solicitudes por estado
@@ -86,10 +86,10 @@
         <span>Hasta</span>
         <input type="date" class="dash__input" name="repHasta" [(ngModel)]="hastaStr" />
       </label>
-      <button type="button" class="dash__btn" (click)="cargarReporte()" [disabled]="reporteLoading">Actualizar</button>
+      <button type="button" class="dash__btn" (click)="cargarReporte()" [disabled]="reporteLoading()">Actualizar</button>
     </div>
 
-    <p class="dash__muted" *ngIf="reporteLoading">Cargando reporte…</p>
+    <p class="dash__muted" *ngIf="reporteLoading()">Cargando reporte…</p>
     <div class="dash__alert" *ngIf="reporteError" role="alert">{{ reporteError }}</div>
 
     <ng-container *ngIf="reporte as rpt">

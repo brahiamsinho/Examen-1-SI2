@@ -10,9 +10,9 @@
   </header>
 
   <p *ngIf="error" class="org__alert" role="alert">{{ error }}</p>
-  <p *ngIf="loading" class="org__muted">Cargando…</p>
+  <p *ngIf="loading()" class="org__muted">Cargando…</p>
 
-  <div class="org__tablewrap" *ngIf="!loading && tenants.length">
+  <div class="org__tablewrap" *ngIf="!loading() && tenants().length">
     <table class="org__table">
       <thead>
         <tr>
@@ -26,7 +26,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let t of tenants">
+        <tr *ngFor="let t of tenants()">
           <td>{{ t.id }}</td>
           <td><code class="org__code">{{ t.slug }}</code></td>
           <td>{{ t.nombre }}</td>
@@ -45,7 +45,7 @@
     </table>
   </div>
 
-  <p *ngIf="!loading && !tenants.length" class="org__muted">No hay organizaciones registradas.</p>
+  <p *ngIf="!loading() && !tenants().length" class="org__muted">No hay organizaciones registradas.</p>
 
   <div
     class="org__backdrop"

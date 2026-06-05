@@ -4,7 +4,7 @@
 
   <div class="emg__alert" *ngIf="error" role="alert">{{ error }}</div>
 
-  <div class="emg__toolbar" *ngIf="!loading">
+  <div class="emg__toolbar" *ngIf="!loading()">
     <input
       type="search"
       class="emg__search"
@@ -29,9 +29,9 @@
     <button type="button" class="emg__btn" (click)="reload()">Actualizar</button>
   </div>
 
-  <p class="emg__muted" *ngIf="loading">Cargando…</p>
+  <p class="emg__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="emg__tablewrap" *ngIf="!loading">
+  <div class="emg__tablewrap" *ngIf="!loading()">
     <table class="emg__table">
       <thead>
         <tr>

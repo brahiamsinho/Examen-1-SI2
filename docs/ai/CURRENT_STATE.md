@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-04 — Admin planes/precios + Stripe landing ✅
+# Última actualización: 2026-06-05 — Fix panel taller "Cargando…" (OnPush + signals) ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
@@ -161,6 +161,11 @@
 ### Taller web — navegación post-aceptación (2026-04-26) ✅
 - [x] **Historial / comisiones API:** respuestas de `GET .../historial-atenciones` y `GET .../comisiones` incluyen **`bandeja_id`** (join a `solicitud_taller_bandeja`) para poder abrir `GET .../bandeja/{id}` desde listados.
 - [x] **Angular panel taller:** rutas y menú **Mis solicitudes** (activas, fuera de bandeja disponible), **Historial de atenciones** (filtros fecha/estado), **Servicios asignados** (con técnico), **Comisiones** (resumen CU31 + tabla). Servicio `TallerEmergenciasApiService` extendido. Sesión: `docs/ai/sessions/2026-04-26-taller-web-sidebar-historial-comisiones.md`.
+
+### Taller web — fix "Cargando…" sidebar (2026-06-05) ✅
+- [x] **Síntoma:** vistas del panel taller atascadas en "Cargando…" con API 200 (mismo bug que admin organizaciones).
+- [x] **Fix:** componentes hijos migrados a OnPush + `loading` signal + `markForCheck` + `finalize`/`takeUntilDestroyed` (bandeja, historial, dashboard, mi-taller, técnicos, roles, clientes, disponibilidad, comisiones, detalle incidente).
+- [x] **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-taller-panel-loading.md`.
 
 ## Lo que existe
 

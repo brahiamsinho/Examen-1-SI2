@@ -1,8 +1,14 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-06-04 — Admin planes/precios + Stripe landing
+# Actualizado: 2026-06-05 — Fix panel taller "Cargando…"
 # =========================================================
+
+## ALTA — Verificar panel taller (2026-06-05)
+
+1. Hard refresh **Ctrl+Shift+R** en `http://localhost/taller/panel` como `luis.rivera@sc-demo.test`.
+2. Navegar sidebar: Resumen, Solicitudes, Mis solicitudes, Historial, Mi taller, Técnicos, Roles, Clientes.
+3. Si algo sigue en "Cargando…", revisar consola DevTools (Network debe ser 200) y el componente hijo de esa ruta.
 
 ## ALTA — Planes y precios + Stripe (2026-06-04)
 

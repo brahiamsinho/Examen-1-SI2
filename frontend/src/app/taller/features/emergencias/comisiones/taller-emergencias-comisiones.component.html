@@ -4,9 +4,9 @@
 
   <div class="emg__alert" *ngIf="error" role="alert">{{ error }}</div>
 
-  <p class="emg__muted" *ngIf="loading">Cargando…</p>
+  <p class="emg__muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="emg__resumen" *ngIf="!loading && resumen">
+  <div class="emg__resumen" *ngIf="!loading() && resumen">
     <div class="emg__card">
       <h3 class="emg__card-title">Totales del taller</h3>
       <p class="emg__metric"><span class="emg__muted">Registros</span> {{ resumen.total_registros }}</p>
@@ -22,7 +22,7 @@
     </div>
   </div>
 
-  <div class="emg__tablewrap" *ngIf="!loading">
+  <div class="emg__tablewrap" *ngIf="!loading()">
     <table class="emg__table">
       <thead>
         <tr>

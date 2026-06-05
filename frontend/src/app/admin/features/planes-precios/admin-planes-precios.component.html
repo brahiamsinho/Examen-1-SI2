@@ -9,17 +9,17 @@
 
   <div class="plans__alert" *ngIf="error" role="alert">{{ error }}</div>
 
-  <div class="plans__toolbar" *ngIf="!loading">
-    <button type="button" class="plans__btn plans__btn--ghost" (click)="reload()">Actualizar</button>
+  <div class="plans__toolbar" *ngIf="!loading()">
+    <button type="button" class="plans__btn plans__btn--ghost" (click)="reload(true)">Actualizar</button>
     <a routerLink="/" class="plans__link" target="_blank" rel="noopener">Ver landing pública ↗</a>
   </div>
 
-  <p class="plans__muted" *ngIf="loading">Cargando planes…</p>
+  <p class="plans__muted" *ngIf="loading()">Cargando planes…</p>
 
-  <div class="plans__grid" *ngIf="!loading">
+  <div class="plans__grid" *ngIf="!loading()">
     <article
       class="plans__card"
-      *ngFor="let plan of plans"
+      *ngFor="let plan of plans()"
       [class.plans__card--featured]="plan.featured"
       [class.plans__card--inactive]="!plan.active"
     >

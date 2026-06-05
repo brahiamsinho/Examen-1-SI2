@@ -1,7 +1,17 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { TallerEmergenciasApiService } from '../../../../core/services/taller-emergencias-api.service';
 import type { BandejaIncidenteBaseDto, EstadoSolicitudSeguimiento } from '../../../../core/models/taller-emergencias.models';
 
@@ -11,16 +21,19 @@ import type { BandejaIncidenteBaseDto, EstadoSolicitudSeguimiento } from '../../
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './taller-emergencias-bandeja.component.html',
   styleUrl: './taller-emergencias-bandeja.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerEmergenciasBandejaComponent implements OnInit {
   private readonly api = inject(TallerEmergenciasApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   rows: BandejaIncidenteBaseDto[] = [];
   search = '';
   estadoSolicitud: EstadoSolicitudSeguimiento | '' = '';
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
   successFlash: string | null = null;
 
@@ -36,7 +49,7 @@ export class TallerEmergenciasBandejaComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.route.queryParamMap.subscribe((q) => {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
       const ok = q.get('ok');
       if (ok === 'aceptada') {
         this.successFlash = 'Solicitud aceptada correctamente.';
@@ -45,27 +58,38 @@ export class TallerEmergenciasBandejaComponent implements OnInit {
         this.successFlash = 'Solicitud rechazada.';
         void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
       }
+      this.cdr.markForCheck();
     });
     this.reload();
   }
 
   reload(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.error = null;
-    this.api.listBandejaDisponibles().subscribe({
-      next: (list) => {
-        this.rows = list;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = this.msg(err, 'No se pudo cargar la bandeja de solicitudes.');
-      },
-    });
+    this.api
+      .listBandejaDisponibles()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (list) => {
+          this.rows = list;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.error = this.msg(err, 'No se pudo cargar la bandeja de solicitudes.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   dismissFlash(): void {
     this.successFlash = null;
+    this.cdr.markForCheck();
   }
 
   get filtered(): BandejaIncidenteBaseDto[] {
@@ -94,7 +118,6 @@ export class TallerEmergenciasBandejaComponent implements OnInit {
     return fallback;
   }
 
-  /** Código de prioridad (p. ej. ALTA); usa `nivel_prioridad` o `ai_payload.prioridad` como respaldo. */
   private prioridadCodigo(r: BandejaIncidenteBaseDto): string | null {
     if (r.nivel_prioridad) return r.nivel_prioridad;
     const p = r.ai_payload?.['prioridad'];

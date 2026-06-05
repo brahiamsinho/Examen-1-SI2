@@ -1,7 +1,22 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-04 (Docker optimización + refactor rendimiento)
+# Fecha: 2026-06-05 (fix panel taller + organizaciones admin)
+
+## Cambios recientes (2026-06-05) — Fix panel taller atascado en "Cargando…" ✅
+
+- **Síntoma:** casi todo el sidebar del panel taller (`/taller/panel/*`) quedaba en "Cargando…" aunque las APIs respondían 200.
+- **Causa:** componentes hijos lazy-loaded sin migrar a OnPush + signals + `markForCheck` tras refactor Fase 1 del shell.
+- **Fix:** 10 componentes taller → OnPush, `loading` signal, `finalize` + `takeUntilDestroyed`, templates `loading()`.
+- **Build:** `docker compose build frontend && docker compose up -d frontend` — OK.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-taller-panel-loading.md`.
+
+## Cambios recientes (2026-06-05) — Fix organizaciones atascadas en "Cargando…" ✅
+
+- **Síntoma:** `/admin/panel/organizaciones` quedaba en "Cargando…" aunque `GET /api/admin/tenants` respondía 200.
+- **Causa:** `admin-organizaciones` no migrado al patrón OnPush + signals + `markForCheck` del refactor Fase 1; peticiones duplicadas shell + página.
+- **Fix:** `admin-organizaciones.component` OnPush, signals `loading`/`tenants`, `finalize` + `takeUntilDestroyed`; `AdminApiService.listTenants()` con `shareReplay` + `invalidateTenantsList()`; bootstrap excluye `99_*.sql`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-organizaciones-loading.md`.
 
 ## Cambios recientes (2026-06-04) — Docker optimización ✅
 

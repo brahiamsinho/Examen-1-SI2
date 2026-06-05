@@ -1,7 +1,17 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { TallerEmergenciasApiService } from '../../../../core/services/taller-emergencias-api.service';
 import { TallerApiService } from '../../../../core/services/taller-api.service';
 import type { EstadoSolicitudSeguimiento, HistorialAtencionDto } from '../../../../core/models/taller-emergencias.models';
@@ -15,20 +25,22 @@ type HistorialModo = 'mis' | 'historial' | 'servicios';
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './taller-emergencias-historial-list.component.html',
   styleUrl: './taller-emergencias-historial-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerEmergenciasHistorialListComponent implements OnInit {
   private readonly api = inject(TallerEmergenciasApiService);
   private readonly tallerApi = inject(TallerApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   modo: HistorialModo = 'historial';
   rows: HistorialAtencionDto[] = [];
   tecnicos: TecnicoPortalDto[] = [];
   search = '';
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
 
-  /** Solo modo `historial`: filtro en servidor. */
   estado: EstadoSolicitudSeguimiento | '' = '';
   desde = '';
   hasta = '';
@@ -47,14 +59,19 @@ export class TallerEmergenciasHistorialListComponent implements OnInit {
   ngOnInit(): void {
     const m = this.route.snapshot.data['historialModo'];
     this.modo = m === 'mis' || m === 'servicios' ? m : 'historial';
-    this.tallerApi.listTecnicos().subscribe({
-      next: (list) => {
-        this.tecnicos = list;
-      },
-      error: () => {
-        this.tecnicos = [];
-      },
-    });
+    this.tallerApi
+      .listTecnicos()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (list) => {
+          this.tecnicos = list;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.tecnicos = [];
+          this.cdr.markForCheck();
+        },
+      });
     this.reload();
   }
 
@@ -75,7 +92,7 @@ export class TallerEmergenciasHistorialListComponent implements OnInit {
   }
 
   reload(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.error = null;
     const params =
       this.modo === 'historial'
@@ -85,16 +102,25 @@ export class TallerEmergenciasHistorialListComponent implements OnInit {
             hasta: this.hasta || undefined,
           }
         : undefined;
-    this.api.listHistorialAtenciones(params).subscribe({
-      next: (list) => {
-        this.rows = list;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = this.msg(err, 'No se pudo cargar el historial.');
-      },
-    });
+    this.api
+      .listHistorialAtenciones(params)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (list) => {
+          this.rows = list;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.error = this.msg(err, 'No se pudo cargar el historial.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private porModo(r: HistorialAtencionDto[]): HistorialAtencionDto[] {

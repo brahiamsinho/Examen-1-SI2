@@ -1,7 +1,17 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import type {
   PlanTenant,
@@ -18,12 +28,15 @@ const TENANT_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-organizaciones.component.html',
   styleUrl: './admin-organizaciones.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminOrganizacionesComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  tenants: TenantDto[] = [];
-  loading = true;
+  readonly tenants = signal<TenantDto[]>([]);
+  readonly loading = signal(true);
   error: string | null = null;
   busy = false;
   modalCreate = false;
@@ -45,31 +58,45 @@ export class AdminOrganizacionesComponent implements OnInit {
     this.reload();
   }
 
-  reload(): void {
-    this.loading = true;
-    this.api.listTenants().subscribe({
-      next: (rows) => {
-        this.tenants = rows;
-        this.loading = false;
-        this.error = null;
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudieron cargar las organizaciones.';
-      },
-    });
+  reload(force = false): void {
+    if (force) {
+      this.api.invalidateTenantsList();
+    }
+    this.loading.set(true);
+    this.api
+      .listTenants()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (rows) => {
+          this.tenants.set(Array.isArray(rows) ? rows : []);
+          this.error = null;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.error = 'No se pudieron cargar las organizaciones.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   closeModals(): void {
     this.modalCreate = false;
     this.modalEdit = false;
     this.selected = null;
+    this.cdr.markForCheck();
   }
 
   openCreate(): void {
     this.createForm = { slug: '', nombre: '', plan: 'STARTER' };
     this.error = null;
     this.modalCreate = true;
+    this.cdr.markForCheck();
   }
 
   private normalizeSlug(raw: string): string {
@@ -111,10 +138,12 @@ export class AdminOrganizacionesComponent implements OnInit {
     const nombre = this.createForm.nombre.trim();
     if (!slug || !nombre) {
       this.error = 'Slug y nombre son obligatorios.';
+      this.cdr.markForCheck();
       return;
     }
     if (!TENANT_SLUG_PATTERN.test(slug)) {
       this.error = 'Slug inválido: usa minúsculas, números y guiones (ej. mi-empresa).';
+      this.cdr.markForCheck();
       return;
     }
     this.busy = true;
@@ -124,17 +153,21 @@ export class AdminOrganizacionesComponent implements OnInit {
       nombre,
       plan: this.createForm.plan,
     };
-    this.api.createTenant(body).subscribe({
-      next: () => {
-        this.busy = false;
-        this.closeModals();
-        this.reload();
-      },
-      error: (err) => {
-        this.busy = false;
-        this.error = this.apiErrorMessage(err, 'No se pudo crear la organización.');
-      },
-    });
+    this.api
+      .createTenant(body)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.closeModals();
+          this.reload(true);
+        },
+        error: (err) => {
+          this.busy = false;
+          this.error = this.apiErrorMessage(err, 'No se pudo crear la organización.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   openEdit(t: TenantDto): void {
@@ -148,6 +181,7 @@ export class AdminOrganizacionesComponent implements OnInit {
     };
     this.stripeCustomerId = t.stripe_customer_id ?? '';
     this.modalEdit = true;
+    this.cdr.markForCheck();
   }
 
   openCheckout(t: TenantDto): void {
@@ -157,55 +191,69 @@ export class AdminOrganizacionesComponent implements OnInit {
         success_url: `${base}/admin/panel/organizaciones?billing=ok`,
         cancel_url: `${base}/admin/panel/organizaciones?billing=cancel`,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           if (res.checkout_url) window.location.href = res.checkout_url;
         },
         error: () => {
-          this.error = 'No se pudo abrir checkout Stripe (revisa STRIPE_SAAS_PRICE_STARTER en .env).';
+          this.error =
+            'No se pudo abrir checkout Stripe (revisa STRIPE_SAAS_PRICE_STARTER en .env).';
+          this.cdr.markForCheck();
         },
       });
   }
 
   openBillingPortal(t: TenantDto): void {
-    this.api.createTenantBillingPortal(t.id, window.location.href).subscribe({
-      next: (res) => {
-        if (res.portal_url) window.location.href = res.portal_url;
-      },
-      error: () => {
-        this.error = 'Portal de facturación no disponible (cliente Stripe requerido).';
-      },
-    });
+    this.api
+      .createTenantBillingPortal(t.id, window.location.href)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res.portal_url) window.location.href = res.portal_url;
+        },
+        error: () => {
+          this.error = 'Portal de facturación no disponible (cliente Stripe requerido).';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   submitEdit(): void {
     if (!this.selected) return;
     this.busy = true;
-    this.api.updateTenant(this.selected.id, this.editForm).subscribe({
-      next: () => {
-        if (this.stripeCustomerId.trim()) {
-          this.api.linkTenantStripeCustomer(this.selected!.id, this.stripeCustomerId.trim()).subscribe({
-            next: () => {
-              this.busy = false;
-              this.closeModals();
-              this.reload();
-            },
-            error: () => {
-              this.busy = false;
-              this.error = 'Organización actualizada; falló vincular Stripe.';
-              this.reload();
-            },
-          });
-          return;
-        }
-        this.busy = false;
-        this.closeModals();
-        this.reload();
-      },
-      error: () => {
-        this.busy = false;
-        this.error = 'No se pudo actualizar la organización.';
-      },
-    });
+    this.api
+      .updateTenant(this.selected.id, this.editForm)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          if (this.stripeCustomerId.trim()) {
+            this.api
+              .linkTenantStripeCustomer(this.selected!.id, this.stripeCustomerId.trim())
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: () => {
+                  this.busy = false;
+                  this.closeModals();
+                  this.reload(true);
+                },
+                error: () => {
+                  this.busy = false;
+                  this.error = 'Organización actualizada; falló vincular Stripe.';
+                  this.reload(true);
+                },
+              });
+            return;
+          }
+          this.busy = false;
+          this.closeModals();
+          this.reload(true);
+        },
+        error: () => {
+          this.busy = false;
+          this.error = 'No se pudo actualizar la organización.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 }

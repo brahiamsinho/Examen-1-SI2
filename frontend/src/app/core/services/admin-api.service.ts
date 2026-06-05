@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import type {
   AccionBitacora,
@@ -31,23 +32,41 @@ import type {
 export class AdminApiService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiUrl;
+  private tenantsList$: Observable<TenantDto[]> | null = null;
+  private pricingPlansList$: Observable<PricingPlanDto[]> | null = null;
 
   listTenants(): Observable<TenantDto[]> {
-    return this.http.get<TenantDto[]>(`${this.base}/admin/tenants`);
+    if (!this.tenantsList$) {
+      this.tenantsList$ = this.http.get<TenantDto[]>(`${this.base}/admin/tenants`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+    }
+    return this.tenantsList$;
+  }
+
+  /** Tras crear/editar organización o vincular Stripe; el shell y listados deben ver datos frescos. */
+  invalidateTenantsList(): void {
+    this.tenantsList$ = null;
   }
 
   createTenant(body: TenantCreatePayload): Observable<TenantDto> {
-    return this.http.post<TenantDto>(`${this.base}/admin/tenants`, body);
+    return this.http
+      .post<TenantDto>(`${this.base}/admin/tenants`, body)
+      .pipe(tap(() => this.invalidateTenantsList()));
   }
 
   updateTenant(id: number, body: TenantUpdatePayload): Observable<TenantDto> {
-    return this.http.patch<TenantDto>(`${this.base}/admin/tenants/${id}`, body);
+    return this.http
+      .patch<TenantDto>(`${this.base}/admin/tenants/${id}`, body)
+      .pipe(tap(() => this.invalidateTenantsList()));
   }
 
   linkTenantStripeCustomer(id: number, stripe_customer_id: string): Observable<TenantDto> {
-    return this.http.post<TenantDto>(`${this.base}/admin/tenants/${id}/stripe-customer`, {
-      stripe_customer_id,
-    });
+    return this.http
+      .post<TenantDto>(`${this.base}/admin/tenants/${id}/stripe-customer`, {
+        stripe_customer_id,
+      })
+      .pipe(tap(() => this.invalidateTenantsList()));
   }
 
   createTenantCheckout(
@@ -214,10 +233,21 @@ export class AdminApiService {
   }
 
   listPricingPlans(): Observable<PricingPlanDto[]> {
-    return this.http.get<PricingPlanDto[]>(`${this.base}/admin/pricing-plans`);
+    if (!this.pricingPlansList$) {
+      this.pricingPlansList$ = this.http
+        .get<PricingPlanDto[]>(`${this.base}/admin/pricing-plans`)
+        .pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    }
+    return this.pricingPlansList$;
+  }
+
+  invalidatePricingPlansList(): void {
+    this.pricingPlansList$ = null;
   }
 
   updatePricingPlan(slug: string, payload: PricingPlanUpdatePayload): Observable<PricingPlanDto> {
-    return this.http.patch<PricingPlanDto>(`${this.base}/admin/pricing-plans/${slug}`, payload);
+    return this.http
+      .patch<PricingPlanDto>(`${this.base}/admin/pricing-plans/${slug}`, payload)
+      .pipe(tap(() => this.invalidatePricingPlansList()));
   }
 }

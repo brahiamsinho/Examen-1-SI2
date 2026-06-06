@@ -87,6 +87,7 @@ async def get_solicitud_for_cliente(
         stmt = stmt.options(
             selectinload(SolicitudEmergencia.ubicaciones),
             selectinload(SolicitudEmergencia.evidencias),
+            joinedload(SolicitudEmergencia.taller),
         )
     r = await db.execute(stmt)
     return r.scalar_one_or_none()

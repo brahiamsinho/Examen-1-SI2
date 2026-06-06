@@ -1,8 +1,16 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-05 — PWA Angular frontend ✅
+# Última actualización: 2026-06-04 — Red talleres + horarios por tenant ✅
 # =========================================================
+
+## Red talleres + horarios (2026-06-04) ✅
+- [x] Tabla `taller_horarios` + servicio `horarios_service` (zona `America/La_Paz`).
+- [x] Portal taller: `/taller/panel/horarios` + API `/app/taller/horarios`.
+- [x] CU37/CU26/IA6 respetan horario (`abierto_ahora`).
+- [x] Seeds: **6 talleres** ACTIVO en `demo-sc` + **5 talleres/org** multi-org (principal + 4 sucursales).
+- [x] **1 técnico por sucursal** (+ 2 en taller principal multi-org); demo-sc matriz completa en `docs/CREDENCIALES_DEMO.md`.
+- [x] Mobile cliente: badge «Cerrado» en selección taller.
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
 
@@ -235,6 +243,7 @@
 - [x] Portal **taller** — emergencias: bandeja, detalle incidente, aceptar/rechazar; **CU28** en UI: `TallerEmergenciasApiService` (`asignarTecnico`, `listarAsignacionesTecnico`) + bloque asignación en `taller-emergencias-incidente-detalle` (tras aceptar permanece en detalle y lista historial de asignaciones). Ver `frontend/src/app/core/services/taller-emergencias-api.service.ts`
 
 ### Mobile Flutter ✅
+- [x] **Panel cliente UI Paleta A (2026-06-05):** design system `cliente_panel_ui.dart`; shell con bottom nav pill; home/perfil/vehículos/notificaciones/emergencias alineados con auth mobile; chip selector org en home y perfil (`ClienteOrgChip` + `showOrgSlugPicker`).
 - [x] `mobile/.env` + **flutter_dotenv** (asset); `lib/core/config/app_env.dart` — `API_BASE_URL`, `APP_NAME`, timeouts opcionales
 - [x] `lib/cliente/` — auth portal (login/registro/recuperar), shell, home, vehículos, perfil; Riverpod + go_router
 - [x] `lib/tecnico/` — emergencias (servicios asignados, detalle, chat, etc.); splash, login, recuperar, shell; **tokens JWT en secure storage separados** (`tecnico_access_token`)

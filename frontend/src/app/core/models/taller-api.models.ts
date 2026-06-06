@@ -267,3 +267,28 @@ export interface ReportTemplateCreatePayload {
 }
 
 export type ReportExportFormat = 'excel' | 'pdf' | 'csv';
+
+export interface TallerHorarioDiaDto {
+  dia_semana: number;
+  nombre_dia: string;
+  hora_apertura: string | null;
+  hora_cierre: string | null;
+  activo: boolean;
+}
+
+export interface TallerHorariosDto {
+  horarios: TallerHorarioDiaDto[];
+  abierto_ahora: boolean;
+  zona_horaria: string;
+}
+
+export interface TallerHorarioDiaUpdatePayload {
+  dia_semana: number;
+  hora_apertura: string | null;
+  hora_cierre: string | null;
+  activo: boolean;
+}
+
+export interface TallerHorariosUpdatePayload {
+  horarios: TallerHorarioDiaUpdatePayload[];
+}

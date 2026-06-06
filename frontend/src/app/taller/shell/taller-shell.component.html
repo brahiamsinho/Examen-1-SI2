@@ -29,7 +29,8 @@
         </span>
         <span class="shell__brand-text" *ngIf="!sidebarCollapsed">
           <span class="shell__brand-name">EmergenciasViales</span>
-          <span class="shell__brand-tag">Panel taller</span>
+          <span class="shell__brand-tag">{{ miTaller?.nombre_comercial ?? 'Panel taller' }}</span>
+          <span class="shell__brand-city" *ngIf="miTaller?.ciudad">{{ miTaller?.ciudad }}</span>
         </span>
       </a>
       <button
@@ -233,9 +234,11 @@
         <div class="shell__user-card">
           <div class="shell__avatar" aria-hidden="true">{{ userInitials(me.email) }}</div>
           <div class="shell__user-meta">
+            <span class="shell__taller-name" *ngIf="miTaller">{{ miTaller.nombre_comercial }}</span>
             <span class="shell__email">{{ me.email }}</span>
             <span class="shell__roles">
               <span class="shell__badge shell__badge--role" *ngFor="let r of me.roles ?? []">{{ r }}</span>
+              <span class="shell__badge shell__badge--estado" *ngIf="miTaller">{{ miTaller.estado }}</span>
             </span>
           </div>
         </div>

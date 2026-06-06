@@ -20,6 +20,7 @@ from app.modules.atencion.taller_emergencias.schemas import (
     TallerDisponibilidadRead,
     TallerDisponibilidadUpdateIn,
 )
+from app.modules.talleres_y_tecnicos.talleres import horarios_service
 from . import helpers
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 
@@ -179,6 +180,7 @@ async def aceptar_solicitud(
         )
 
     disp = await helpers.ensure_disponibilidad(db, taller_id)
+    await horarios_service.assert_taller_abierto(db, taller_id, accion="aceptar solicitudes")
     if not disp.acepta_nuevas_solicitudes:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

@@ -134,6 +134,10 @@ class UbicacionTecnicoCompartidaRead(BaseModel):
 class SolicitudEmergenciaDetailRead(SolicitudEmergenciaRead):
     ubicaciones: list[SolicitudUbicacionRead]
     evidencias: list[SolicitudEvidenciaRead]
+    taller: TallerSeguimientoRead | None = Field(
+        default=None,
+        description="Taller elegido por el cliente o ya confirmado en bandeja.",
+    )
 
 
 class TallerSeguimientoRead(BaseModel):

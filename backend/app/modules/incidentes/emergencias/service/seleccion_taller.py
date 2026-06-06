@@ -22,6 +22,7 @@ from app.modules.incidentes.emergencias import repository
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.incidentes.emergencias.schemas import SeleccionarTallerOut
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, Taller
+from app.modules.talleres_y_tecnicos.talleres import horarios_service
 
 
 def _ubicacion_actual(solicitud) -> object | None:
@@ -123,6 +124,8 @@ async def seleccionar_taller(
             detail="El taller no pertenece a tu organización.",
         )
 
+    await horarios_service.assert_taller_abierto(db, taller_id, accion="recibir tu solicitud")
+
     existing = await get_bandeja_por_solicitud_taller(
         db, solicitud_id=solicitud_id, taller_id=taller_id
     )
@@ -155,6 +158,8 @@ async def seleccionar_taller(
             observacion="Cliente eligió taller",
             created_at=now,
         )
+    # Referencia al taller elegido (confirmación formal al aceptar en bandeja → TALLER_ASIGNADO).
+    s.taller_id = taller_id
     s.updated_at = now
 
     await registrar_accion(

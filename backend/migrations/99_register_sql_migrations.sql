@@ -29,5 +29,6 @@ INSERT INTO app_sql_migrations (filename) VALUES
     ('0022_taller_backup.sql'),
     ('0023_taller_clientes_crud_permisos.sql'),
     ('0024_taller_usuarios_eliminar_permiso.sql'),
-    ('0025_reportes_modulo.sql')
+    ('0025_reportes_modulo.sql'),
+    ('0026_taller_horarios.sql')
 ON CONFLICT (filename) DO NOTHING;

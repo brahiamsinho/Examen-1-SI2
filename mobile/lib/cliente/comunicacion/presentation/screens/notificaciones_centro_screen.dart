@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../application/comunicacion_providers.dart';
 import '../widgets/notificacion_list_item.dart';
 
@@ -20,37 +20,20 @@ class _NotificacionesCentroScreenState extends ConsumerState<NotificacionesCentr
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(notificacionesClienteProvider(_soloNoLeidas));
-    final theme = ShadTheme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notificaciones'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/cliente/app/home'),
-        ),
-      ),
+    return ClienteSubpageScaffold(
+      title: 'Notificaciones',
+      onBack: () => context.canPop() ? context.pop() : context.go('/cliente/app/home'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Row(
-              children: [
-                FilterChip(
-                  label: const Text('Todas'),
-                  selected: !_soloNoLeidas,
-                  onSelected: (_) => setState(() => _soloNoLeidas = false),
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('No leídas'),
-                  selected: _soloNoLeidas,
-                  onSelected: (_) => setState(() => _soloNoLeidas = true),
-                ),
-              ],
-            ),
+          const SizedBox(height: 8),
+          ClienteFilterChips(
+            options: const ['Todas', 'No leídas'],
+            selectedIndex: _soloNoLeidas ? 1 : 0,
+            onSelected: (i) => setState(() => _soloNoLeidas = i == 1),
           ),
+          const SizedBox(height: 8),
           Expanded(
             child: async.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -60,14 +43,14 @@ class _NotificacionesCentroScreenState extends ConsumerState<NotificacionesCentr
               ),
               data: (list) {
                 if (list.isEmpty) {
-                  return _EmptyCentro(soloNoLeidas: _soloNoLeidas, theme: theme);
+                  return _EmptyCentro(soloNoLeidas: _soloNoLeidas);
                 }
                 return RefreshIndicator(
                   onRefresh: () => ref.refresh(notificacionesClienteProvider(_soloNoLeidas).future),
                   child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     itemCount: list.length,
-                    separatorBuilder: (_, __) => Divider(height: 1, color: theme.colorScheme.border),
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, i) {
                       final n = list[i];
                       return NotificacionListItem(
@@ -87,35 +70,16 @@ class _NotificacionesCentroScreenState extends ConsumerState<NotificacionesCentr
 }
 
 class _EmptyCentro extends StatelessWidget {
-  const _EmptyCentro({required this.soloNoLeidas, required this.theme});
+  const _EmptyCentro({required this.soloNoLeidas});
 
   final bool soloNoLeidas;
-  final ShadThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.notifications_none_rounded, size: 56, color: theme.colorScheme.mutedForeground),
-            const SizedBox(height: 16),
-            Text(
-              soloNoLeidas ? 'No tenés notificaciones sin leer.' : 'Todavía no hay notificaciones.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.large,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Cuando haya novedades en tus solicitudes, las verás acá.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.muted,
-            ),
-          ],
-        ),
-      ),
+    return ClienteEmptyState(
+      icon: Icons.notifications_none_rounded,
+      title: soloNoLeidas ? 'No tenés notificaciones sin leer' : 'Todavía no hay notificaciones',
+      message: 'Cuando haya novedades en tus solicitudes, las verás acá.',
     );
   }
 }
@@ -128,18 +92,12 @@ class _ErrorCentro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ShadButton.outline(onPressed: onRetry, child: const Text('Reintentar')),
-          ],
-        ),
-      ),
+    return ClienteEmptyState(
+      icon: Icons.error_outline,
+      title: 'Error al cargar',
+      message: message,
+      actionLabel: 'Reintentar',
+      onAction: onRetry,
     );
   }
 }

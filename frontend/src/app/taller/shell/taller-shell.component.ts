@@ -20,7 +20,7 @@ import { take } from 'rxjs';
 import { TallerAuthService } from '../../core/services/taller-auth.service';
 import { TallerApiService } from '../../core/services/taller-api.service';
 import type { MeResponse } from '../../core/models/auth.models';
-import type { TallerSuscripcionDto } from '../../core/models/taller-api.models';
+import type { MiTallerDto, TallerSuscripcionDto } from '../../core/models/taller-api.models';
 
 export type TallerNavIcon =
   | 'home'
@@ -62,6 +62,7 @@ export class TallerShellComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   me: MeResponse | null = null;
+  miTaller: MiTallerDto | null = null;
   subscription: TallerSuscripcionDto | null = null;
   pageTitle = 'Resumen';
   sidebarCollapsed = false;
@@ -125,6 +126,13 @@ export class TallerShellComponent implements OnInit {
           icon: 'chart',
           permiso: 'disponibilidad:gestionar',
         },
+        {
+          path: '/taller/panel/horarios',
+          label: 'Horarios',
+          exact: true,
+          icon: 'chart',
+          permiso: 'disponibilidad:gestionar',
+        },
       ],
     },
     {
@@ -184,6 +192,7 @@ export class TallerShellComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSubscription();
+    this.loadMiTaller();
 
     this.auth
       .refreshMeSiHaySesion()
@@ -260,6 +269,7 @@ export class TallerShellComponent implements OnInit {
       '/taller/panel/emergencias/servicios-asignados': 'Servicios asignados',
       '/taller/panel/emergencias/comisiones': 'Comisiones',
       '/taller/panel/emergencias/disponibilidad': 'Disponibilidad',
+      '/taller/panel/horarios': 'Horarios',
       '/taller/panel/accesos/usuarios': 'Usuarios del taller',
       '/taller/panel/accesos/clientes': 'Cuentas clientes',
       '/taller/panel/accesos/roles': 'Roles',
@@ -285,6 +295,22 @@ export class TallerShellComponent implements OnInit {
         },
         error: () => {
           this.subscription = null;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private loadMiTaller(): void {
+    this.tallerApi
+      .getMiTaller()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.miTaller = data;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.miTaller = null;
           this.cdr.markForCheck();
         },
       });

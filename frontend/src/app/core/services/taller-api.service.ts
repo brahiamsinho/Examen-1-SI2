@@ -28,6 +28,8 @@ import type {
   ReportVoiceTranscribeResultDto,
   ReportTemplateCreatePayload,
   ReportTemplateDto,
+  TallerHorariosDto,
+  TallerHorariosUpdatePayload,
 } from '../models/taller-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -49,6 +51,14 @@ export class TallerApiService {
 
   updateMiTaller(body: MiTallerUpdatePayload): Observable<MiTallerDto> {
     return this.http.put<MiTallerDto>(`${this.base}/mi-taller`, body);
+  }
+
+  getHorarios(): Observable<TallerHorariosDto> {
+    return this.http.get<TallerHorariosDto>(`${this.base}/horarios`);
+  }
+
+  putHorarios(body: TallerHorariosUpdatePayload): Observable<TallerHorariosDto> {
+    return this.http.put<TallerHorariosDto>(`${this.base}/horarios`, body);
   }
 
   listTecnicos(): Observable<TecnicoPortalDto[]> {

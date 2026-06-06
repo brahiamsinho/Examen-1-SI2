@@ -10,6 +10,7 @@ from app.modules.atencion.taller_emergencias.models import (
     SolicitudTallerBandeja,
 )
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTecnicoEnum, EstadoTallerEnum, Taller, Tecnico
+from app.modules.talleres_y_tecnicos.talleres import horarios_service
 
 
 async def list_talleres_for_assignment(
@@ -43,6 +44,9 @@ async def list_talleres_for_assignment(
             specs_by_taller[t.taller_id].append(t.especialidad.nombre)
 
     out: list[dict] = []
+    abierto_map = await horarios_service.abierto_map_for_talleres(
+        db, [t.id for t in talleres]
+    )
     for t in talleres:
         out.append(
             {
@@ -53,6 +57,7 @@ async def list_talleres_for_assignment(
                 "longitud": float(t.longitud) if t.longitud is not None else None,
                 "pendientes_bandeja": pend_map.get(t.id, 0),
                 "especialidad_nombres": specs_by_taller.get(t.id, []),
+                "abierto_ahora": abierto_map.get(t.id, True),
             }
         )
     return out

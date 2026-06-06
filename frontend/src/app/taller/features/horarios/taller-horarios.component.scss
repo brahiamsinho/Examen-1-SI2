@@ -1,0 +1,143 @@
+@use '../../../admin/admin-theme' as t;
+@use '../../../admin/admin-ui' as ui;
+@use '../../taller-page' as tp;
+
+.emg__h {
+  @include tp.taller-page-title;
+}
+
+.emg__lead {
+  @include tp.taller-page-lead;
+}
+
+.emg__status {
+  @include ui.ev-card;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  &--open {
+    border-color: rgba(76, 201, 240, 0.35);
+    color: t.$ev-cyan;
+  }
+
+  &--closed {
+    border-color: rgba(255, 120, 120, 0.25);
+    color: #ffb4b4;
+  }
+}
+
+.emg__alert {
+  @include ui.ev-alert-error;
+}
+
+.emg__success {
+  @include ui.ev-card;
+  margin-bottom: 1rem;
+  border-color: rgba(76, 201, 240, 0.35);
+  color: t.$ev-cyan;
+  font-size: 0.875rem;
+}
+
+.emg__muted {
+  color: t.$ev-muted;
+  font-size: 0.8125rem;
+}
+
+.emg__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.emg__card {
+  @include ui.ev-card;
+}
+
+.emg__grid-head,
+.emg__grid-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) 4rem minmax(7rem, 1fr) minmax(7rem, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.emg__grid-head {
+  padding: 0.5rem 1rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: t.$ev-muted;
+}
+
+.emg__day {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.emg__switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+
+  &--inline {
+    justify-content: center;
+  }
+
+  input {
+    cursor: pointer;
+  }
+}
+
+.emg__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.emg__hint {
+  margin: 0.5rem 0 0;
+  color: t.$ev-muted;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.emg__inp {
+  @include ui.ev-input;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.emg__form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.emg__btn {
+  @include ui.ev-btn-ghost;
+
+  &--primary {
+    @include ui.ev-btn-primary;
+  }
+}
+
+@media (max-width: 640px) {
+  .emg__grid-head {
+    display: none;
+  }
+
+  .emg__grid-row {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+}

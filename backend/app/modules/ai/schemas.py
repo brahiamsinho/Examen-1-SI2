@@ -191,6 +191,7 @@ class TallerCandidatoScore(BaseModel):
     taller_id: int
     nombre_comercial: str
     score: float
+    abierto_ahora: bool = True
     detalle: dict = Field(default_factory=dict)
 
 

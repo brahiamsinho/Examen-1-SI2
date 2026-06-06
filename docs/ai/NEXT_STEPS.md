@@ -7,6 +7,24 @@
 # Actualizado: 2026-06-05 — Reportes personalizados QBE
 # =========================================================
 
+# Actualizado: 2026-06-04 — Red talleres + horarios
+# =========================================================
+
+## ALTA — Validar red talleres + horarios (2026-06-04)
+
+1. `docker compose up -d --build backend frontend` (migración `0026_taller_horarios.sql`).
+2. Seeds: `docker compose exec backend python -m app.seeds`.
+3. Verificar **6 talleres** en org `demo-sc` (cada uno con ≥1 técnico) — ver `docs/CREDENCIALES_DEMO.md`.
+4. Portal taller → **Horarios** — cambiar franja; probar fuera de horario (ranking mobile + aceptar bandeja).
+5. Login móvil técnico: p. ej. `marco.salas@sc-demo.test` / `scdemo1` org `demo-sc`; probar `andres.vargas@` (4to Anillo).
+
+## MEDIA — Validar panel cliente mobile Paleta A (2026-06-05)
+
+1. `cd mobile && flutter run` (o hot reload si ya corre).
+2. Login cliente `carlos.vega@sc-demo.test` / `scdemo1` org `demo-sc`.
+3. Revisar home, bottom nav, perfil, vehículos, notificaciones, flujo emergencia.
+4. Probar chip org (cambia slug persistido; requests usan nuevo `X-Tenant-Slug`).
+
 ## ALTA — Reportes portal taller (2026-06-05)
 
 1. `docker compose up -d --build backend frontend` (migración `0025_reportes_modulo.sql` + `openpyxl`/`reportlab`).

@@ -4,6 +4,7 @@ class TallerCandidato {
     required this.tallerId,
     required this.nombreComercial,
     required this.score,
+    this.abiertoAhora = true,
     this.distanciaKm,
     this.cargaBandeja,
   });
@@ -11,6 +12,7 @@ class TallerCandidato {
   final int tallerId;
   final String nombreComercial;
   final double score;
+  final bool abiertoAhora;
   final double? distanciaKm;
   final int? cargaBandeja;
 
@@ -28,6 +30,7 @@ class TallerCandidato {
       tallerId: (json['taller_id'] as num).toInt(),
       nombreComercial: json['nombre_comercial'] as String? ?? 'Taller',
       score: (json['score'] as num?)?.toDouble() ?? 0,
+      abiertoAhora: json['abierto_ahora'] as bool? ?? true,
       distanciaKm: dist,
       cargaBandeja: carga,
     );

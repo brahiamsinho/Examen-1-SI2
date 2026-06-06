@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/mobile/mobile_shell_widgets.dart';
+
 /// Navegación principal responsable de taller.
 class TallerAppShell extends StatelessWidget {
   const TallerAppShell({super.key, required this.child});
 
   final Widget child;
+
+  static const _navItems = [
+    (icon: Icons.dashboard_rounded, label: 'Inicio'),
+    (icon: Icons.inbox_rounded, label: 'Bandeja'),
+    (icon: Icons.groups_rounded, label: 'Técnicos'),
+    (icon: Icons.person_rounded, label: 'Perfil'),
+  ];
 
   static bool _showBottomNav(String path) {
     if (path.startsWith('/taller/app/bandeja/') && path != '/taller/app/bandeja') return false;
@@ -26,12 +35,12 @@ class TallerAppShell extends StatelessWidget {
     final showNav = _showBottomNav(loc);
     final index = _indexForPath(loc);
 
-    return Scaffold(
-      body: SafeArea(child: child),
-      bottomNavigationBar: showNav
-          ? NavigationBar(
-              selectedIndex: index,
-              onDestinationSelected: (i) {
+    return MobileAppShell(
+      bottomNav: showNav
+          ? MobilePanelBottomNav(
+              index: index,
+              items: _navItems,
+              onChanged: (i) {
                 switch (i) {
                   case 0:
                     context.go('/taller/app/inicio');
@@ -43,30 +52,9 @@ class TallerAppShell extends StatelessWidget {
                     context.go('/taller/app/perfil');
                 }
               },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard_rounded),
-                  label: 'Inicio',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.inbox_outlined),
-                  selectedIcon: Icon(Icons.inbox_rounded),
-                  label: 'Bandeja',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.groups_outlined),
-                  selectedIcon: Icon(Icons.groups_rounded),
-                  label: 'Técnicos',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person_rounded),
-                  label: 'Perfil',
-                ),
-              ],
             )
           : null,
+      child: child,
     );
   }
 }

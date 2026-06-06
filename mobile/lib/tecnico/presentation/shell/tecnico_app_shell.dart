@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/mobile/mobile_shell_widgets.dart';
+
 /// Navegación principal técnico: Inicio · Servicios · Perfil.
 class TecnicoAppShell extends StatelessWidget {
   const TecnicoAppShell({super.key, required this.child});
 
   final Widget child;
 
+  static const _navItems = [
+    (icon: Icons.home_rounded, label: 'Inicio'),
+    (icon: Icons.assignment_rounded, label: 'Servicios'),
+    (icon: Icons.person_rounded, label: 'Perfil'),
+  ];
+
   static bool _showBottomNav(String path) {
     if (path.startsWith('/tecnico/app/historial')) return false;
-    // Detalle / ubicación / estado / chat: pantalla completa sin barra inferior.
     if (path.startsWith('/tecnico/app/servicios/')) return false;
     return true;
   }
@@ -26,12 +33,12 @@ class TecnicoAppShell extends StatelessWidget {
     final showNav = _showBottomNav(loc);
     final index = _indexForPath(loc);
 
-    return Scaffold(
-      body: SafeArea(child: child),
-      bottomNavigationBar: showNav
-          ? NavigationBar(
-              selectedIndex: index,
-              onDestinationSelected: (i) {
+    return MobileAppShell(
+      bottomNav: showNav
+          ? MobilePanelBottomNav(
+              index: index,
+              items: _navItems,
+              onChanged: (i) {
                 switch (i) {
                   case 0:
                     context.go('/tecnico/app/inicio');
@@ -41,25 +48,9 @@ class TecnicoAppShell extends StatelessWidget {
                     context.go('/tecnico/app/perfil');
                 }
               },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home_rounded),
-                  label: 'Inicio',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.assignment_outlined),
-                  selectedIcon: Icon(Icons.assignment_rounded),
-                  label: 'Servicios',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person_rounded),
-                  label: 'Perfil',
-                ),
-              ],
             )
           : null,
+      child: child,
     );
   }
 }

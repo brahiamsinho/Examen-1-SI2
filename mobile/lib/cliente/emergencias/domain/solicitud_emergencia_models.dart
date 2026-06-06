@@ -53,6 +53,11 @@ enum EstadoSolicitudEmergencia {
         EstadoSolicitudEmergencia.finalizada => 'Finalizada',
         EstadoSolicitudEmergencia.cancelada => 'Cancelada',
       };
+
+  /// CU37 — el cliente aún puede enviar la solicitud a un taller.
+  bool get puedeElegirTaller =>
+      this == EstadoSolicitudEmergencia.registrada ||
+      this == EstadoSolicitudEmergencia.enRevision;
 }
 
 enum TipoEvidenciaSolicitud {

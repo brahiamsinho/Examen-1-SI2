@@ -15,6 +15,7 @@ import '../widgets/seguimiento/seguimiento_timeline.dart';
 import '../widgets/seguimiento/taller_cliente_resumen_card.dart';
 import '../widgets/seguimiento/taller_asignado_card.dart';
 import '../widgets/seguimiento/tecnico_asignado_card.dart';
+import '../widgets/seguimiento/elegir_taller_prompt_card.dart';
 
 /// Seguimiento de solicitud: estado, taller, técnico, ETA, historial.
 class EmergenciaSeguimientoScreen extends ConsumerWidget {
@@ -67,10 +68,12 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
               Text('Taller', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               if (s.taller == null)
-                const _InfoPlaceholder(
-                  icon: Icons.store_outlined,
-                  text: 'Todavía no elegiste taller. Podés hacerlo desde el detalle de la solicitud.',
-                )
+                s.estado.puedeElegirTaller
+                    ? ElegirTallerPromptCard(solicitudId: solicitudId)
+                    : const _InfoPlaceholder(
+                        icon: Icons.store_outlined,
+                        text: 'Sin taller asignado para esta solicitud.',
+                      )
               else if (s.estado == EstadoSolicitudEmergencia.enRevision)
                 TallerClienteResumenCard(taller: s.taller!, estado: s.estado)
               else

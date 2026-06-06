@@ -18,6 +18,8 @@ from app.modules.atencion.taller_emergencias.repository import (
     expirar_todas_bandeja_pendientes,
     get_bandeja_por_solicitud_taller,
 )
+from app.modules.comunicacion_y_notificaciones.notificaciones import service as notif_service
+from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.incidentes.emergencias import repository
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.incidentes.emergencias.schemas import SeleccionarTallerOut
@@ -170,6 +172,16 @@ async def seleccionar_taller(
         descripcion=f"CU37 cliente seleccionó taller_id={taller_id} solicitud_id={solicitud_id}",
         usuario_id=user.id,
         entidad_id=solicitud_id,
+    )
+
+    await notif_service.notificar_responsable_taller(
+        db,
+        taller=taller,
+        solicitud_id=s.id,
+        tipo=TipoNotificacionEnum.SOLICITUD_CREADA,
+        titulo="Nueva solicitud en tu bandeja",
+        mensaje=f"Un cliente eligió tu taller para la solicitud #{s.id}. Revisá la bandeja.",
+        extra_data={"bandeja_id": str(bandeja.id)},
     )
 
     return SeleccionarTallerOut(

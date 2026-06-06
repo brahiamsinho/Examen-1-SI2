@@ -10,6 +10,7 @@ import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/ai/solicitud_ai_resumen_card.dart';
 import '../widgets/seguimiento/taller_cliente_resumen_card.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
+import '../widgets/seguimiento/elegir_taller_prompt_card.dart';
 
 /// Detalle de una solicitud (API fase 1 + campos fase 2 en JSON).
 class EmergenciaDetalleScreen extends ConsumerWidget {
@@ -48,6 +49,9 @@ class EmergenciaDetalleScreen extends ConsumerWidget {
               if (d.taller != null) ...[
                 const SizedBox(height: 16),
                 TallerClienteResumenCard(taller: d.taller!, estado: d.estado),
+              ] else if (d.estado.puedeElegirTaller) ...[
+                const SizedBox(height: 16),
+                ElegirTallerPromptCard(solicitudId: solicitudId),
               ],
               const SizedBox(height: 20),
               Text('Resumen', style: Theme.of(context).textTheme.titleMedium),

@@ -57,7 +57,10 @@ class _SolicitudTile extends StatelessWidget {
       title: 'Solicitud #${solicitud.id}',
       subtitle: [
         'Vehículo #${solicitud.vehiculoId} · ${_fecha(solicitud.createdAt)}',
-        if (solicitud.tiempoEstimadoMin != null) 'ETA: ${solicitud.tiempoEstimadoMin} min',
+        if (solicitud.tallerId == null && solicitud.estado.puedeElegirTaller)
+          'Pendiente: elegir taller'
+        else if (solicitud.tiempoEstimadoMin != null)
+          'ETA: ${solicitud.tiempoEstimadoMin} min',
       ].join('\n'),
       accent: Theme.of(context).colorScheme.error.withValues(alpha: 0.85),
       onTap: () => context.push('/cliente/app/emergencias/solicitudes/${solicitud.id}'),

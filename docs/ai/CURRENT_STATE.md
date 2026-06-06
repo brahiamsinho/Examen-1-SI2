@@ -1,8 +1,31 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-04 — Red talleres + horarios por tenant ✅
+# Última actualización: 2026-06-06 — Notificaciones taller ampliadas ✅
 # =========================================================
+
+## Notificaciones taller ampliadas (2026-06-06) ✅
+- [x] Helper `notificar_responsable_taller_por_solicitud` (taller + `bandeja_id` en FCM).
+- [x] Push/in-app al responsable en: estado técnico (en camino, atención, finalizada), chat cliente/técnico, pago confirmado.
+- [x] CU37 incluye `bandeja_id` en payload push.
+- [x] API `GET .../solicitudes/{id}/bandeja-id` + campana taller navega al detalle.
+- [x] Sesión: `docs/ai/sessions/2026-06-06-agent-notificaciones-taller-ampliadas.md`.
+
+## Notificaciones web + push FCM (2026-06-04) ✅
+- [x] Credenciales Firebase copiadas: `backend/firebase-credentials.json`, `mobile/android/app/google-services.json`.
+- [x] Migración `0027_taller_fcm_notificaciones.sql` — permiso `dispositivos:fcm` → `TALLER_RESPONSABLE`.
+- [x] API: `/api/app/taller|admin/dispositivos/fcm` + `/notificaciones` (listar, marcar leída).
+- [x] Push al responsable cuando CU37 elige taller (`notificar_responsable_taller`).
+- [x] Angular: `FcmService`, `NotificacionesApiService`, campana en shells taller/admin; SW en scope `/firebase-cloud-messaging-push-scope/` (sin conflicto con `ngsw`).
+- [x] Config vía `.env` raíz → `firebase-config.generated.ts` (`FIREBASE_WEB_*`, `npm run env:sync`).
+- [x] Activar en local: `FCM_ENABLED=true` + credenciales Firebase (`transporte-si2`) — **2026-06-06**.
+- [x] Fix mobile push: credenciales backend (archivo JSON, no directorio), canal Android manifest, race `onMessage`, `onTokenRefresh`.
+
+## VRT + ETA routing (2026-06-06) ✅
+- [x] OSRM en Docker (perfil `routing`) + `scripts/osrm-setup.ps1` (extracto Bolivia).
+- [x] Backend `core/routing/osrm_client.py` — polyline + ETA en `GET .../ubicacion-tecnico`.
+- [x] Mobile: mapa con ruta por calles + tarjeta `RutaVrtEtaCard` (VRT).
+- [ ] Opcional: levantar OSRM en tu máquina (`docker compose --profile routing up -d osrm`).
 
 ## Red talleres + horarios (2026-06-04) ✅
 - [x] Tabla `taller_horarios` + servicio `horarios_service` (zona `America/La_Paz`).

@@ -11,7 +11,7 @@ from app.modules.incidentes.emergencias.models import SolicitudEmergencia
 from app.modules.comunicacion_y_notificaciones.notificaciones import repository as notif_repository
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.notificaciones.schemas import NotificacionRead
-from app.modules.talleres_y_tecnicos.talleres.models import Tecnico
+from app.modules.talleres_y_tecnicos.talleres.models import Taller, Tecnico
 from app.modules.clientes_y_vehiculos.clientes.models import Cliente
 
 
@@ -23,6 +23,7 @@ async def crear_notificacion_y_push(
     tipo: TipoNotificacionEnum,
     titulo: str,
     mensaje: str,
+    extra_data: dict[str, str] | None = None,
 ) -> NotificacionRead:
     now = utc_now_naive()
     row = await notif_repository.insert_notificacion(
@@ -38,6 +39,7 @@ async def crear_notificacion_y_push(
         "tipo": tipo.value,
         "notificacion_id": str(row.id),
         **({"solicitud_id": str(solicitud_id)} if solicitud_id is not None else {}),
+        **(extra_data or {}),
     }
     await send_fcm_to_usuario(
         db,
@@ -69,6 +71,64 @@ async def notificar_cliente_solicitud_emergencia(
         tipo=tipo,
         titulo=titulo,
         mensaje=mensaje,
+    )
+
+
+async def notificar_responsable_taller(
+    db: AsyncSession,
+    *,
+    taller: Taller,
+    solicitud_id: int,
+    tipo: TipoNotificacionEnum,
+    titulo: str,
+    mensaje: str,
+    extra_data: dict[str, str] | None = None,
+) -> None:
+    merged = {"portal": "taller", **(extra_data or {})}
+    await crear_notificacion_y_push(
+        db,
+        usuario_destino_id=taller.usuario_responsable_id,
+        solicitud_id=solicitud_id,
+        tipo=tipo,
+        titulo=titulo,
+        mensaje=mensaje,
+        extra_data=merged,
+    )
+
+
+async def notificar_responsable_taller_por_solicitud(
+    db: AsyncSession,
+    *,
+    solicitud: SolicitudEmergencia,
+    tipo: TipoNotificacionEnum,
+    titulo: str,
+    mensaje: str,
+) -> None:
+    """Notifica al responsable del taller vinculado a la solicitud (in-app + FCM web)."""
+    if solicitud.taller_id is None:
+        return
+    res = await db.execute(select(Taller).where(Taller.id == solicitud.taller_id))
+    taller = res.scalar_one_or_none()
+    if taller is None:
+        return
+
+    extra: dict[str, str] = {}
+    from app.modules.atencion.taller_emergencias import repository as taller_emergencias_repository
+
+    bandeja = await taller_emergencias_repository.get_bandeja_por_solicitud_taller(
+        db, solicitud_id=solicitud.id, taller_id=taller.id
+    )
+    if bandeja is not None:
+        extra["bandeja_id"] = str(bandeja.id)
+
+    await notificar_responsable_taller(
+        db,
+        taller=taller,
+        solicitud_id=solicitud.id,
+        tipo=tipo,
+        titulo=titulo,
+        mensaje=mensaje,
+        extra_data=extra or None,
     )
 
 

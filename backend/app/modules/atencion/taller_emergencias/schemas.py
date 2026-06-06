@@ -208,3 +208,9 @@ class ReporteTallerDashboardRead(BaseModel):
         description="Conteo de solicitudes creadas en el periodo (por `created_at`) agrupado por estado.",
     )
     ganancias_por_tecnico: list[ReporteTecnicoGananciasRead] = Field(default_factory=list)
+
+
+class BandejaIdPorSolicitudRead(BaseModel):
+    """Identificador de bandeja para deep-link desde notificaciones del portal taller."""
+
+    bandeja_id: int | None = None

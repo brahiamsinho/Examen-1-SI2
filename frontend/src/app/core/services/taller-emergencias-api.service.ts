@@ -87,4 +87,10 @@ export class TallerEmergenciasApiService {
   listComisiones(): Observable<ComisionTallerDto[]> {
     return this.http.get<ComisionTallerDto[]>(`${this.base}/comisiones`);
   }
+
+  resolveBandejaId(solicitudId: number): Observable<{ bandeja_id: number | null }> {
+    return this.http.get<{ bandeja_id: number | null }>(
+      `${this.base}/solicitudes/${solicitudId}/bandeja-id`,
+    );
+  }
 }

@@ -127,6 +127,32 @@ async def actualizar_estado_servicio(
         mensaje=mensaje_cliente,
     )
 
+    nombre_tec = f"{user.nombres} {user.apellidos}".strip() or "Técnico"
+    if body.nuevo_estado == EstadoSolicitudSeguimientoEnum.EN_CAMINO:
+        mensaje_taller = f"{nombre_tec} va en camino a la emergencia #{se.id}."
+        titulo_taller = "Técnico en camino"
+    elif body.nuevo_estado == EstadoSolicitudSeguimientoEnum.EN_ATENCION:
+        if monto_txt:
+            mensaje_taller = (
+                f"{nombre_tec} inició atención en la emergencia #{se.id}. Presupuesto: {monto_txt}"
+            )
+        else:
+            mensaje_taller = f"{nombre_tec} inició atención en la emergencia #{se.id}."
+        titulo_taller = "Atención en curso"
+    elif body.nuevo_estado == EstadoSolicitudSeguimientoEnum.FINALIZADA:
+        mensaje_taller = f"{nombre_tec} finalizó la emergencia #{se.id}."
+        titulo_taller = "Servicio finalizado"
+    else:
+        mensaje_taller = f"Emergencia #{se.id}: {etiqueta}."
+        titulo_taller = "Actualización de servicio"
+    await notificaciones_service.notificar_responsable_taller_por_solicitud(
+        db,
+        solicitud=se,
+        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+        titulo=titulo_taller,
+        mensaje=mensaje_taller,
+    )
+
     row = await repository.get_servicio_asignado_detalle(db, solicitud_id=solicitud_id, tecnico_id=t.id)
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Solicitud no encontrada.")

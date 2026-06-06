@@ -7,8 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/utils/bolivia_time.dart';
 import '../../application/emergencias_providers.dart';
-import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/emergencia_ubicacion_osm_map.dart';
+import '../widgets/seguimiento/ruta_vrt_eta_card.dart';
 
 /// Mapa y datos de la última posición compartida por el técnico asignado (CU36 polling).
 class EmergenciaUbicacionTecnicoScreen extends ConsumerStatefulWidget {
@@ -45,17 +45,9 @@ class _EmergenciaUbicacionTecnicoScreenState extends ConsumerState<EmergenciaUbi
     }
   }
 
-  static SolicitudUbicacionRead? _ubicacionActualCliente(SolicitudEmergenciaDetail d) {
-    for (final u in d.ubicaciones) {
-      if (u.esActual) return u;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(emergenciaUbicacionTecnicoProvider(widget.solicitudId));
-    final detailAsync = ref.watch(emergenciaDetailProvider(widget.solicitudId));
 
     return Scaffold(
       appBar: AppBar(
@@ -77,10 +69,12 @@ class _EmergenciaUbicacionTecnicoScreenState extends ConsumerState<EmergenciaUbi
         ),
         data: (u) {
           final scheme = Theme.of(context).colorScheme;
-          final clienteUb = detailAsync.maybeWhen(
-            data: _ubicacionActualCliente,
-            orElse: () => null,
-          );
+          final ruta = u.ruta;
+          final routeLabel = ruta == null
+              ? null
+              : ruta.esRutaPorCalles
+                  ? 'Ruta por calles (OSRM) — técnico → tu ubicación'
+                  : 'Ruta aproximada en línea recta — activá OSRM para calles reales';
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
             children: [
@@ -89,21 +83,34 @@ class _EmergenciaUbicacionTecnicoScreenState extends ConsumerState<EmergenciaUbi
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 8),
+              if (ruta != null) ...[
+                RutaVrtEtaCard(ruta: ruta),
+                const SizedBox(height: 12),
+              ],
               EmergenciaUbicacionOsmMap(
                 latitude: u.latitud,
                 longitude: u.longitud,
-                routeToLatitude: clienteUb?.latitud,
-                routeToLongitude: clienteUb?.longitud,
-                height: 260,
+                routePoints: ruta?.geometria,
+                routeToLatitude: u.clienteLatitud ?? ruta?.geometria.lastOrNull?.first,
+                routeToLongitude: u.clienteLongitud ?? ruta?.geometria.lastOrNull?.last,
+                height: 280,
+                routeLabel: routeLabel,
               ),
-              if (clienteUb != null) ...[
+              if (ruta != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Línea azul: aproximación directa técnico → tu última ubicación compartida en la solicitud.',
+                  'La línea azul sigue la ruta calculada hacia tu última ubicación compartida. '
+                  'El ETA se recalcula en cada actualización.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                         height: 1.35,
                       ),
+                ),
+              ] else if (u.clienteLatitud != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Sin ruta calculada: falta tu ubicación actual en la solicitud.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                 ),
               ],
               const SizedBox(height: 16),

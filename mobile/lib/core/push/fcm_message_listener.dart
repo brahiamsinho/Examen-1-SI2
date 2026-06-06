@@ -31,14 +31,17 @@ class _FcmMessageListenerState extends ConsumerState<FcmMessageListener> {
   void initState() {
     super.initState();
     if (kIsWeb || !firebaseReady) return;
-    unawaited(
-      _SystemLocalNotifier.instance.initialize(
-        onTapPayload: _onLocalNotificationTap,
-      ),
+    unawaited(_setupFcm());
+  }
+
+  Future<void> _setupFcm() async {
+    await _SystemLocalNotifier.instance.initialize(
+      onTapPayload: _onLocalNotificationTap,
     );
+    if (!mounted) return;
     _onMessageSub = FirebaseMessaging.onMessage.listen(_onMessage);
     _onOpenSub = FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpened);
-    unawaited(_handleInitialMessage());
+    await _handleInitialMessage();
   }
 
   Future<void> _onMessage(RemoteMessage message) async {

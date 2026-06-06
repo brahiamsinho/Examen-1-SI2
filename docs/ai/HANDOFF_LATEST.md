@@ -2,9 +2,33 @@
 # =========================================================
 # Handoff para el próximo agente/sesión
 
-# HANDOFF_LATEST.md
-# =========================================================
-# Handoff para el próximo agente/sesión
+## Cambios (2026-06-06) — Notificaciones taller ampliadas ✅
+
+- **Backend:** `notificar_responsable_taller_por_solicitud` en estado técnico, chat y pagos; `bandeja_id` en FCM.
+- **Frontend:** campana taller abre detalle de solicitud vía `GET .../bandeja-id`.
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-notificaciones-taller-ampliadas.md`.
+
+## Cambios (2026-06-06) — VRT + ETA con OSRM (CU36) ✅
+
+- **OSRM** contenedor Docker (perfil `routing`) + script `scripts/osrm-setup.ps1`.
+- **Backend:** `core/routing/osrm_client.py`; respuesta `ubicacion-tecnico` incluye polyline + ETA.
+- **Mobile:** mapa con ruta real + `RutaVrtEtaCard`.
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-vrt-eta-osrm.md`.
+
+## Cambios (2026-06-06) — Fix push FCM mobile ✅
+
+- **Causa:** `FCM_ENABLED=false` + `backend/firebase-credentials.json` era directorio vacío (no JSON).
+- **Fix:** credenciales restauradas, `FCM_ENABLED=true`, canal Android en manifest + `fcm_client.py`, race `onMessage` corregido, `onTokenRefresh`.
+- **Verificado en contenedor:** `FCM_ENABLED=True`, `credentials is_file=True`.
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-fix-fcm-mobile-push.md`.
+
+## Cambios (2026-06-04) — Notificaciones web + push FCM ✅
+
+- **Backend:** migración `0027`; routers `/api/app/taller/...` y `/api/admin/...` (FCM + notificaciones); push a responsable en CU37.
+- **Frontend:** `firebase` npm; `FcmService` + campana `NotificationBellComponent` en shells; SW dedicado bajo `/firebase-cloud-messaging-push-scope/`.
+- **Config:** claves en `.env` raíz (`FIREBASE_WEB_*`, `FIREBASE_WEB_ENABLED`); credenciales backend/mobile copiadas desde Downloads (gitignored).
+- **Activar push:** `FCM_ENABLED=true` en backend + variables Firebase web en `.env` + `npm run env:sync` + recargar panel taller/admin y aceptar permiso del navegador.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-frontend-fcm-notificaciones.md`.
 
 ## Cambios (2026-06-04) — Técnicos por taller + credenciales demo ✅
 

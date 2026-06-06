@@ -192,6 +192,12 @@ class Settings(BaseSettings):
     FCM_ENABLED: bool = False
     FIREBASE_CREDENTIALS_PATH: str | None = None  # ej. firebase-credentials.json (relativo a backend/)
 
+    # ── OSRM — routing VRT/ETA técnico→cliente (contenedor `osrm`, perfil compose `routing`) ──
+    OSRM_ENABLED: bool = True
+    OSRM_BASE_URL: str | None = None  # ej. http://osrm:5000
+    OSRM_TIMEOUT_SECONDS: float = 8.0
+    OSRM_FALLBACK_SPEED_KMH: float = 35.0
+
     @property
     def firebase_credentials_file(self) -> Path | None:
         if not self.FIREBASE_CREDENTIALS_PATH:

@@ -39,4 +39,4 @@ def sort_order_for_slug(plans: list[PricingPlanRead], slug: str) -> int:
 
 
 def plan_enum_for_slug(slug: str) -> PlanTenantEnum:
-    return SLUG_TO_PLAN_ENUM.get(slug.strip().lower(), PlanTenantEnum.STARTER)
+    return SLUG_TO_PLAN_ENUM.get(slug.strip().lower(), PlanTenantEnum.FREE)

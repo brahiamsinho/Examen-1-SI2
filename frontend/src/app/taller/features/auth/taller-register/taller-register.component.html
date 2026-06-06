@@ -3,91 +3,153 @@
 
   <main class="taller-reg__main">
     <header class="taller-reg__brand">
-      <p class="taller-reg__eyebrow">EMERGENCIASVIALES</p>
+      <div class="taller-reg__logo" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lg-reg-taller" x1="8" y1="6" x2="32" y2="34" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#38BDF8" />
+              <stop offset="1" stop-color="#0EA5E9" />
+            </linearGradient>
+          </defs>
+          <rect width="40" height="40" rx="11" fill="url(#lg-reg-taller)" />
+          <path
+            d="M20 9L12 12.5V19.2C12 24.35 15.2 29.05 20 30.5C24.8 29.05 28 24.35 28 19.2V12.5L20 9Z"
+            stroke="white"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+            fill="none"
+          />
+        </svg>
+      </div>
+      <p class="taller-reg__eyebrow">EmergenciasViales</p>
       <h1 class="taller-reg__title">Registrar taller</h1>
-      <p class="taller-reg__subtitle">Taller web</p>
+      <p class="taller-reg__subtitle">Alta en la plataforma SaaS — tu taller quedará vinculado a una organización.</p>
     </header>
 
     <section class="taller-reg__card" aria-labelledby="reg-title">
       <h2 id="reg-title" class="taller-reg__card-title">Alta de taller</h2>
-      <p class="taller-reg__card-desc">Crea tu usuario responsable y el perfil del taller (estado inicial pendiente).</p>
+      <p class="taller-reg__card-desc">
+        Crea el usuario responsable y el perfil del taller. Estado inicial: pendiente de verificación.
+      </p>
 
       <div class="taller-reg__alert" *ngIf="errorMsg" role="alert">{{ errorMsg }}</div>
+
       <div class="taller-reg__alert taller-reg__alert--ok" *ngIf="success && pendienteVerificacion" role="status">
         <p><strong>Revisa tu correo</strong> para activar la cuenta (enlace válido 72 h).</p>
-        <p class="taller-reg__hint" *ngIf="mailhogWebUrl">
-          Desarrollo: correos en
-          <a [href]="mailhogWebUrl" target="_blank" rel="noopener">MailHog</a>
-          — luego podrás iniciar sesión en el taller.
+        <p class="taller-reg__success-hint" *ngIf="registeredOrgSlug">
+          Al iniciar sesión, selecciona la organización <code>{{ registeredOrgSlug }}</code>.
         </p>
-        <p class="taller-reg__hint"><a routerLink="/taller">Ir al inicio de sesión</a></p>
+        <p class="taller-reg__success-hint" *ngIf="mailhogWebUrl">
+          Desarrollo: correos en
+          <a [href]="mailhogWebUrl" target="_blank" rel="noopener">MailHog</a>.
+        </p>
+        <p class="taller-reg__success-hint">
+          <a [routerLink]="['/taller']" [queryParams]="loginQuery()">Ir al inicio de sesión</a>
+        </p>
       </div>
+
       <div class="taller-reg__alert taller-reg__alert--ok" *ngIf="success && !pendienteVerificacion" role="status">
-        Registro exitoso. Ya puedes iniciar sesión.
-        <p class="taller-reg__hint"><a routerLink="/taller">Ir al inicio de sesión</a></p>
+        Registro exitoso. Ya puedes iniciar sesión con tu organización.
+        <p class="taller-reg__success-hint">
+          <a [routerLink]="['/taller']" [queryParams]="loginQuery()">Ir al inicio de sesión</a>
+        </p>
       </div>
 
       <form class="taller-reg__form" [formGroup]="form" (ngSubmit)="submit()" *ngIf="!success" novalidate>
-        <div class="taller-reg__field">
-          <label class="taller-reg__label" for="reg-nombre-taller">Nombre del taller</label>
-          <input id="reg-nombre-taller" class="taller-reg__input" formControlName="nombre_comercial" />
-        </div>
-        <div class="taller-reg__grid2">
+        <fieldset class="taller-reg__section">
+          <legend class="taller-reg__section-legend">Organización SaaS</legend>
           <div class="taller-reg__field">
-            <label class="taller-reg__label" for="reg-email">Correo</label>
-            <input id="reg-email" class="taller-reg__input" type="email" formControlName="email" autocomplete="email" />
+            <label class="taller-reg__label" for="reg-org">Organización</label>
+            <select
+              id="reg-org"
+              class="taller-reg__input taller-reg__select"
+              formControlName="orgSlug"
+              autocomplete="organization"
+            >
+              <option *ngIf="loadingTenants" value="" disabled selected>Cargando organizaciones…</option>
+              <option *ngIf="!loadingTenants && tenants.length === 0" value="" disabled selected>
+                No hay organizaciones disponibles
+              </option>
+              <option *ngFor="let t of tenants" [value]="t.slug">{{ tenantLabel(t) }}</option>
+            </select>
           </div>
+        </fieldset>
+
+        <fieldset class="taller-reg__section">
+          <legend class="taller-reg__section-legend">Datos del taller</legend>
           <div class="taller-reg__field">
-            <label class="taller-reg__label" for="reg-tel">Teléfono</label>
-            <input id="reg-tel" class="taller-reg__input" formControlName="telefono" autocomplete="tel" />
-          </div>
-        </div>
-        <div class="taller-reg__field">
-          <label class="taller-reg__label" for="reg-dir">Dirección</label>
-          <input id="reg-dir" class="taller-reg__input" formControlName="direccion" />
-        </div>
-        <div class="taller-reg__field">
-          <label class="taller-reg__label" for="reg-ciudad">Ciudad</label>
-          <input id="reg-ciudad" class="taller-reg__input" formControlName="ciudad" />
-        </div>
-        <div class="taller-reg__field">
-          <label class="taller-reg__label" for="reg-resp">Nombre del responsable (completo)</label>
-          <input id="reg-resp" class="taller-reg__input" formControlName="responsable_nombre_completo" />
-        </div>
-        <div class="taller-reg__field">
-          <label class="taller-reg__label" for="reg-desc">Descripción breve (opcional)</label>
-          <textarea id="reg-desc" class="taller-reg__input taller-reg__ta" rows="2" formControlName="descripcion"></textarea>
-        </div>
-        <div class="taller-reg__grid2">
-          <div class="taller-reg__field">
-            <label class="taller-reg__label" for="reg-pass">Contraseña</label>
+            <label class="taller-reg__label" for="reg-nombre-taller">Nombre comercial</label>
             <input
-              id="reg-pass"
+              id="reg-nombre-taller"
               class="taller-reg__input"
-              [type]="showPassword ? 'text' : 'password'"
-              formControlName="password"
-              autocomplete="new-password"
+              formControlName="nombre_comercial"
+              placeholder="Taller Mecánico Central"
             />
           </div>
-          <div class="taller-reg__field">
-            <label class="taller-reg__label" for="reg-pass2">Confirmar contraseña</label>
-            <input
-              id="reg-pass2"
-              class="taller-reg__input"
-              [type]="showPassword ? 'text' : 'password'"
-              formControlName="password2"
-              autocomplete="new-password"
-            />
+          <div class="taller-reg__grid2">
+            <div class="taller-reg__field">
+              <label class="taller-reg__label" for="reg-email">Correo de contacto</label>
+              <input id="reg-email" class="taller-reg__input" type="email" formControlName="email" autocomplete="email" />
+            </div>
+            <div class="taller-reg__field">
+              <label class="taller-reg__label" for="reg-tel">Teléfono</label>
+              <input id="reg-tel" class="taller-reg__input" formControlName="telefono" autocomplete="tel" />
+            </div>
           </div>
-        </div>
-        <p class="taller-reg__err" *ngIf="form.errors?.['mismatch'] && form.touched">Las contraseñas no coinciden.</p>
+          <div class="taller-reg__field">
+            <label class="taller-reg__label" for="reg-dir">Dirección</label>
+            <input id="reg-dir" class="taller-reg__input" formControlName="direccion" />
+          </div>
+          <div class="taller-reg__field">
+            <label class="taller-reg__label" for="reg-ciudad">Ciudad</label>
+            <input id="reg-ciudad" class="taller-reg__input" formControlName="ciudad" />
+          </div>
+          <div class="taller-reg__field">
+            <label class="taller-reg__label" for="reg-desc">Descripción breve (opcional)</label>
+            <textarea id="reg-desc" class="taller-reg__input taller-reg__ta" rows="2" formControlName="descripcion"></textarea>
+          </div>
+        </fieldset>
+
+        <fieldset class="taller-reg__section">
+          <legend class="taller-reg__section-legend">Responsable y acceso</legend>
+          <div class="taller-reg__field">
+            <label class="taller-reg__label" for="reg-resp">Nombre completo del responsable</label>
+            <input id="reg-resp" class="taller-reg__input" formControlName="responsable_nombre_completo" />
+          </div>
+          <div class="taller-reg__grid2">
+            <div class="taller-reg__field">
+              <label class="taller-reg__label" for="reg-pass">Contraseña</label>
+              <input
+                id="reg-pass"
+                class="taller-reg__input"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+            </div>
+            <div class="taller-reg__field">
+              <label class="taller-reg__label" for="reg-pass2">Confirmar contraseña</label>
+              <input
+                id="reg-pass2"
+                class="taller-reg__input"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password2"
+                autocomplete="new-password"
+              />
+            </div>
+          </div>
+          <p class="taller-reg__err" *ngIf="form.errors?.['mismatch'] && form.touched">Las contraseñas no coinciden.</p>
+        </fieldset>
+
         <label class="taller-reg__check">
           <input type="checkbox" formControlName="terms" />
           <span>Acepto los términos del servicio.</span>
         </label>
-        <button class="taller-reg__submit" type="submit" [disabled]="submitting">
+
+        <button class="taller-reg__submit" type="submit" [disabled]="submitting || loadingTenants">
           {{ submitting ? 'Registrando…' : 'Registrar taller' }}
         </button>
+
         <p class="taller-reg__subrow">
           <a routerLink="/taller" class="taller-reg__link">Ya tengo cuenta</a>
           ·

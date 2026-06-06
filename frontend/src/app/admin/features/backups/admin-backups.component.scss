@@ -1,15 +1,25 @@
 @use '../../admin-theme' as t;
 @use '../../admin-ui' as ui;
 
+.bk__head {
+  margin-bottom: calc(t.$ev-space * 2);
+}
+
 .bk__h {
   @include ui.ev-page-title;
 }
 
 .bk__lead {
-  margin: -1rem 0 1rem;
-  color: t.$ev-muted;
-  font-size: 0.875rem;
+  @include ui.ev-page-lead;
   max-width: 52rem;
+
+  code {
+    font-size: 0.8125rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: t.$ev-radius-sm;
+    background: rgba(56, 189, 248, 0.1);
+    color: t.$ev-cyan;
+  }
 }
 
 .bk__alert {

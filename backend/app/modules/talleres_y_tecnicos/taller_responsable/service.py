@@ -22,6 +22,9 @@ from app.modules.talleres_y_tecnicos.talleres.models import (
 from app.modules.talleres_y_tecnicos.talleres import service as talleres_service
 from app.modules.acceso_y_administracion.bitacora.service import registrar_accion
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
+from app.modules.acceso_y_administracion.tenants import service as tenants_service
+from app.modules.acceso_y_administracion.tenants.models import EstadoTenantEnum
+from app.modules.acceso_y_administracion.tenants.schemas import normalize_tenant_slug
 
 from .schemas import (
     RegistroTallerIn,
@@ -55,11 +58,18 @@ async def _rol_id_by_nombre(db: AsyncSession, nombre: str) -> int:
 
 
 async def registro_taller_publico(body: RegistroTallerIn, db: AsyncSession) -> MiTallerRead:
-    """Crea usuario responsable, rol TALLER_RESPONSABLE y taller en estado PENDIENTE."""
+    """Crea usuario responsable, rol TALLER_RESPONSABLE y taller PENDIENTE dentro de un tenant SaaS."""
+    slug = normalize_tenant_slug(body.tenant_slug)
+    tenant = await tenants_service.get_tenant_by_slug(db, slug)
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="Organización no encontrada.")
+    if tenant.estado != EstadoTenantEnum.ACTIVO:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Esta organización no acepta nuevos registros de taller.",
+        )
+
     nombres, apellidos = _split_nombre_completo(body.responsable_nombre_completo)
-    dup_tel = await db.execute(select(Usuario).where(Usuario.telefono == body.telefono))
-    if dup_tel.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="El teléfono ya está registrado.")
 
     user = await usuarios_service.create_usuario(
         {
@@ -70,6 +80,7 @@ async def registro_taller_publico(body: RegistroTallerIn, db: AsyncSession) -> M
             "password": body.password,
             "username": None,
             "estado": EstadoUsuarioEnum.PENDIENTE,
+            "tenant_id": tenant.id,
         },
         db,
         ejecutor_id=None,
@@ -83,11 +94,12 @@ async def registro_taller_publico(body: RegistroTallerIn, db: AsyncSession) -> M
         entidad="registro",
         entidad_id=user.id,
         accion=AccionBitacoraEnum.CREAR,
-        descripcion=f"Registro público de taller para {user.email}",
+        descripcion=f"Registro público de taller en org {tenant.slug} para {user.email}",
     )
 
     taller = await talleres_service.create_taller(
         {
+            "tenant_id": tenant.id,
             "usuario_responsable_id": user.id,
             "nombre_comercial": body.nombre_comercial,
             "telefono_contacto": body.telefono,

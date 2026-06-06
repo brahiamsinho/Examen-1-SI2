@@ -1,9 +1,11 @@
 <div class="bk">
-  <h2 class="bk__h">Backups de plataforma</h2>
-  <p class="bk__lead">
-    Respaldos con <code>pg_dump</code> (BD completa) o export CSV por organización. El contenedor
-    <strong>backup-scheduler</strong> ejecuta backups automáticos según la configuración.
-  </p>
+  <header class="bk__head">
+    <h2 class="bk__h">Backups de plataforma</h2>
+    <p class="bk__lead">
+      Respaldos con <code>pg_dump</code> (BD completa) o export CSV por organización. El contenedor
+      <strong>backup-scheduler</strong> ejecuta backups automáticos según la configuración.
+    </p>
+  </header>
 
   <div class="bk__alert bk__alert--error" *ngIf="error" role="alert">{{ error }}</div>
   <div class="bk__alert bk__alert--ok" *ngIf="success" role="status">{{ success }}</div>

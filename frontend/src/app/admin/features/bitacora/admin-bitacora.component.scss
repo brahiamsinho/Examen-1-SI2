@@ -1,14 +1,16 @@
 @use '../../admin-theme' as t;
 @use '../../admin-ui' as ui;
 
+.bit__head {
+  margin-bottom: calc(t.$ev-space * 2);
+}
+
 .bit__h {
   @include ui.ev-page-title;
 }
 
 .bit__lead {
-  margin: -1rem 0 1rem;
-  color: t.$ev-muted;
-  font-size: 0.875rem;
+  @include ui.ev-page-lead;
 }
 
 .bit__alert {

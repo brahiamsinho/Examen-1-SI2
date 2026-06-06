@@ -1,6 +1,40 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
+
+## Cambios (2026-06-05) — Portal taller login/registro UI + registro multi-tenant ✅
+
+- **UI:** login `/taller` y registro `/taller/registro` rediseñados (Paleta A, `_taller-auth-ui.scss`); labels sin superposición.
+- **SaaS registro:** `tenant_slug` obligatorio en `POST /app/taller/registro`; usuario y taller reciben `tenant_id`; selector org en registro.
+- **Flujo:** registro ↔ login con `?org=`; `FLOWS_PORTAL_TALLER.md` actualizado.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-auth-ui-multitenant-registro.md`.
+
+## Cambios (2026-06-05) — Fix UI admin: títulos superpuestos + backups loading ✅
+
+- **Síntoma:** en Bitácora y Backups el subtítulo se superponía al título (texto “fantasma”); Backups también en "Cargando…" infinito.
+- **Causa UI:** `.bit__lead` / `.bk__lead` usaban `margin: -1rem` (tiraba el párrafo hacia arriba sobre el h2). Mismo patrón en roles, permisos y talleres.
+- **Fix UI:** usar mixin `ev-page-lead` + `<header>` con espaciado; eliminados todos los `margin: -1rem` del admin.
+- **Fix backups:** OnPush + `markForCheck` (igual que bitácora).
+
+# Fecha: 2026-06-05 (Fix bitácora admin loading)
+
+## Cambios (2026-06-05) — Fix bitácora admin atascada en "Cargando…" ✅
+
+- **Síntoma:** `/admin/panel/bitacora` quedaba en "Cargando…" aunque `GET /api/bitacora/` respondía 200.
+- **Causa:** mismo bug OnPush del shell admin: `admin-bitacora` no usaba `ChangeDetectionStrategy.OnPush` ni `markForCheck` tras HTTP.
+- **Fix:** `admin-bitacora.component.ts` — OnPush, `finalize`, `takeUntilDestroyed`, `markForCheck` (patrón igual que `taller-bitacora` y organizaciones).
+- **Pendiente similar:** `admin-backups` aún sin OnPush (puede repetir el bug).
+
+# Fecha: 2026-06-05 (Admin organizaciones — planes comerciales)
+
+## Cambios (2026-06-05) — Admin organizaciones: planes Free / Pro / Max ✅
+
+- **Problema:** modal «Nueva organización» mostraba enums internos `FREE/STARTER/PRO/ENTERPRISE` (confuso vs landing y portal taller).
+- **Frontend:** `frontend/src/app/core/utils/saas-plan-tiers.ts` — mapeo comercial ↔ enum BD; `admin-organizaciones` carga catálogo vía `listPricingPlans()`; tabla muestra nombre comercial + badge `legacy` si `STARTER`.
+- **Backend:** default al crear tenant pasa de `STARTER` a `FREE` (`tenants/schemas.py`, `tenants/service.py`, `plan_tiers.py`); `demo-sc` seed conserva `STARTER` como legacy.
+- **Build:** `npm run build` OK.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-admin-org-planes-comerciales.md`.
+
 # Fecha: 2026-06-05 (PWA Angular frontend)
 
 ## Cambios (2026-06-05) — PWA en portal web Angular ✅

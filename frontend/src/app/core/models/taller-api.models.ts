@@ -2,6 +2,7 @@ export type EstadoTaller = 'PENDIENTE' | 'ACTIVO' | 'SUSPENDIDO' | 'INACTIVO';
 export type EstadoTecnico = 'ACTIVO' | 'INACTIVO';
 
 export interface RegistroTallerPayload {
+  tenant_slug: string;
   nombre_comercial: string;
   email: string;
   telefono: string;

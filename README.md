@@ -359,5 +359,3 @@ docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f do
 
 5Verificar
 docker compose -f docker-compose.yml -f docker-compose.ai-custom-model.yml -f docker-compose.override.yml exec backend alembic current
-
-#si

@@ -1,6 +1,15 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import type { BackupDto, BackupTipo, TenantDto } from '../../../core/models/admin-api.models';
 
@@ -10,9 +19,12 @@ import type { BackupDto, BackupTipo, TenantDto } from '../../../core/models/admi
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-backups.component.html',
   styleUrl: './admin-backups.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminBackupsComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   rows: BackupDto[] = [];
   tenants: TenantDto[] = [];
@@ -25,25 +37,38 @@ export class AdminBackupsComponent implements OnInit {
   incluirEvidencias = true;
 
   ngOnInit(): void {
-    this.api.listTenants().subscribe({
-      next: (t) => (this.tenants = t),
-    });
+    this.api
+      .listTenants()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (t) => {
+          this.tenants = Array.isArray(t) ? t : [];
+          this.cdr.markForCheck();
+        },
+      });
     this.fetch();
   }
 
   fetch(): void {
     this.loading = true;
     this.error = null;
-    this.api.listBackups().subscribe({
-      next: (r) => {
-        this.rows = r;
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'No se pudo cargar los backups (requiere superadmin plataforma).';
-      },
-    });
+    this.api
+      .listBackups()
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (r) => {
+          this.rows = Array.isArray(r) ? r : [];
+        },
+        error: () => {
+          this.error = 'No se pudo cargar los backups (requiere superadmin plataforma).';
+        },
+      });
   }
 
   crear(): void {
@@ -52,6 +77,7 @@ export class AdminBackupsComponent implements OnInit {
     const tenantId = this.createTenantId.trim() ? Number(this.createTenantId) : undefined;
     if (this.createTipo === 'TENANT' && (!tenantId || Number.isNaN(tenantId))) {
       this.error = 'Selecciona una organización para backup TENANT.';
+      this.cdr.markForCheck();
       return;
     }
     this.api
@@ -60,6 +86,7 @@ export class AdminBackupsComponent implements OnInit {
         tenant_id: tenantId,
         incluir_evidencias: this.incluirEvidencias,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.success = 'Backup creado correctamente.';
@@ -67,33 +94,42 @@ export class AdminBackupsComponent implements OnInit {
         },
         error: (err) => {
           this.error = err?.error?.detail ?? 'Error al crear backup.';
+          this.cdr.markForCheck();
         },
       });
   }
 
   descargar(row: BackupDto): void {
-    this.api.downloadBackup(row.id).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = row.archivo.split('/').pop() ?? `backup-${row.id}`;
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      error: () => {
-        this.error = 'No se pudo descargar el archivo.';
-      },
-    });
+    this.api
+      .downloadBackup(row.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = row.archivo.split('/').pop() ?? `backup-${row.id}`;
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.error = 'No se pudo descargar el archivo.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   eliminar(row: BackupDto): void {
     if (!confirm(`¿Eliminar backup #${row.id}?`)) return;
-    this.api.deleteBackup(row.id).subscribe({
-      next: () => this.fetch(),
-      error: () => {
-        this.error = 'No se pudo eliminar el backup.';
-      },
-    });
+    this.api
+      .deleteBackup(row.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.fetch(),
+        error: () => {
+          this.error = 'No se pudo eliminar el backup.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 }

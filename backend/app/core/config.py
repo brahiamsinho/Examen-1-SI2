@@ -146,6 +146,13 @@ class Settings(BaseSettings):
     SEED_STRESS_VISUAL_ON_START: bool = False
     SEED_STRESS_CLIENT_PASSWORD: str | None = _seed_sc.STRESS_PASSWORD
 
+    # ── Seed multi-org SaaS (6 tenants: 2 Free, 2 Pro, 2 Max) ──
+    SEED_MULTI_ORGS_ON_START: bool = False
+    # Misma contraseña demo que identidades_demo_sc / identidades_multi_org (no importar ese módulo aquí: circular import).
+    SEED_MULTI_ORGS_PASSWORD: str | None = _seed_sc.DEMO_PASSWORD
+    # Emergencias operativas por taller multi-org (bandeja, historial, comisiones).
+    SEED_MULTI_ORG_EMERGENCIAS_ON_START: bool = False
+
     # ── Pagos CU20 — simulación local; desactivar autocmpletar para flujo tipo pasarela (2 pasos) ──
     PAGO_SIMULADO_AUTOCOMPLETE: bool = True
     PAGO_PROVEEDOR_DEFAULT: str = "SIMULADO"

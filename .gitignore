@@ -1,8 +1,8 @@
 # .gitignore — Plataforma Emergencias Vehiculares
 
 # ── Variables de entorno (NUNCA versionar) ────────────────
-#.env
-#.env.*
+.env
+.env.*
 !.env.example
 !**/.env.example
 mobile/.env

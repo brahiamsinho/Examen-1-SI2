@@ -2,6 +2,27 @@
 # =========================================================
 # Handoff para el próximo agente/sesión
 
+# HANDOFF_LATEST.md
+# =========================================================
+# Handoff para el próximo agente/sesión
+
+## Cambios (2026-06-05) — Limpieza `.env` local ✅
+
+- **`RUN_SEEDS_IN_LIFESPAN=false`** — alineado con Docker dev (override ya lo forzaba).
+- **`SEED_MULTI_ORGS_ON_START=true`** + **`SEED_MULTI_ORGS_PASSWORD=scdemo1`** — multi-org sin depender solo del override.
+- **Stripe** — una sola definición (claves test); eliminado bloque duplicado al final.
+- **`AI_INFERENCE_STUB=false`** — una sola definición (worker YOLO/Whisper real si levantás `--profile ai`).
+- **Gemini** — sección única al final; eliminado `#si` y duplicados.
+- **`.gitignore`** — `.env` descomentado (ya no se versiona).
+
+## Cambios (2026-06-05) — Seed 6 organizaciones SaaS demo ✅
+
+- **Nuevo:** `identidades_multi_org.py` + `dev_multi_orgs.py` — 6 orgs (2 Free, 2 Pro, 2 Max).
+- **Por org:** 1 taller ACTIVO, 2 técnicos, 2 clientes con vehículo Toyota Corolla; `tenant_id` en todo.
+- **Flag:** `SEED_MULTI_ORGS_ON_START` (true en `docker-compose.override.yml` dev); incluido en `python -m app.seeds`.
+- **Login taller:** slug org + `responsable@{slug}.demo.test` / `scdemo1`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-seed-multi-org-saas.md`.
+
 ## Cambios (2026-06-05) — Portal taller login/registro UI + registro multi-tenant ✅
 
 - **UI:** login `/taller` y registro `/taller/registro` rediseñados (Paleta A, `_taller-auth-ui.scss`); labels sin superposición.

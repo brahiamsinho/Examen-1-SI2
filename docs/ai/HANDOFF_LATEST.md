@@ -1,6 +1,29 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
+# Fecha: 2026-06-05 (PWA Angular frontend)
+
+## Cambios (2026-06-05) — PWA en portal web Angular ✅
+
+- **Paquete:** `@angular/pwa` + `@angular/service-worker` en `frontend/`.
+- **Manifest:** `Emergencias Vehiculares`, tema `#0B1020`, `start_url` `/taller/panel`, shortcuts bandeja/reportes.
+- **SW:** cache de shell + assets; API autenticada **no** cacheada; `/api/public/**` freshness 1h.
+- **UX:** banner «Actualizar ahora» cuando hay nueva versión del build.
+- **Nginx:** `ngsw-worker.js`, `ngsw.json`, `manifest.webmanifest` sin cache immutable.
+- **Nota:** SW solo en build **production** (Docker/nginx); `ng serve` dev no lo activa.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-pwa-angular-frontend.md`.
+
+# Fecha: 2026-06-05 (Mobile panel taller responsable)
+
+## Cambios (2026-06-05) — Mobile: panel responsable de taller ✅
+
+- **Módulo:** `mobile/lib/taller/` (auth, data, domain, presentation) + `core/network/taller_api_client.dart`.
+- **Flujo:** `/modo` → Responsable de taller → login (`X-Tenant-Slug`) → panel con dashboard, bandeja, técnicos, perfil.
+- **API:** mismos endpoints que portal web `/api/app/taller/*` y `/api/app/taller/emergencias/*`.
+- **Sesiones separadas:** `taller_access_token` vs `tecnico_access_token` vs cliente; técnico ya no admite `TALLER_RESPONSABLE`.
+- **Pendiente mobile taller:** comisiones, disponibilidad, reportes QBE/voz, suscripción, bitácora, backups (placeholders → web).
+- **Admin SaaS:** no implementado en mobile (Angular `/admin`).
+
 # Fecha: 2026-06-05 (Reportes QBE + voz + export + fix restore backup)
 
 ## Cambios (2026-06-05) — Reportes personalizados (voz + Excel/PDF/CSV) ✅

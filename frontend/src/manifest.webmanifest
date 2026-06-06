@@ -1,0 +1,86 @@
+{
+  "name": "Emergencias Vehiculares",
+  "short_name": "Emergencias",
+  "description": "Plataforma de atención de emergencias vehiculares — portal taller, admin y operaciones.",
+  "theme_color": "#0B1020",
+  "background_color": "#0B1020",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/taller/panel",
+  "lang": "es-BO",
+  "orientation": "any",
+  "categories": ["business", "utilities"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Panel taller",
+      "short_name": "Taller",
+      "description": "Acceso al panel del responsable de taller",
+      "url": "/taller/panel",
+      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Bandeja de emergencias",
+      "short_name": "Bandeja",
+      "description": "Solicitudes pendientes del taller",
+      "url": "/taller/panel/emergencias/solicitudes",
+      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Reportes",
+      "short_name": "Reportes",
+      "description": "Reportes personalizados del taller",
+      "url": "/taller/panel/reportes",
+      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ]
+}

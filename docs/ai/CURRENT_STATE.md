@@ -1,7 +1,7 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-05 — Reportes personalizados QBE + voz + export ✅
+# Última actualización: 2026-06-05 — PWA Angular frontend ✅
 # =========================================================
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
@@ -230,12 +230,15 @@
 
 ### Frontend Angular ✅
 - [x] Docker + nginx + proxy; environments; rutas lazy; landing; estilos globales oscuros
+- [x] **PWA (2026-06-05):** `@angular/service-worker`, `manifest.webmanifest`, iconos, `ngsw-config.json`, banner actualización; nginx sin cache en SW/manifest; `start_url` `/taller/panel`
 - [x] Portal **taller** — emergencias: bandeja, detalle incidente, aceptar/rechazar; **CU28** en UI: `TallerEmergenciasApiService` (`asignarTecnico`, `listarAsignacionesTecnico`) + bloque asignación en `taller-emergencias-incidente-detalle` (tras aceptar permanece en detalle y lista historial de asignaciones). Ver `frontend/src/app/core/services/taller-emergencias-api.service.ts`
 
 ### Mobile Flutter ✅
 - [x] `mobile/.env` + **flutter_dotenv** (asset); `lib/core/config/app_env.dart` — `API_BASE_URL`, `APP_NAME`, timeouts opcionales
-- [x] `lib/cliente/` — auth portal (login/registro/recuperar), shell, home, vehículos, perfil; Riverpod + go_router (`cliente/presentation/router/cliente_go_router.dart` registra también rutas globales)
-- [x] `lib/tecnico/` — emergencias (servicios asignados, detalle, chat, etc.); splash, login, recuperar, shell; **tokens JWT en secure storage separados** (`tecnico_access_token` vía `core/network/tecnico_api_client.dart`)
+- [x] `lib/cliente/` — auth portal (login/registro/recuperar), shell, home, vehículos, perfil; Riverpod + go_router
+- [x] `lib/tecnico/` — emergencias (servicios asignados, detalle, chat, etc.); splash, login, recuperar, shell; **tokens JWT en secure storage separados** (`tecnico_access_token`)
+- [x] **`lib/taller/` (2026-06-05):** panel **responsable de taller** en mobile — login propio (`taller_access_token`), splash, shell (Inicio · Bandeja · Técnicos · Perfil), dashboard `/app/taller/dashboard`, bandeja aceptar/rechazar/asignar técnico, listado técnicos, pantalla «Más» (comisiones/reportes/backups → portal web). Selector `/modo` con tercera tarjeta. Flujo técnico ya **no** acepta rol `TALLER_RESPONSABLE`.
+- [ ] Admin plataforma SaaS en mobile (sigue solo en Angular `/admin`).
 - [x] Badge de estado cliente: colores distintos **Taller asignado** vs **Técnico asignado** (`estado_solicitud_badge.dart`)
 - [x] `core/network/api_error.dart` compartido; `api_constants` con `portal/taller/mi-taller`, `tecnicos`, etc.
 

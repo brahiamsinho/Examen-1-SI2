@@ -11,6 +11,12 @@ server {
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
 
+    # PWA: service worker y manifest siempre frescos (no cache largo).
+    location ~* ^/(ngsw-worker\.js|ngsw\.json|manifest\.webmanifest|safety-worker\.js|worker-basic\.min\.js)$ {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        try_files $uri =404;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
         add_header Cache-Control "no-cache, no-store, must-revalidate";
@@ -20,6 +26,7 @@ server {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
     }
 
+    # Assets versionados (hash en nombre) — cache largo; excluye ngsw-worker.js (regla anterior).
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";

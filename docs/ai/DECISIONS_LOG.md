@@ -253,3 +253,9 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-06-05  
 **Decisión:** Módulo `reportes` con motor QBE (whitelist SQLAlchemy), export Excel/PDF/CSV en memoria, traductor NL por reglas en español, micrófono Web Speech en frontend y endpoint `/voice` opcional vía Whisper. Scope automático `tenant_id` + `taller_id`.  
 **Por qué:** Reutiliza patrón probado en Oftalmología sin SQL generado por IA; aislamiento multi-tenant en el motor; tres formatos de exportación pedidos por voz (“en excel y pdf”).
+
+## DEC-037 — Horarios de atención por taller (2026-06-04)
+
+**Fecha:** 2026-06-04  
+**Decisión:** Tabla `taller_horarios` (7 filas max por taller, franja TIME, `activo`). Zona fija `America/La_Paz`. Default Lun–Sáb 08:00–18:00, Dom cerrado. Mismo permiso `disponibilidad:gestionar` para editar horarios. Ranking CU37 expone `abierto_ahora`; selección cliente y aceptar bandeja rechazan fuera de horario.  
+**Por qué:** Red multi-taller por tenant requiere disponibilidad temporal real; evita asignar emergencias cuando el taller no opera.

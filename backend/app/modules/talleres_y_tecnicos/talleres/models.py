@@ -4,10 +4,10 @@
 #   Taller, EspecialidadTecnico, Tecnico
 # =========================================================
 import enum
-from datetime import datetime
+from datetime import datetime, time
 from decimal import Decimal
 
-from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, Enum as SAEnum, Numeric
+from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, Enum as SAEnum, Numeric, Time, Boolean, SmallInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -60,6 +60,31 @@ class Taller(Base):
 
     # Relaciones
     tecnicos: Mapped[list["Tecnico"]] = relationship(back_populates="taller")
+    horarios: Mapped[list["TallerHorario"]] = relationship(
+        back_populates="taller", cascade="all, delete-orphan"
+    )
+
+
+# ── Modelo: TallerHorario ───────────────────────────────────
+class TallerHorario(Base):
+    """
+    Tabla: taller_horarios
+    Franja horaria de atención por día de la semana (0=lunes … 6=domingo, hora Bolivia).
+    """
+    __tablename__ = "taller_horarios"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    taller_id: Mapped[int] = mapped_column(
+        ForeignKey("talleres.id", ondelete="CASCADE"), nullable=False
+    )
+    dia_semana: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    hora_apertura: Mapped[time] = mapped_column(Time, nullable=False)
+    hora_cierre: Mapped[time] = mapped_column(Time, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime | None] = mapped_column(DateTime)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime)
+
+    taller: Mapped["Taller"] = relationship(back_populates="horarios")
 
 
 # ── Modelo: EspecialidadTecnico ─────────────────────────────

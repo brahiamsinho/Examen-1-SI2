@@ -153,6 +153,9 @@ class Settings(BaseSettings):
     # Emergencias operativas por taller multi-org (bandeja, historial, comisiones).
     SEED_MULTI_ORG_EMERGENCIAS_ON_START: bool = False
 
+    # Red mínima de talleres por tenant (demo-sc y multi-org)
+    SEED_TALLERES_RED_ON_START: bool = False
+
     # ── Pagos CU20 — simulación local; desactivar autocmpletar para flujo tipo pasarela (2 pasos) ──
     PAGO_SIMULADO_AUTOCOMPLETE: bool = True
     PAGO_PROVEEDOR_DEFAULT: str = "SIMULADO"

@@ -12,6 +12,7 @@ from app.modules.talleres_y_tecnicos.talleres import service as talleres_service
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTecnicoEnum, Taller, Tecnico
 from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
 from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
+from app.seeds.identidades_demo_sc import TALLER_EMAIL
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,18 @@ async def ensure_dev_tecnico(
     if not email or not pwd or not tel:
         logger.warning("Seed técnico omitido (faltan email/password/tel).")
         return
-    tr = await db.execute(select(Taller).order_by(Taller.id).limit(1))
+    tr = await db.execute(
+        select(Taller)
+        .join(Usuario, Usuario.id == Taller.usuario_responsable_id)
+        .where(
+            Usuario.email == TALLER_EMAIL.strip().lower(),
+            Taller.tenant_id == tenant_id,
+        )
+    )
     taller = tr.scalar_one_or_none()
+    if taller is None:
+        tr2 = await db.execute(select(Taller).where(Taller.tenant_id == tenant_id).order_by(Taller.id).limit(1))
+        taller = tr2.scalar_one_or_none()
     if taller is None:
         logger.warning("Seed técnico omitido: no hay taller (corré seed taller antes).")
         return

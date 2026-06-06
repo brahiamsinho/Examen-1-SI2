@@ -31,6 +31,12 @@ from .schemas import (
 from . import subscription_service
 from . import bitacora_service
 
+from app.modules.talleres_y_tecnicos.talleres.horarios_schemas import (
+    TallerHorariosRead,
+    TallerHorariosUpdateIn,
+)
+from app.modules.talleres_y_tecnicos.talleres import horarios_service as taller_horarios_service
+
 router = APIRouter(prefix="/app/taller", tags=["App taller (responsable)"])
 
 
@@ -224,3 +230,32 @@ async def listar_bitacora_taller(
         limit=limit,
         offset=offset,
     )
+
+
+@router.get(
+    "/horarios",
+    response_model=TallerHorariosRead,
+    dependencies=[Depends(require_permission("disponibilidad:gestionar"))],
+)
+async def get_horarios_taller(
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    """Horarios de atención semanal del taller (zona Bolivia)."""
+    _, taller = ctx
+    return await taller_horarios_service.obtener_horarios(db, taller.id)
+
+
+@router.put(
+    "/horarios",
+    response_model=TallerHorariosRead,
+    dependencies=[Depends(require_permission("disponibilidad:gestionar"))],
+)
+async def put_horarios_taller(
+    body: TallerHorariosUpdateIn,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    """Actualiza franjas horarias por día (ej. Lun–Vie 08:00–18:00)."""
+    _, taller = ctx
+    return await taller_horarios_service.actualizar_horarios(db, taller.id, body)

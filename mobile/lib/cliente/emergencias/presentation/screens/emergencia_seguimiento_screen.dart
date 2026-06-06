@@ -3,13 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../../../core/utils/bolivia_time.dart';
 import '../../../pagos/presentation/widgets/solicitud_pago_cta_block.dart';
 import '../../application/emergencias_providers.dart';
+import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
 import '../widgets/ai/solicitud_ai_resumen_card.dart';
 import '../widgets/seguimiento/eta_llegada_card.dart';
 import '../widgets/seguimiento/seguimiento_timeline.dart';
+import '../widgets/seguimiento/taller_cliente_resumen_card.dart';
 import '../widgets/seguimiento/taller_asignado_card.dart';
 import '../widgets/seguimiento/tecnico_asignado_card.dart';
 
@@ -23,14 +26,9 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(emergenciaSeguimientoProvider(solicitudId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Seguimiento'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/cliente/app/emergencias/solicitudes/$solicitudId'),
-        ),
-      ),
+    return ClienteSubpageScaffold(
+      title: 'Seguimiento',
+      onBack: () => context.canPop() ? context.pop() : context.go('/cliente/app/emergencias/solicitudes/$solicitudId'),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(
@@ -40,7 +38,7 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
         data: (s) => RefreshIndicator(
           onRefresh: () => ref.refresh(emergenciaSeguimientoProvider(solicitudId).future),
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: ClientePanelUi.pagePadding,
             children: [
               Text('Solicitud #${s.solicitudId}', style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 12),
@@ -71,8 +69,10 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
               if (s.taller == null)
                 const _InfoPlaceholder(
                   icon: Icons.store_outlined,
-                  text: 'Todavía no hay taller asignado a esta solicitud.',
+                  text: 'Todavía no elegiste taller. Podés hacerlo desde el detalle de la solicitud.',
                 )
+              else if (s.estado == EstadoSolicitudEmergencia.enRevision)
+                TallerClienteResumenCard(taller: s.taller!, estado: s.estado)
               else
                 TallerAsignadoCard(taller: s.taller!),
               const SizedBox(height: 24),
@@ -195,18 +195,12 @@ class _ErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            const SizedBox(height: 16),
-            ShadButton.outline(onPressed: onRetry, child: const Text('Reintentar')),
-          ],
-        ),
-      ),
+    return ClienteEmptyState(
+      icon: Icons.error_outline,
+      title: 'Error al cargar',
+      message: message,
+      actionLabel: 'Reintentar',
+      onAction: onRetry,
     );
   }
 }

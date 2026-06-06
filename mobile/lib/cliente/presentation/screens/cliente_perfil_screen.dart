@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/tenant/tenant_slug_resolver.dart';
+import '../../../core/theme/mobile_auth_theme.dart';
+import '../../../core/widgets/auth/auth_screen_widgets.dart';
+import '../../../core/widgets/auth/cliente_org_chip.dart';
 import '../../application/client_auth_provider.dart';
 import '../../application/cliente_injection.dart';
+import '../widgets/cliente_panel_ui.dart';
 
 class ClientePerfilScreen extends ConsumerStatefulWidget {
   const ClientePerfilScreen({super.key});
@@ -23,11 +28,18 @@ class _ClientePerfilScreenState extends ConsumerState<ClientePerfilScreen> {
   bool _saving = false;
   String? _error;
   String? _ok;
+  String _tenantSlug = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncFromProfile());
+    _loadSlug();
+  }
+
+  Future<void> _loadSlug() async {
+    final slug = await resolveInitialTenantSlug();
+    if (mounted) setState(() => _tenantSlug = slug);
   }
 
   void _syncFromProfile() {
@@ -79,6 +91,7 @@ class _ClientePerfilScreenState extends ConsumerState<ClientePerfilScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: MobileAuthTheme.cardColor,
         title: const Text('Cerrar sesión'),
         content: const Text('¿Seguro que deseas salir de la aplicación?'),
         actions: [
@@ -93,53 +106,74 @@ class _ClientePerfilScreenState extends ConsumerState<ClientePerfilScreen> {
     }
   }
 
+  Future<void> _onOrgChanged(String slug) async {
+    await persistTenantSlug(slug);
+    if (mounted) setState(() => _tenantSlug = slug);
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(clientAuthNotifierProvider).profile;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+
+    return ClientePanelBackground(
+      child: ListView(
+        padding: ClientePanelUi.pagePadding,
         children: [
-          if (profile != null)
-            Text(profile.email, style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 16),
-          Text('Nombres', style: Theme.of(context).textTheme.labelLarge),
-          ShadInput(controller: _nombres),
-          const SizedBox(height: 12),
-          Text('Apellidos', style: Theme.of(context).textTheme.labelLarge),
-          ShadInput(controller: _apellidos),
-          const SizedBox(height: 12),
-          Text('Teléfono', style: Theme.of(context).textTheme.labelLarge),
-          ShadInput(controller: _telefono, keyboardType: TextInputType.phone),
-          const SizedBox(height: 12),
-          Text('Ciudad', style: Theme.of(context).textTheme.labelLarge),
-          ShadInput(controller: _ciudad, placeholder: const Text('Opcional')),
-          const SizedBox(height: 12),
-          Text('Dirección', style: Theme.of(context).textTheme.labelLarge),
-          ShadInput(controller: _direccion, placeholder: const Text('Opcional'), maxLines: 3),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          ],
-          if (_ok != null) ...[
-            const SizedBox(height: 12),
-            Text(_ok!, style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
-          ],
-          const SizedBox(height: 20),
-          ShadButton(
-            onPressed: _saving ? null : _save,
-            child: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Guardar cambios'),
+          ClienteTabHeader(
+            title: 'Perfil',
+            subtitle: profile?.email,
+            trailing: _tenantSlug.isEmpty
+                ? null
+                : ClienteOrgChip(slug: _tenantSlug, onChanged: _onOrgChanged),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+          AuthFormCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const AuthFieldLabel('Nombres'),
+                ShadInput(controller: _nombres),
+                const SizedBox(height: 14),
+                const AuthFieldLabel('Apellidos'),
+                ShadInput(controller: _apellidos),
+                const SizedBox(height: 14),
+                const AuthFieldLabel('Teléfono'),
+                ShadInput(controller: _telefono, keyboardType: TextInputType.phone),
+                const SizedBox(height: 14),
+                const AuthFieldLabel('Ciudad'),
+                ShadInput(controller: _ciudad, placeholder: const Text('Opcional')),
+                const SizedBox(height: 14),
+                const AuthFieldLabel('Dirección'),
+                ShadInput(controller: _direccion, placeholder: const Text('Opcional'), maxLines: 3),
+                if (_error != null) ...[
+                  const SizedBox(height: 14),
+                  AuthErrorBanner(message: _error!),
+                ],
+                if (_ok != null) ...[
+                  const SizedBox(height: 14),
+                  ClienteInfoBanner(message: _ok!, tone: ClienteBannerTone.success),
+                ],
+                const SizedBox(height: 20),
+                ShadButton(
+                  onPressed: _saving ? null : _save,
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Guardar cambios'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           OutlinedButton(
             onPressed: _confirmLogout,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+              side: BorderSide(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.5)),
+            ),
             child: const Text('Cerrar sesión'),
           ),
         ],

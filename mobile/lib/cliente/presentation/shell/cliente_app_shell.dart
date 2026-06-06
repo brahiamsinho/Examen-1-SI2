@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/mobile/mobile_shell_widgets.dart';
+import '../widgets/cliente_panel_ui.dart';
+
 /// Bottom navigation + área de contenido para el área autenticada `/cliente/app/*`.
 class ClienteAppShell extends StatelessWidget {
   const ClienteAppShell({super.key, required this.child});
@@ -10,6 +13,8 @@ class ClienteAppShell extends StatelessWidget {
   static bool _showBottomNav(String path) {
     if (path.startsWith('/cliente/app/vehiculos/')) return false;
     if (path.startsWith('/cliente/app/emergencias/')) return false;
+    if (path.startsWith('/cliente/app/notificaciones/')) return false;
+    if (path == '/cliente/app/notificaciones') return false;
     return true;
   }
 
@@ -25,12 +30,11 @@ class ClienteAppShell extends StatelessWidget {
     final showNav = _showBottomNav(loc);
     final index = _indexForPath(loc);
 
-    return Scaffold(
-      body: SafeArea(child: child),
-      bottomNavigationBar: showNav
-          ? NavigationBar(
-              selectedIndex: index,
-              onDestinationSelected: (i) {
+    return MobileAppShell(
+      bottomNav: showNav
+          ? ClientePanelBottomNav(
+              index: index,
+              onChanged: (i) {
                 switch (i) {
                   case 0:
                     context.go('/cliente/app/home');
@@ -40,25 +44,9 @@ class ClienteAppShell extends StatelessWidget {
                     context.go('/cliente/app/perfil');
                 }
               },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Inicio',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.directions_car_outlined),
-                  selectedIcon: Icon(Icons.directions_car),
-                  label: 'Vehículos',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Perfil',
-                ),
-              ],
             )
           : null,
+      child: child,
     );
   }
 }

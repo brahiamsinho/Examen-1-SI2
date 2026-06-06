@@ -6,6 +6,37 @@
 # =========================================================
 # Handoff para el próximo agente/sesión
 
+## Cambios (2026-06-04) — Técnicos por taller + credenciales demo ✅
+
+- **Seeds:** `ensure_tecnicos_red` / `ensure_tecnicos_red_for_extra_defs` — 1 técnico móvil por sucursal; demo-sc incluye taller 2 (4to Anillo, `rodrigo.torrez@`).
+- **`dev_talleres_red`:** `min_count=6` para demo-sc (Rivero + 5 sucursales).
+- **Doc:** `docs/CREDENCIALES_DEMO.md` — matriz completa demo-sc + 6 orgs multi-org (responsable + técnico por sucursal).
+- **Verificado:** `python -m app.seeds` → 6 talleres demo-sc, cada uno con ≥1 técnico.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-tecnicos-red-credenciales.md`.
+
+## Cambios (2026-06-04) — Red talleres + horarios por tenant ✅
+
+- **Migración `0026_taller_horarios.sql`**: franja horaria por día (Bolivia); default Lun–Sáb 08:00–18:00.
+- **API** `GET/PUT /api/app/taller/horarios`; UI `/taller/panel/horarios`.
+- **Negocio**: ranking CU37 marca `abierto_ahora`; selección y aceptar bandeja validan horario.
+- **Seeds**: mín. 5 talleres/tenant (`SEED_TALLERES_RED_ON_START`, multi-org +4 sucursales); demo-sc talleres 3–6.
+- **Mobile**: badge «Cerrado» en selección de taller.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-red-talleres-horarios.md`.
+
+## Cambios (2026-06-05) — Paleta oscura global mobile (Paleta A) ✅
+
+- **`MobileAuthTheme.themeData`** — tema Material explícito (sin `fromSeed` que aclara superficies): fondo `#0B1020`, cards `#141B2E`, texto suave `#E8EAF6` (no blanco puro).
+- **Shadcn** alineado en `EmergenciasShadTheme.dark()`.
+- **Shells** cliente/técnico/taller con gradiente + bottom nav pill (`mobile_shell_widgets.dart`).
+- **Splash y onboarding** con gradiente oscuro.
+
+## Cambios (2026-06-05) — Mobile panel cliente UI Paleta A ✅
+
+- **Design system:** `mobile/lib/cliente/presentation/widgets/cliente_panel_ui.dart` — gradiente, bottom nav pill, action tiles, banners, subpage scaffold, empty/error states, filter chips.
+- **Org chip:** `ClienteOrgChip` en home y perfil (bottom sheet reutilizable `showOrgSlugPicker`).
+- **Pantallas:** home, shell, perfil, vehículos (lista/detalle/form), mis solicitudes, notificaciones, selección vehículo, wizard emergencia, detalle/seguimiento solicitud.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-mobile-cliente-panel-ui.md`.
+
 ## Cambios (2026-06-05) — Limpieza `.env` local ✅
 
 - **`RUN_SEEDS_IN_LIFESPAN=false`** — alineado con Docker dev (override ya lo forzaba).

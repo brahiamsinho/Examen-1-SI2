@@ -4,7 +4,7 @@
 > **No uses estos valores en producción.**  
 > Secretos de terceros (Gemini, Stripe secret) viven en `.env` (gitignored). Este archivo documenta cuentas demo e infra.
 
-**Última revisión:** 2026-06-05 · Fuente: `identidades_demo_sc.py`, `identidades_multi_org.py`, `.env.example`
+**Última revisión:** 2026-06-04 · Fuente: `identidades_demo_sc.py`, `identidades_multi_org.py`, `talleres_red_seed.py`
 
 ---
 
@@ -51,105 +51,182 @@
 
 ## Organización principal — `demo-sc`
 
-Tenant por defecto (Santa Cruz). Slug obligatorio en login móvil, portal taller y API (`X-Tenant-Slug: demo-sc`).
+Tenant por defecto (Santa Cruz). Slug obligatorio en login móvil, portal taller y API (`X-Tenant-Slug: demo-sc`).  
+Password de **todas** las cuentas: **`scdemo1`**.
 
-| Rol | Email | Password | Notas |
-|-----|-------|----------|--------|
-| **Admin plataforma** | `patricio.mendez@sc-demo.test` | `scdemo1` | Login en `/admin/login`. Rol `ADMIN`. |
-| **Cliente (app móvil)** | `carlos.vega@sc-demo.test` | `scdemo1` | Org `demo-sc`. Vehículo demo seed. |
-| **Responsable taller 1** | `luis.rivera@sc-demo.test` | `scdemo1` | Taller **Mecánica Express Rivero**. Portal `/taller`. |
-| **Técnico** | `marco.salas@sc-demo.test` | `scdemo1` | Asignado al taller principal. App móvil técnico. |
-| **Responsable taller 2** | `rodrigo.torrez@sc-demo.test` | `scdemo1` | Taller **Auxilio Vial 4to Anillo SC**. Requiere seed media (`python -m app.seeds`). |
+### Cuentas plataforma y clientes (nivel organización)
 
-**Teléfonos demo-sc:** +591 77010010 (admin) … 77010014 (taller 2).
+| Rol | Email | Login | Notas |
+|-----|-------|-------|--------|
+| **Admin plataforma** | `patricio.mendez@sc-demo.test` | `/admin/login` | Rol `ADMIN` |
+| **Cliente móvil** | `carlos.vega@sc-demo.test` | App cliente, org `demo-sc` | Vehículo demo seed |
+
+Los **clientes son de la organización**, no de un taller concreto: cualquier taller de `demo-sc` puede atenderlos.
+
+### Red de talleres — responsables, técnicos y portal `/taller`
+
+Login taller: org **`demo-sc`** + email + `scdemo1`.
+
+| # | Taller | Responsable (portal `/taller`) | Técnico (app móvil técnico) |
+|---|--------|--------------------------------|----------------------------|
+| 1 | Mecánica Express Rivero | `luis.rivera@sc-demo.test` | `marco.salas@sc-demo.test` |
+| 2 | Auxilio Vial 4to Anillo SC | `rodrigo.torrez@sc-demo.test` | `andres.vargas@sc-demo.test` |
+| 3 | Auxilio Sur SC — Zona Piraí | `sandra.miranda@sc-demo.test` | `mateo.rios@sc-demo.test` |
+| 4 | Mecánica Express Urubó | `felipe.guzman@sc-demo.test` | `julia.meza@sc-demo.test` |
+| 5 | Grúas Palermo Norte SC | `elena.cortez@sc-demo.test` | `renato.paz@sc-demo.test` |
+| 6 | Auxilio Centro SC — 2do anillo | `pablo.ramos@sc-demo.test` | `diego.flores@sc-demo.test` |
+
+Teléfonos responsables: +591 77010012 … 77010018 · Técnicos: 77010013, 77010024 … 77010028.
 
 ---
 
 ## 6 organizaciones SaaS (multi-org)
 
 Patrón de email: `{local}@{slug}.demo.test` · Password: **`scdemo1`**  
-Login portal taller: slug de org + email + password.
+Login portal taller: **slug de org** + email + password.
 
-| Slug org | Plan | Taller | Responsable |
-|----------|------|--------|-------------|
-| `org-free-equipetrol` | Free | Taller Equipetrol Express | `responsable@org-free-equipetrol.demo.test` |
-| `org-free-urbari` | Free | Urbari Mecánica Rápida | `responsable@org-free-urbari.demo.test` |
-| `org-pro-anillo` | Pro | Auxilio Vial 4to Anillo Pro | `responsable@org-pro-anillo.demo.test` |
-| `org-pro-plan3000` | Pro | Taller Plan 3000 Pro | `responsable@org-pro-plan3000.demo.test` |
-| `org-max-centro` | Max | Centro Max Asistencia Vial | `responsable@org-max-centro.demo.test` |
-| `org-max-el-torno` | Max | El Torno Max Vial | `responsable@org-max-el-torno.demo.test` |
+Cada org tiene **5 talleres** (1 principal + 4 sucursales), **2 técnicos en el principal** + **1 técnico por sucursal**, y **2 clientes** compartidos a nivel org.
+
+### Matriz taller → responsable → técnico (patrón `{slug}`)
+
+| Sucursal | Responsable (portal `/taller`) | Técnico(s) (app móvil) |
+|----------|--------------------------------|-------------------------|
+| Principal | `responsable@{slug}.demo.test` | `tecnico1@…`, `tecnico2@…` |
+| Norte | `taller-norte@{slug}.demo.test` | `tecnico-norte@{slug}.demo.test` |
+| Sur | `taller-sur@{slug}.demo.test` | `tecnico-sur@{slug}.demo.test` |
+| Este | `taller-este@{slug}.demo.test` | `tecnico-este@{slug}.demo.test` |
+| Oeste | `taller-oeste@{slug}.demo.test` | `tecnico-oeste@{slug}.demo.test` |
+
+Clientes org: `cliente1@{slug}.demo.test`, `cliente2@{slug}.demo.test`
+
+| Slug org | Plan | Taller principal |
+|----------|------|------------------|
+| `org-free-equipetrol` | Free | Taller Equipetrol Express |
+| `org-free-urbari` | Free | Urbari Mecánica Rápida |
+| `org-pro-anillo` | Pro | Auxilio Vial 4to Anillo Pro |
+| `org-pro-plan3000` | Pro | Taller Plan 3000 Pro |
+| `org-max-centro` | Max | Centro Max Asistencia Vial |
+| `org-max-el-torno` | Max | El Torno Max Vial |
 
 ### Detalle por organización
 
 #### `org-free-equipetrol` (Free)
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Responsable | `responsable@org-free-equipetrol.demo.test` | `scdemo1` |
-| Técnico 1 | `tecnico1@org-free-equipetrol.demo.test` | `scdemo1` |
-| Técnico 2 | `tecnico2@org-free-equipetrol.demo.test` | `scdemo1` |
-| Cliente 1 | `cliente1@org-free-equipetrol.demo.test` | `scdemo1` |
-| Cliente 2 | `cliente2@org-free-equipetrol.demo.test` | `scdemo1` |
+| Rol | Email |
+|-----|--------|
+| Responsable principal | `responsable@org-free-equipetrol.demo.test` |
+| Técnico 1 (principal) | `tecnico1@org-free-equipetrol.demo.test` |
+| Técnico 2 (principal) | `tecnico2@org-free-equipetrol.demo.test` |
+| Responsable Norte | `taller-norte@org-free-equipetrol.demo.test` |
+| Técnico Norte | `tecnico-norte@org-free-equipetrol.demo.test` |
+| Responsable Sur | `taller-sur@org-free-equipetrol.demo.test` |
+| Técnico Sur | `tecnico-sur@org-free-equipetrol.demo.test` |
+| Responsable Este | `taller-este@org-free-equipetrol.demo.test` |
+| Técnico Este | `tecnico-este@org-free-equipetrol.demo.test` |
+| Responsable Oeste | `taller-oeste@org-free-equipetrol.demo.test` |
+| Técnico Oeste | `tecnico-oeste@org-free-equipetrol.demo.test` |
+| Cliente 1 | `cliente1@org-free-equipetrol.demo.test` |
+| Cliente 2 | `cliente2@org-free-equipetrol.demo.test` |
 
 Placas vehículos: `SCF101A`, `SCF102B`
 
 #### `org-free-urbari` (Free)
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Responsable | `responsable@org-free-urbari.demo.test` | `scdemo1` |
-| Técnico 1 | `tecnico1@org-free-urbari.demo.test` | `scdemo1` |
-| Técnico 2 | `tecnico2@org-free-urbari.demo.test` | `scdemo1` |
-| Cliente 1 | `cliente1@org-free-urbari.demo.test` | `scdemo1` |
-| Cliente 2 | `cliente2@org-free-urbari.demo.test` | `scdemo1` |
+| Rol | Email |
+|-----|--------|
+| Responsable principal | `responsable@org-free-urbari.demo.test` |
+| Técnico 1 (principal) | `tecnico1@org-free-urbari.demo.test` |
+| Técnico 2 (principal) | `tecnico2@org-free-urbari.demo.test` |
+| Responsable Norte | `taller-norte@org-free-urbari.demo.test` |
+| Técnico Norte | `tecnico-norte@org-free-urbari.demo.test` |
+| Responsable Sur | `taller-sur@org-free-urbari.demo.test` |
+| Técnico Sur | `tecnico-sur@org-free-urbari.demo.test` |
+| Responsable Este | `taller-este@org-free-urbari.demo.test` |
+| Técnico Este | `tecnico-este@org-free-urbari.demo.test` |
+| Responsable Oeste | `taller-oeste@org-free-urbari.demo.test` |
+| Técnico Oeste | `tecnico-oeste@org-free-urbari.demo.test` |
+| Cliente 1 | `cliente1@org-free-urbari.demo.test` |
+| Cliente 2 | `cliente2@org-free-urbari.demo.test` |
 
 Placas: `SCU201A`, `SCU202B`
 
 #### `org-pro-anillo` (Pro)
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Responsable | `responsable@org-pro-anillo.demo.test` | `scdemo1` |
-| Técnico 1 | `tecnico1@org-pro-anillo.demo.test` | `scdemo1` |
-| Técnico 2 | `tecnico2@org-pro-anillo.demo.test` | `scdemo1` |
-| Cliente 1 | `cliente1@org-pro-anillo.demo.test` | `scdemo1` |
-| Cliente 2 | `cliente2@org-pro-anillo.demo.test` | `scdemo1` |
+| Rol | Email |
+|-----|--------|
+| Responsable principal | `responsable@org-pro-anillo.demo.test` |
+| Técnico 1 (principal) | `tecnico1@org-pro-anillo.demo.test` |
+| Técnico 2 (principal) | `tecnico2@org-pro-anillo.demo.test` |
+| Responsable Norte | `taller-norte@org-pro-anillo.demo.test` |
+| Técnico Norte | `tecnico-norte@org-pro-anillo.demo.test` |
+| Responsable Sur | `taller-sur@org-pro-anillo.demo.test` |
+| Técnico Sur | `tecnico-sur@org-pro-anillo.demo.test` |
+| Responsable Este | `taller-este@org-pro-anillo.demo.test` |
+| Técnico Este | `tecnico-este@org-pro-anillo.demo.test` |
+| Responsable Oeste | `taller-oeste@org-pro-anillo.demo.test` |
+| Técnico Oeste | `tecnico-oeste@org-pro-anillo.demo.test` |
+| Cliente 1 | `cliente1@org-pro-anillo.demo.test` |
+| Cliente 2 | `cliente2@org-pro-anillo.demo.test` |
 
 Placas: `SCP301A`, `SCP302B`
 
 #### `org-pro-plan3000` (Pro)
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Responsable | `responsable@org-pro-plan3000.demo.test` | `scdemo1` |
-| Técnico 1 | `tecnico1@org-pro-plan3000.demo.test` | `scdemo1` |
-| Técnico 2 | `tecnico2@org-pro-plan3000.demo.test` | `scdemo1` |
-| Cliente 1 | `cliente1@org-pro-plan3000.demo.test` | `scdemo1` |
-| Cliente 2 | `cliente2@org-pro-plan3000.demo.test` | `scdemo1` |
+| Rol | Email |
+|-----|--------|
+| Responsable principal | `responsable@org-pro-plan3000.demo.test` |
+| Técnico 1 (principal) | `tecnico1@org-pro-plan3000.demo.test` |
+| Técnico 2 (principal) | `tecnico2@org-pro-plan3000.demo.test` |
+| Responsable Norte | `taller-norte@org-pro-plan3000.demo.test` |
+| Técnico Norte | `tecnico-norte@org-pro-plan3000.demo.test` |
+| Responsable Sur | `taller-sur@org-pro-plan3000.demo.test` |
+| Técnico Sur | `tecnico-sur@org-pro-plan3000.demo.test` |
+| Responsable Este | `taller-este@org-pro-plan3000.demo.test` |
+| Técnico Este | `tecnico-este@org-pro-plan3000.demo.test` |
+| Responsable Oeste | `taller-oeste@org-pro-plan3000.demo.test` |
+| Técnico Oeste | `tecnico-oeste@org-pro-plan3000.demo.test` |
+| Cliente 1 | `cliente1@org-pro-plan3000.demo.test` |
+| Cliente 2 | `cliente2@org-pro-plan3000.demo.test` |
 
 Placas: `SCP401A`, `SCP402B`
 
 #### `org-max-centro` (Max)
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Responsable | `responsable@org-max-centro.demo.test` | `scdemo1` |
-| Técnico 1 | `tecnico1@org-max-centro.demo.test` | `scdemo1` |
-| Técnico 2 | `tecnico2@org-max-centro.demo.test` | `scdemo1` |
-| Cliente 1 | `cliente1@org-max-centro.demo.test` | `scdemo1` |
-| Cliente 2 | `cliente2@org-max-centro.demo.test` | `scdemo1` |
+| Rol | Email |
+|-----|--------|
+| Responsable principal | `responsable@org-max-centro.demo.test` |
+| Técnico 1 (principal) | `tecnico1@org-max-centro.demo.test` |
+| Técnico 2 (principal) | `tecnico2@org-max-centro.demo.test` |
+| Responsable Norte | `taller-norte@org-max-centro.demo.test` |
+| Técnico Norte | `tecnico-norte@org-max-centro.demo.test` |
+| Responsable Sur | `taller-sur@org-max-centro.demo.test` |
+| Técnico Sur | `tecnico-sur@org-max-centro.demo.test` |
+| Responsable Este | `taller-este@org-max-centro.demo.test` |
+| Técnico Este | `tecnico-este@org-max-centro.demo.test` |
+| Responsable Oeste | `taller-oeste@org-max-centro.demo.test` |
+| Técnico Oeste | `tecnico-oeste@org-max-centro.demo.test` |
+| Cliente 1 | `cliente1@org-max-centro.demo.test` |
+| Cliente 2 | `cliente2@org-max-centro.demo.test` |
 
 Placas: `SCM501A`, `SCM502B`
 
 #### `org-max-el-torno` (Max)
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Responsable | `responsable@org-max-el-torno.demo.test` | `scdemo1` |
-| Técnico 1 | `tecnico1@org-max-el-torno.demo.test` | `scdemo1` |
-| Técnico 2 | `tecnico2@org-max-el-torno.demo.test` | `scdemo1` |
-| Cliente 1 | `cliente1@org-max-el-torno.demo.test` | `scdemo1` |
-| Cliente 2 | `cliente2@org-max-el-torno.demo.test` | `scdemo1` |
+| Rol | Email |
+|-----|--------|
+| Responsable principal | `responsable@org-max-el-torno.demo.test` |
+| Técnico 1 (principal) | `tecnico1@org-max-el-torno.demo.test` |
+| Técnico 2 (principal) | `tecnico2@org-max-el-torno.demo.test` |
+| Responsable Norte | `taller-norte@org-max-el-torno.demo.test` |
+| Técnico Norte | `tecnico-norte@org-max-el-torno.demo.test` |
+| Responsable Sur | `taller-sur@org-max-el-torno.demo.test` |
+| Técnico Sur | `tecnico-sur@org-max-el-torno.demo.test` |
+| Responsable Este | `taller-este@org-max-el-torno.demo.test` |
+| Técnico Este | `tecnico-este@org-max-el-torno.demo.test` |
+| Responsable Oeste | `taller-oeste@org-max-el-torno.demo.test` |
+| Técnico Oeste | `tecnico-oeste@org-max-el-torno.demo.test` |
+| Cliente 1 | `cliente1@org-max-el-torno.demo.test` |
+| Cliente 2 | `cliente2@org-max-el-torno.demo.test` |
 
 Placas: `SCM601A`, `SCM602B`
 

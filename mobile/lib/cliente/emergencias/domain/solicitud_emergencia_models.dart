@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/utils/api_datetime.dart';
 import 'solicitud_ai_payload.dart';
+import 'solicitud_seguimiento_models.dart';
 
 double _asDouble(Object? v) {
   if (v is num) return v.toDouble();
@@ -157,6 +158,7 @@ class SolicitudEmergenciaDetail {
     this.presupuestoBob,
     this.presupuestoRegistradoAt,
     this.aiPayload,
+    this.taller,
   });
 
   final int id;
@@ -176,6 +178,10 @@ class SolicitudEmergenciaDetail {
   final double? presupuestoBob;
   final DateTime? presupuestoRegistradoAt;
   final SolicitudAiPayloadV1? aiPayload;
+  final TallerSeguimientoRead? taller;
+
+  bool get tallerPendienteConfirmacion =>
+      taller != null && estado == EstadoSolicitudEmergencia.enRevision;
 
   factory SolicitudEmergenciaDetail.fromJson(Map<String, dynamic> j) {
     return SolicitudEmergenciaDetail(
@@ -203,6 +209,9 @@ class SolicitudEmergenciaDetail {
           ? _asDateTime(j['presupuesto_registrado_at'])
           : null,
       aiPayload: SolicitudAiPayloadV1.tryParse(j['ai_payload']),
+      taller: j['taller'] != null && j['taller'] is Map<String, dynamic>
+          ? TallerSeguimientoRead.fromJson(j['taller'] as Map<String, dynamic>)
+          : null,
     );
   }
 }

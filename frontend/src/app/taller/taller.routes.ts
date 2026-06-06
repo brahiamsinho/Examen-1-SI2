@@ -145,6 +145,13 @@ export const TALLER_ROUTES: Routes = [
           ),
       },
       {
+        path: 'horarios',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'disponibilidad:gestionar' },
+        loadComponent: () =>
+          import('./features/horarios/taller-horarios.component').then((m) => m.TallerHorariosComponent),
+      },
+      {
         path: 'suscripcion',
         loadComponent: () =>
           import('./features/suscripcion/taller-suscripcion.component').then((m) => m.TallerSuscripcionComponent),

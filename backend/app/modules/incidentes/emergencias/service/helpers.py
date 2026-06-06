@@ -27,10 +27,12 @@ def to_detail(s: SolicitudEmergencia) -> SolicitudEmergenciaDetailRead:
     base = SolicitudEmergenciaRead.model_validate(s)
     ubs = sorted(s.ubicaciones, key=lambda x: x.registrado_at, reverse=True)
     evs = sorted(s.evidencias, key=lambda x: x.created_at, reverse=True)
+    taller = TallerSeguimientoRead.model_validate(s.taller) if s.taller is not None else None
     return SolicitudEmergenciaDetailRead(
         **base.model_dump(),
         ubicaciones=[SolicitudUbicacionRead.model_validate(x) for x in ubs],
         evidencias=[SolicitudEvidenciaRead.model_validate(x) for x in evs],
+        taller=taller,
     )
 
 

@@ -25,6 +25,7 @@ def seeds_enabled_for_startup(*, run_all: bool = False) -> bool:
         or settings.SEED_STRESS_VISUAL_ON_START
         or settings.SEED_MULTI_ORGS_ON_START
         or settings.SEED_MULTI_ORG_EMERGENCIAS_ON_START
+        or settings.SEED_TALLERES_RED_ON_START
     )
 
 
@@ -46,6 +47,7 @@ async def run_startup_seeds(*, run_all: bool = False, max_attempts: int = 8) -> 
     from app.seeds.dev_multi_org_emergencias import ensure_multi_org_emergencias_seed
     from app.seeds.dev_tecnico import ensure_dev_tecnico
     from app.seeds.dev_taller import ensure_dev_taller
+    from app.seeds.dev_talleres_red import ensure_talleres_red_demo_sc
     from app.seeds.dev_tenant import ensure_default_tenant
 
     async with _startup_seed_lock:
@@ -81,6 +83,10 @@ async def run_startup_seeds(*, run_all: bool = False, max_attempts: int = 8) -> 
                         await ensure_multi_orgs_seed(session, require_enabled_flag=False)
                     if run_all or settings.SEED_MULTI_ORG_EMERGENCIAS_ON_START:
                         await ensure_multi_org_emergencias_seed(session, require_enabled_flag=False)
+                    if run_all or settings.SEED_TALLERES_RED_ON_START:
+                        await ensure_talleres_red_demo_sc(
+                            session, tenant_id=tenant_id, require_enabled_flag=False
+                        )
 
                     await session.commit()
                 _log.info("Seeds aplicados correctamente")

@@ -25,6 +25,12 @@ from app.modules.clientes_y_vehiculos.vehiculos.models import MarcaVehiculo, Mod
 from app.modules.talleres_y_tecnicos.talleres import service as talleres_service
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, EstadoTecnicoEnum, Taller, Tecnico
 from app.seeds.identidades_multi_org import MULTI_ORG_PASSWORD, MULTI_ORGS, OrgSeed, PersonaSeed
+from app.seeds.talleres_red_seed import (
+    ensure_horarios_y_disponibilidad_tenant,
+    ensure_min_talleres_red,
+    ensure_tecnicos_red_for_extra_defs,
+    multi_org_extra_taller_defs,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -351,6 +357,23 @@ async def _seed_one_org(
         len(org.tecnicos),
         len(org.clientes),
     )
+
+    extra = multi_org_extra_taller_defs(
+        slug=org.slug,
+        ciudad=org.ciudad,
+        base_lat=org.lat,
+        base_lng=org.lng,
+        org_idx=list(MULTI_ORGS).index(org) + 1,
+        password=password,
+    )
+    await ensure_min_talleres_red(
+        db,
+        tenant_id=tenant_id,
+        rol_taller_responsable_id=rol_responsable_id,
+        extra_defs=extra,
+    )
+    await ensure_tecnicos_red_for_extra_defs(db, tenant_id=tenant_id, extra_defs=extra)
+    await ensure_horarios_y_disponibilidad_tenant(db, tenant_id)
 
 
 async def ensure_multi_orgs_seed(

@@ -1,8 +1,26 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-05 — CU43/CU45 sync offline mobile + CU42 cotización ✅
+# Última actualización: 2026-06-06 — EA secuencia CU41–CU46 (patrón Tenant) ✅
+
+### EA — Diagramas secuencia CU41–CU46 (2026-06-06) ✅
+- [x] Patrón `CU_Gestionar_Tenant` (diagramID 12): Actor → V.Index/Crear/Modificar → Controller → M.* en paquete `/Model/Secuencia`.
+- [x] Diagramas EA: **67** CU41, **68** CU42, **69** CU43, **70** CU44, **71** CU45, **72** CU46 — lifelines BCE + mensajes numerados.
+- [ ] Opcional EA: CombinedFragment `alt` visuales; enlazar a casos de uso; limpiar diagramas 55–66 obsoletos.
+- Sesión: `docs/ai/sessions/2026-06-06-agent-ea-secuencia-cu41-cu46.md`.
 # =========================================================
+
+### CU46 — Visualizar dashboard de KPIs (2026-06-05) ✅
+- [x] Backend: migración `0023_reportes_kpis_cu46.sql` (`reportes:leer`); `GET /api/admin/panel/kpis`; `GET .../reportes/kpis` taller.
+- [x] Frontend admin: `/admin/panel/reportes-kpis` — filtros, tarjetas, estados, finanzas, top talleres, serie, CSV.
+- [x] Frontend taller: `/taller/panel/reportes-kpis` — KPIs aislados al taller, guard `reportes:leer`, CSV.
+- [ ] Verificar E2E admin/taller con migración 0023 en Docker; tests pytest CU46 opcional.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu46-dashboard-kpis.md`.
+
+### CU44 — Consultar tiempo estimado de reparación (2026-06-05) ✅
+- [x] Backend: `GET .../seguimiento/eta`, `SeguimientoETAService`, mensajes contextuales y 403.
+- [x] Mobile: `consultarEtaProvider`, caché offline, `EtaReparacionCu44Card` en Seguimiento.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu44-consultar-eta-reparacion.md`.
 
 ### CU43/CU45 — Emergencia offline + sync al reconectar (2026-06-05) ✅
 - [x] Backend: migración `0022_client_request_id_cu43.sql`; idempotencia en `crear_solicitud` por `client_request_id`.

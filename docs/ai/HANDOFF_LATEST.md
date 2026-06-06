@@ -1,7 +1,28 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-05 (CU43/CU45 offline + CU42 cotización + notificaciones)
+# Fecha: 2026-06-06 (EA secuencia CU41–CU46 patrón Tenant)
+
+## Cambios recientes (2026-06-06) — EA diagramas secuencia CU41–CU46 (patrón CU_Gestionar_Tenant) ✅
+
+- **Paquete EA:** `/Model/Secuencia` — subpaquetes CU41–CU46.
+- **Referencia:** `CU_Gestionar_Tenant` diagramID **12** (V.Index/Crear/Modificar + Controller + M.*).
+- **Diagramas finales:** 67 CU41, 68 CU42, 69 CU43, 70 CU44, 71 CU45, 72 CU46 — lifelines boundary/control/entity + mensajes numerados.
+- **Obsoletos:** diagramIDs 55–66 (versiones sd/Class anteriores).
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-ea-secuencia-cu41-cu46.md`.
+
+## Cambios recientes (2026-06-05) — CU46 Dashboard KPIs ✅
+
+- **Backend:** `0023_reportes_kpis_cu46.sql`, `GET /api/admin/panel/kpis`, `GET /api/app/taller/emergencias/reportes/kpis`.
+- **Frontend:** `/admin/panel/reportes-kpis`, `/taller/panel/reportes-kpis` (nav + lazy routes).
+- **Permiso:** `reportes:leer` (ADMIN, TALLER_RESPONSABLE).
+- **Pendiente:** E2E con Docker + migración 0023; pytest opcional.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu46-dashboard-kpis.md`.
+
+## Cambios recientes (2026-06-05) — CU44 Consultar ETA reparación ✅
+
+- Backend `GET .../seguimiento/eta`; mobile `EtaReparacionCu44Card` + caché offline.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu44-consultar-eta-reparacion.md`.
 
 ## Cambios recientes (2026-06-05) — CU43/CU45 sync offline mobile ✅
 

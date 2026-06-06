@@ -7,6 +7,7 @@ from .bandeja import (
     obtener_detalle_bandeja,
     obtener_disponibilidad,
     rechazar_solicitud,
+    resolver_bandeja_id_por_solicitud,
 )
 from .reportes import (
     listar_comisiones_taller,
@@ -28,4 +29,5 @@ __all__ = [
     "obtener_reporte_dashboard_taller",
     "obtener_resumen_comisiones",
     "rechazar_solicitud",
+    "resolver_bandeja_id_por_solicitud",
 ]

@@ -55,6 +55,20 @@ def _monto_a_unidad_menor(monto: Decimal) -> int:
     return int((monto * Decimal(100)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
+async def _notificar_pago_confirmado_taller(db: AsyncSession, *, solicitud, pago) -> None:
+    monto = _quantize_monto(pago.monto)
+    await notificaciones_service.notificar_responsable_taller_por_solicitud(
+        db,
+        solicitud=solicitud,
+        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+        titulo="Pago confirmado",
+        mensaje=(
+            f"El cliente confirmó el pago de {monto} {pago.moneda} "
+            f"en la emergencia #{solicitud.id}."
+        ),
+    )
+
+
 async def _aplicar_resultado_pasarela(
     db: AsyncSession,
     *,
@@ -85,6 +99,7 @@ async def _aplicar_resultado_pasarela(
             titulo="Pago confirmado",
             mensaje="Tu pago fue confirmado correctamente. Gracias por usar la plataforma.",
         )
+        await _notificar_pago_confirmado_taller(db, solicitud=solicitud, pago=pago)
         await repository.registrar_comision_taller_tras_pago(db, solicitud=solicitud, pago=pago)
     else:
         pago.estado = EstadoPagoEnum.FALLIDO
@@ -409,6 +424,7 @@ async def confirmar_pago_stripe(
         titulo="Pago confirmado",
         mensaje="Tu pago en Stripe fue confirmado correctamente.",
     )
+    await _notificar_pago_confirmado_taller(db, solicitud=sol, pago=pago)
     await repository.registrar_comision_taller_tras_pago(db, solicitud=sol, pago=pago)
     await repository.refresh_pago(db, pago)
     return PagoRead.model_validate(pago)

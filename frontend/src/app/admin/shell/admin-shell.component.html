@@ -206,6 +206,8 @@
           </select>
         </label>
 
+        <app-notification-bell portal="admin" />
+
         <div class="shell__user-card">
           <div class="shell__avatar" aria-hidden="true">{{ userInitials(me.email) }}</div>
           <div class="shell__user-meta">
@@ -217,7 +219,7 @@
           </div>
         </div>
 
-        <button type="button" class="shell__logout" (click)="auth.logout()">
+        <button type="button" class="shell__logout" (click)="logout()">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path
               d="M10 17l5-5-5-5M15 12H4M20 4v16"

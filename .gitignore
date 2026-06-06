@@ -5,10 +5,9 @@
 .env.*
 !.env.example
 !**/.env.example
-mobile/.env
-# Variables de entorno: usar solo `.env` en la raíz del repo (ver `.env.example`).
 backend/.env
 frontend/.env
+mobile/.env
 
 # ── Backups locales (no versionar dumps) ───────────────────
 backend/backups/
@@ -73,35 +72,31 @@ logs/
 # OJO: Si ignoras docs/ completo, NADA de docs/ sube a GitHub.
 # Para entregar documentación o docs/ai al equipo, comenta o borra este bloque.
 
-
 # Evidencias (foto/audio) guardadas por el API en disco
-#backend/uploads/
+backend/uploads/
 
 # Pesos IA (grandes; el entrenamiento en Colab genera .pt en backend/)
 # Para usar el modelo: descargarlo de Drive/Colab y colocarlo en backend/
+# Excepción versionada: backend/incidentes_emergencias_v1.pt (demo IA)
 #backend/*.pt
 #*.pt
 
 # ── Credenciales de servicios externos (NUNCA versionar) ──
 google-credentials.json
 **/google-services.json
+**/GoogleService-Info.plist
 firebase-credentials.json
 **/firebase-credentials.json
+mobile/lib/firebase_options.dart
 stripe-credentials.json
 
-# ── Variables de entorno (NUNCA versionar) ────────────────
-.env
-.env.*
-!.env.example
-!**/.env.example
-backend/.env
-frontend/.env
-mobile/.env
 # ── Cursor / MCP local ───────────────────────────────────
 .cursor/mcp.json
+
 # ── Temporales examen / extracciones ─────────────────────
 .tmp-docx-extract/
 .tmp-exam.zip
+
 # ── Locks / configs locales opcionales ───────────────────
 skills-lock.json
 opencode.jsonc
@@ -112,5 +107,10 @@ tmp-user.json
 tmp-user-token.json
 tmp-user-refresh-token.json
 tmp-user-access-token.json
-tmp-user-refresh-token.json
 docs/puds/_tmp_*
+
+# OSRM — datos preprocesados (grandes; generar con scripts/osrm-setup.ps1)
+data/osrm/*.osm.pbf
+data/osrm/*.osrm
+data/osrm/*.osrm.*
+!data/osrm/.gitkeep

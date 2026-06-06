@@ -259,3 +259,9 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-06-04  
 **Decisión:** Tabla `taller_horarios` (7 filas max por taller, franja TIME, `activo`). Zona fija `America/La_Paz`. Default Lun–Sáb 08:00–18:00, Dom cerrado. Mismo permiso `disponibilidad:gestionar` para editar horarios. Ranking CU37 expone `abierto_ahora`; selección cliente y aceptar bandeja rechazan fuera de horario.  
 **Por qué:** Red multi-taller por tenant requiere disponibilidad temporal real; evita asignar emergencias cuando el taller no opera.
+
+## DEC-038 — VRT/ETA con OSRM + fallback haversine (2026-06-06)
+
+**Fecha:** 2026-06-06  
+**Decisión:** Contenedor **OSRM** (perfil Docker `routing`, datos Geofabrik Bolivia) como motor de rutas por calles. Backend enriquece `GET .../ubicacion-tecnico` con polyline + ETA. Si OSRM no está disponible, fallback haversine (35 km/h) con línea recta.  
+**Por qué:** Open source, alineado con OSM ya usado en mobile; sin API keys de Google; funciona offline en Docker; CU36 pasa de “punto en mapa” a seguimiento con ruta y llegada estimada (VRT).

@@ -1,0 +1,47 @@
+<div class="notif-bell" (click)="$event.stopPropagation()">
+  <button
+    type="button"
+    class="notif-bell__btn"
+    (click)="togglePanel($event)"
+    [attr.aria-expanded]="open"
+    aria-haspopup="true"
+    aria-label="Notificaciones"
+  >
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path
+        d="M12 3a5 5 0 0 0-5 5v2.5c0 .6-.2 1.2-.6 1.7L4.5 15h15l-1.9-2.8a3 3 0 0 1-.6-1.7V8a5 5 0 0 0-5-5Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linejoin="round"
+      />
+      <path d="M10 18a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+    </svg>
+    <span class="notif-bell__badge" *ngIf="unreadCount > 0">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+  </button>
+
+  <div class="notif-bell__panel" *ngIf="open" role="dialog" aria-label="Lista de notificaciones">
+    <div class="notif-bell__head">
+      <strong>Notificaciones</strong>
+      <span class="notif-bell__meta" *ngIf="unreadCount">{{ unreadCount }} sin leer</span>
+    </div>
+
+    <p class="notif-bell__state" *ngIf="loading">Cargando…</p>
+    <p class="notif-bell__state notif-bell__state--error" *ngIf="error">{{ error }}</p>
+    <p class="notif-bell__state" *ngIf="!loading && !error && !items.length">Sin notificaciones.</p>
+
+    <ul class="notif-bell__list" *ngIf="items.length">
+      <li
+        *ngFor="let item of items; trackBy: trackById"
+        class="notif-bell__item"
+        [class.notif-bell__item--unread]="!item.leida"
+      >
+        <button type="button" class="notif-bell__item-btn" (click)="markRead(item, $event)">
+          <span class="notif-bell__title">{{ item.titulo }}</span>
+          <span class="notif-bell__msg">{{ item.mensaje }}</span>
+          <span class="notif-bell__time">{{ formatWhen(item.created_at) }}</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</div>

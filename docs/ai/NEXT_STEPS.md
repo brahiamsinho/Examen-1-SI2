@@ -10,6 +10,45 @@
 # Actualizado: 2026-06-04 — Red talleres + horarios
 # =========================================================
 
+# Actualizado: 2026-06-04 — FCM web + notificaciones
+# =========================================================
+
+# Actualizado: 2026-06-06 — Fix push FCM mobile
+# =========================================================
+
+# Actualizado: 2026-06-06 — Notificaciones taller ampliadas
+# =========================================================
+
+## ALTA — Probar notificaciones taller ampliadas (2026-06-06)
+
+1. `docker compose up -d --build backend` (aplica cambios de notificaciones).
+2. Portal taller: login responsable, campana activa + permiso push navegador.
+3. Flujo completo: CU37 → aceptar bandeja → asignar técnico → técnico en camino/atención/finalizada → chat → pago.
+4. Verificar campana + push en cada paso; click debe abrir detalle de la solicitud.
+
+## ALTA — Activar rutas por calles OSRM (2026-06-06)
+
+1. `.\scripts\osrm-setup.ps1` (descarga Bolivia OSM + preprocesa; ~10–20 min).
+2. `docker compose --profile routing up -d osrm backend`.
+3. Mobile cliente → solicitud con técnico en camino → «Ver ubicación del técnico».
+4. Verificar tarjeta «Llegada estimada (VRT)» y polyline curva (`proveedor: osrm` en JSON API).
+
+## ALTA — Probar push mobile tras fix (2026-06-06)
+
+1. Backend ya con `FCM_ENABLED=true` y credenciales JSON válidas — reiniciar si hace falta: `docker compose up -d backend`.
+2. Mobile: logout/login cliente → aceptar permiso notificaciones Android.
+3. Esperar push «Bienvenido a Emergencias Viales» (primer registro token).
+4. Logs: `FCM multicast enviado: success=1`.
+5. CU37 elige taller → push va al **portal taller** (responsable), no al cliente. Para probar push cliente: mensaje chat, cambio estado, pago simulado.
+
+## ALTA — Activar y probar push web (2026-06-04)
+
+1. `.env` raíz: `FCM_ENABLED=true`, `FIREBASE_WEB_ENABLED=true` + claves `FIREBASE_WEB_*` (proyecto `transporte-si2`).
+2. `cd frontend && npm run env:sync` y rebuild frontend.
+3. Aplicar migración `0027_taller_fcm_notificaciones.sql` (DB existente: `docker compose exec db psql ...` o reinicio init).
+4. Login portal taller → campana notificaciones; aceptar permiso navegador; verificar token en `usuario_fcm_tokens`.
+5. Desde mobile cliente: CU37 elegir taller → push + fila in-app en bandeja taller.
+
 ## ALTA — Validar red talleres + horarios (2026-06-04)
 
 1. `docker compose up -d --build backend frontend` (migración `0026_taller_horarios.sql`).

@@ -19,6 +19,8 @@ import { filter } from 'rxjs/operators';
 import { take } from 'rxjs';
 import { TallerAuthService } from '../../core/services/taller-auth.service';
 import { TallerApiService } from '../../core/services/taller-api.service';
+import { FcmService } from '../../core/services/fcm.service';
+import { NotificationBellComponent } from '../../shared/notifications/notification-bell.component';
 import type { MeResponse } from '../../core/models/auth.models';
 import type { MiTallerDto, TallerSuscripcionDto } from '../../core/models/taller-api.models';
 
@@ -49,13 +51,14 @@ export interface TallerNavGroup {
 @Component({
   selector: 'app-taller-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   templateUrl: './taller-shell.component.html',
   styleUrl: './taller-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TallerShellComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
+  private readonly fcm = inject(FcmService);
   private readonly tallerApi = inject(TallerApiService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -218,6 +221,12 @@ export class TallerShellComponent implements OnInit {
         this.mobileNavOpen = false;
         this.cdr.markForCheck();
       });
+
+    void this.fcm.activate('taller');
+  }
+
+  logout(): void {
+    void this.fcm.deactivate().finally(() => this.auth.logout());
   }
 
   toggleSidebar(): void {

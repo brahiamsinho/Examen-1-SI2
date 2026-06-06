@@ -52,6 +52,12 @@ def send_push_multicast_sync(
         notification=messaging.Notification(title=title, body=body),
         data=payload,
         tokens=registration_tokens,
+        android=messaging.AndroidConfig(
+            priority="high",
+            notification=messaging.AndroidNotification(
+                channel_id="emergencias_high_importance",
+            ),
+        ),
     )
     try:
         response = messaging.send_each_for_multicast(msg)

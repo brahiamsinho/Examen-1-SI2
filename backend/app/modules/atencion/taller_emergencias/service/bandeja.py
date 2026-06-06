@@ -253,3 +253,23 @@ async def aceptar_solicitud(
     )
 
     return await obtener_detalle_bandeja(taller_id, bandeja_id, db)
+
+
+async def resolver_bandeja_id_por_solicitud(
+    taller_id: int, solicitud_id: int, db: AsyncSession
+):
+    from app.modules.atencion.taller_emergencias.schemas import BandejaIdPorSolicitudRead
+
+    res = await db.execute(
+        select(SolicitudEmergencia).where(
+            SolicitudEmergencia.id == solicitud_id,
+            SolicitudEmergencia.taller_id == taller_id,
+        )
+    )
+    if res.scalar_one_or_none() is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Solicitud no encontrada")
+
+    bandeja = await repository.get_bandeja_por_solicitud_taller(
+        db, solicitud_id=solicitud_id, taller_id=taller_id
+    )
+    return BandejaIdPorSolicitudRead(bandeja_id=bandeja.id if bandeja is not None else None)

@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.routing.osrm_client import calcular_ruta_tecnico_cliente
 from app.core.timeutil import utc_now_naive
 from app.modules.ai.services.post_create import enrich_solicitud_ai_after_create
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
@@ -11,6 +12,7 @@ from app.modules.acceso_y_administracion.bitacora.service import registrar_accio
 from app.modules.incidentes.emergencias import repository
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.incidentes.emergencias.schemas import (
+    RutaSeguimientoRead,
     SolicitudEmergenciaCreateIn,
     SolicitudEmergenciaDetailRead,
     SolicitudEmergenciaRead,
@@ -175,7 +177,9 @@ async def obtener_ubicacion_tecnico_compartida_cliente(
     solicitud_id: int,
     db: AsyncSession,
 ) -> UbicacionTecnicoCompartidaRead:
-    s = await repository.get_solicitud_for_cliente(db, solicitud_id=solicitud_id, cliente_id=cliente_id)
+    s = await repository.get_solicitud_for_cliente(
+        db, solicitud_id=solicitud_id, cliente_id=cliente_id, with_children=True
+    )
     if s is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Solicitud no encontrada")
     if s.tecnico_id is None:
@@ -188,10 +192,37 @@ async def obtener_ubicacion_tecnico_compartida_cliente(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="El técnico aún no ha compartido su ubicación.",
         )
+
+    cliente_ub = None
+    for u in s.ubicaciones or []:
+        if u.es_actual:
+            cliente_ub = u
+            break
+
+    ruta_read: RutaSeguimientoRead | None = None
+    if cliente_ub is not None:
+        ruta = await calcular_ruta_tecnico_cliente(
+            origen_lat=float(s.tecnico_ult_latitud),
+            origen_lon=float(s.tecnico_ult_longitud),
+            destino_lat=float(cliente_ub.latitud),
+            destino_lon=float(cliente_ub.longitud),
+        )
+        ruta_read = RutaSeguimientoRead(
+            distancia_metros=ruta.distancia_metros,
+            duracion_segundos=ruta.duracion_segundos,
+            duracion_minutos=(ruta.duracion_segundos + 59) // 60,
+            eta_llegada_at=ruta.eta_llegada_at,
+            geometria=ruta.geometria,
+            proveedor=ruta.proveedor,
+        )
+
     return UbicacionTecnicoCompartidaRead(
         solicitud_id=s.id,
         latitud=s.tecnico_ult_latitud,
         longitud=s.tecnico_ult_longitud,
         precision_metros=s.tecnico_ult_precision_metros,
         actualizado_at=s.tecnico_ult_ubicacion_at,
+        cliente_latitud=cliente_ub.latitud if cliente_ub else None,
+        cliente_longitud=cliente_ub.longitud if cliente_ub else None,
+        ruta=ruta_read,
     )

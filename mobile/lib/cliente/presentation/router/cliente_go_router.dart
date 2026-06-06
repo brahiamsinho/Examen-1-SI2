@@ -46,14 +46,28 @@ import '../../../tecnico/presentation/screens/tecnico_perfil_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_recover_screen.dart';
 import '../../../tecnico/presentation/screens/tecnico_splash_screen.dart';
 import '../../../tecnico/presentation/shell/tecnico_app_shell.dart';
+import '../../../taller/application/taller_auth_provider.dart';
+import '../../../taller/application/taller_auth_state.dart';
+import '../../../taller/presentation/screens/taller_bandeja_detalle_screen.dart';
+import '../../../taller/presentation/screens/taller_bandeja_list_screen.dart';
+import '../../../taller/presentation/screens/taller_home_screen.dart';
+import '../../../taller/presentation/screens/taller_login_screen.dart';
+import '../../../taller/presentation/screens/taller_more_screen.dart';
+import '../../../taller/presentation/screens/taller_perfil_screen.dart';
+import '../../../taller/presentation/screens/taller_splash_screen.dart';
+import '../../../taller/presentation/screens/taller_tecnicos_list_screen.dart';
+import '../../../taller/presentation/shell/taller_app_shell.dart';
 
-/// Router principal: splash/onboarding/modo, **cliente** y **técnico** (módulos separados).
+/// Router principal: splash/onboarding/modo, **cliente**, **técnico** y **taller** (módulos separados).
 final goRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
   ref.listen<ClientAuthState>(clientAuthNotifierProvider, (_, __) {
     refresh.value++;
   });
   ref.listen<TecnicoAuthState>(tecnicoAuthNotifierProvider, (_, __) {
+    refresh.value++;
+  });
+  ref.listen<TallerAuthState>(tallerAuthNotifierProvider, (_, __) {
     refresh.value++;
   });
   ref.onDispose(refresh.dispose);
@@ -63,6 +77,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final loc = state.matchedLocation;
+
+      if (loc.startsWith('/taller')) {
+        final tr = ref.read(tallerAuthNotifierProvider);
+        if (tr.status == TallerAuthStatus.checking) return null;
+        final publicTaller = loc.startsWith('/taller/login') || loc.startsWith('/taller/splash');
+        if (tr.isAuthenticated) {
+          if (publicTaller && !loc.startsWith('/taller/splash')) {
+            return '/taller/app/inicio';
+          }
+          return null;
+        }
+        if (loc.startsWith('/taller/app')) return '/taller/login';
+        return null;
+      }
 
       if (loc.startsWith('/tecnico')) {
         final t = ref.read(tecnicoAuthNotifierProvider);
@@ -80,19 +108,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      final auth = ref.read(clientAuthNotifierProvider);
-      if (auth.status == ClientAuthStatus.checking) return null;
+      if (loc.startsWith('/cliente')) {
+        final auth = ref.read(clientAuthNotifierProvider);
+        if (auth.status == ClientAuthStatus.checking) return null;
 
-      final publicAuth = loc.startsWith('/cliente/login') ||
-          loc.startsWith('/cliente/registro') ||
-          loc.startsWith('/cliente/recuperar');
+        final publicAuth = loc.startsWith('/cliente/login') ||
+            loc.startsWith('/cliente/registro') ||
+            loc.startsWith('/cliente/recuperar');
 
-      if (auth.isAuthenticated) {
-        if (publicAuth) return '/cliente/app/home';
-        return null;
+        if (auth.isAuthenticated) {
+          if (publicAuth) return '/cliente/app/home';
+          return null;
+        }
+
+        if (loc.startsWith('/cliente/app')) return '/cliente/login';
       }
-
-      if (loc.startsWith('/cliente/app')) return '/cliente/login';
       return null;
     },
     routes: [
@@ -131,6 +161,47 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/tecnico/recuperar',
         builder: (context, state) => const TecnicoRecoverScreen(),
+      ),
+      GoRoute(
+        path: '/taller/splash',
+        builder: (context, state) => const TallerSplashScreen(),
+      ),
+      GoRoute(
+        path: '/taller/login',
+        builder: (context, state) => const TallerLoginScreen(),
+      ),
+      ShellRoute(
+        builder: (context, state, child) => TallerAppShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/taller/app/inicio',
+            builder: (context, state) => const TallerHomeScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/bandeja',
+            builder: (context, state) => const TallerBandejaListScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/bandeja/:bid',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['bid'] ?? '');
+              if (id == null) return const SizedBox.shrink();
+              return TallerBandejaDetalleScreen(bandejaId: id);
+            },
+          ),
+          GoRoute(
+            path: '/taller/app/tecnicos',
+            builder: (context, state) => const TallerTecnicosListScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/perfil',
+            builder: (context, state) => const TallerPerfilScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/mas',
+            builder: (context, state) => const TallerMoreScreen(),
+          ),
+        ],
       ),
       ShellRoute(
         builder: (context, state, child) => TecnicoAppShell(child: child),

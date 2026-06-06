@@ -1,22 +1,21 @@
 import 'package:dio/dio.dart';
 
 import '../../core/constants/api_constants.dart';
-import '../../core/tenant/tenant_slug_storage.dart';
 import '../../core/network/api_error.dart';
-import '../../core/network/tecnico_api_client.dart';
-import '../domain/models/auth_me.dart';
-import '../domain/models/tecnico_perfil.dart';
+import '../../core/network/taller_api_client.dart';
+import '../../core/tenant/tenant_slug_storage.dart';
+import '../../tecnico/domain/models/auth_me.dart';
+import '../domain/models/taller_perfil.dart';
 
-/// Autenticación y perfil del flujo técnico / responsable (tokens propios).
-final class TecnicoAuthRepository {
-  TecnicoAuthRepository(this._dio, {TecnicoApiClient? api})
-      : _api = api ?? TecnicoApiClient();
+/// Autenticación del flujo responsable de taller (tokens propios).
+final class TallerAuthRepository {
+  TallerAuthRepository(this._dio, {TallerApiClient? api}) : _api = api ?? TallerApiClient();
 
   final Dio _dio;
-  final TecnicoApiClient _api;
+  final TallerApiClient _api;
 
-  static bool rolesPermitidosTecnicoApp(List<String> roles) {
-    return roles.contains('TECNICO');
+  static bool rolesPermitidosTallerApp(List<String> roles) {
+    return roles.contains('TALLER_RESPONSABLE');
   }
 
   Future<AuthMe> login({
@@ -48,11 +47,11 @@ final class TecnicoAuthRepository {
       await _api.persistTokens(access: access, refresh: refresh);
 
       final me = await fetchMe();
-      if (!rolesPermitidosTecnicoApp(me.roles)) {
+      if (!rolesPermitidosTallerApp(me.roles)) {
         await logoutLocal();
         throw Exception(
-          'Esta cuenta no tiene rol de técnico. '
-          'Usá acceso responsable de taller o cliente según tu rol.',
+          'Esta cuenta no es responsable de taller. '
+          'Usá acceso técnico o cliente según tu rol.',
         );
       }
       return me;
@@ -72,42 +71,12 @@ final class TecnicoAuthRepository {
     }
   }
 
-  Future<TecnicoPerfil> fetchPerfilCompleto(AuthMe me) async {
+  Future<TallerPerfil> fetchPerfilCompleto(AuthMe me) async {
     try {
-      if (me.roles.contains('TALLER_RESPONSABLE')) {
-        final res = await _dio.get<Map<String, dynamic>>(ApiConstants.appTallerMiTaller);
-        final data = res.data;
-        if (data == null) {
-          return TecnicoPerfil.minimal(me);
-        }
-        return TecnicoPerfil.fromMiTaller(me: me, tallerJson: data);
-      }
-      if (me.roles.contains('TECNICO')) {
-        final res = await _dio.get<List<dynamic>>(ApiConstants.tecnicos);
-        final list = res.data ?? const [];
-        Map<String, dynamic>? row;
-        for (final e in list) {
-          if (e is Map<String, dynamic> && e['usuario_id'] == me.id) {
-            row = e;
-            break;
-          }
-        }
-        if (row == null) {
-          return TecnicoPerfil.minimal(me);
-        }
-        final tallerId = row['taller_id'] as int?;
-        String? tallerNombre;
-        if (tallerId != null) {
-          try {
-            final tr = await _dio.get<Map<String, dynamic>>(ApiConstants.tallerById(tallerId));
-            tallerNombre = tr.data?['nombre_comercial'] as String?;
-          } catch (_) {
-            tallerNombre = null;
-          }
-        }
-        return TecnicoPerfil.fromTecnicoRow(me: me, tecnicoJson: row, tallerNombre: tallerNombre);
-      }
-      return TecnicoPerfil.minimal(me);
+      final res = await _dio.get<Map<String, dynamic>>(ApiConstants.appTallerMiTaller);
+      final data = res.data;
+      if (data == null) return TallerPerfil.minimal(me);
+      return TallerPerfil.fromMiTaller(me: me, tallerJson: data);
     } on DioException catch (e) {
       throw Exception(messageFromDio(e));
     }

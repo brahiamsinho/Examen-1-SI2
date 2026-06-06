@@ -80,8 +80,10 @@
 ## MEDIA — Admin SaaS organizaciones
 
 1. ~~Fix 422 al crear org (slug mayúsculas)~~ — hecho 2026-06-04.
-2. Probar en UI: `/admin/panel/organizaciones` → slug `Mi Empresa` o `Nueva-Org` → debe crear OK; slug `mi-empresa` → 409 con mensaje claro.
-3. Si el frontend Docker no refleja cambios: `docker compose up -d --build frontend`.
+2. ~~Dropdown planes comerciales Free / Pro / Max~~ — hecho 2026-06-05 (`saas-plan-tiers.ts`).
+3. Probar en UI: crear org con plan **Pro** → en `/taller/panel/suscripcion` debe mostrarse Pro (no enum interno).
+4. Revisar en `/admin/panel/planes-precios` que Pro y Max tengan `stripe_price_id` distintos si ambos son de pago.
+5. Si el frontend Docker no refleja cambios: `docker compose up -d --build frontend`.
 
 ## MEDIA — Admin SaaS talleres (provision)
 

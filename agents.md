@@ -1468,4 +1468,3 @@ Siempre:
 - dame contexto, por qué sirve, de dónde viene y por qué funciona,
 - ayúdame tanto a construir como a entender y defender el código,
 - y si el proyecto usa `docs/ai/`, ayúdame también a mantener continuidad, skills, prompts, artefactos PUDS y contexto vivo.
-  #si

@@ -63,7 +63,7 @@ async def create_tenant(db: AsyncSession, data: dict) -> Tenant:
         slug=slug,
         nombre=data["nombre"],
         estado=EstadoTenantEnum.ACTIVO,
-        plan=data.get("plan", PlanTenantEnum.STARTER),
+        plan=data.get("plan", PlanTenantEnum.FREE),
         dominio_custom=data.get("dominio_custom"),
         subscription_status=EstadoSuscripcionTenantEnum.TRIAL,
         created_at=now,

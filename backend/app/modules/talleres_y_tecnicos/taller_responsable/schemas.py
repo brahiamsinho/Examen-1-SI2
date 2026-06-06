@@ -1,12 +1,14 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 from typing import Optional
 from datetime import datetime
 
 from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
+from app.modules.acceso_y_administracion.tenants.schemas import normalize_tenant_slug
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, EstadoTecnicoEnum
 
 
 class RegistroTallerIn(BaseModel):
+    tenant_slug: str = Field(..., min_length=2, max_length=80)
     nombre_comercial: str = Field(..., min_length=2, max_length=150)
     email: EmailStr
     telefono: str = Field(..., min_length=5, max_length=30)
@@ -15,6 +17,11 @@ class RegistroTallerIn(BaseModel):
     descripcion: Optional[str] = None
     responsable_nombre_completo: str = Field(..., min_length=3, max_length=200)
     password: str = Field(..., min_length=4, max_length=128)
+
+    @field_validator("tenant_slug", mode="before")
+    @classmethod
+    def normalize_tenant(cls, value: object) -> str:
+        return normalize_tenant_slug(value)
 
 
 class MiTallerUsuarioUpdate(BaseModel):

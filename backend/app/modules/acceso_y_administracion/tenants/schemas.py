@@ -23,7 +23,7 @@ def normalize_tenant_slug(value: object) -> str:
 class TenantCreate(BaseModel):
     slug: str = Field(..., min_length=2, max_length=80, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     nombre: str = Field(..., min_length=2, max_length=150)
-    plan: PlanTenantEnum = PlanTenantEnum.STARTER
+    plan: PlanTenantEnum = PlanTenantEnum.FREE
     dominio_custom: Optional[str] = Field(None, max_length=255)
 
     @field_validator("slug", mode="before")

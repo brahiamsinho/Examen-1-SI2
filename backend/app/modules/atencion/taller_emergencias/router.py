@@ -235,6 +235,24 @@ async def listar_comisiones(
 
 
 @router.get(
+    "/reportes/kpis",
+    response_model=ReporteTallerDashboardRead,
+    dependencies=[Depends(require_permission("reportes:leer"))],
+)
+async def reporte_kpis_taller_cu46(
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+    desde: date | None = Query(None, description="Inicio de periodo (inclusive)."),
+    hasta: date | None = Query(None, description="Fin de periodo (inclusive)."),
+):
+    """CU46 — dashboard KPIs del taller (aislamiento por taller autenticado)."""
+    _, taller = ctx
+    return await service.obtener_reporte_dashboard_taller(
+        taller.id, db, desde=desde, hasta=hasta
+    )
+
+
+@router.get(
     "/reportes/dashboard",
     response_model=ReporteTallerDashboardRead,
     dependencies=[Depends(require_permission("comisiones:leer"))],

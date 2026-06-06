@@ -7,6 +7,7 @@ import type {
   AccionBitacora,
   AdminFinanzasReportes,
   AdminFinanzasResumen,
+  AdminKpisDto,
   AdminPanelOverview,
   BitacoraDto,
   ClienteListDto,
@@ -206,6 +207,19 @@ export class AdminApiService {
       params = params.set('tenant_id', String(filters.tenant_id));
     }
     return this.http.get<AdminPanelOverview>(`${this.base}/admin/panel/overview`, { params });
+  }
+
+  /** CU46 — dashboard KPIs admin. */
+  getPanelKpis(filters?: {
+    desde?: string;
+    hasta?: string;
+    tenant_id?: number;
+  }): Observable<AdminKpisDto> {
+    let params = new HttpParams();
+    if (filters?.desde) params = params.set('desde', filters.desde);
+    if (filters?.hasta) params = params.set('hasta', filters.hasta);
+    if (filters?.tenant_id != null) params = params.set('tenant_id', String(filters.tenant_id));
+    return this.http.get<AdminKpisDto>(`${this.base}/admin/panel/kpis`, { params });
   }
 
   getFinanzasResumen(filters?: {

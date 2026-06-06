@@ -1,6 +1,7 @@
 # Schemas Pydantic — emergencias fase 1
 from __future__ import annotations
 
+import enum
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
@@ -219,6 +220,35 @@ class SolicitudSeguimientoRead(BaseModel):
         default=None,
         description="Momento en que se registró la cotización.",
     )
+
+
+class EtaDisponibilidadEnum(str, enum.Enum):
+    """CU44 — estado semántico del ETA para la UI del cliente."""
+
+    PENDIENTE = "PENDIENTE"
+    DISPONIBLE = "DISPONIBLE"
+    NO_APLICABLE = "NO_APLICABLE"
+    HISTORICO = "HISTORICO"
+
+
+class SolicitudEtaRead(BaseModel):
+    """CU44 — consulta dedicada de tiempo estimado de reparación/atención."""
+
+    solicitud_id: int
+    estado: EstadoSolicitudSeguimientoEnum
+    tiempo_estimado_min: int | None = Field(
+        None,
+        ge=0,
+        description="Minutos estimados informados por taller/técnico.",
+    )
+    disponibilidad: EtaDisponibilidadEnum
+    eta_aplicable: bool = Field(
+        description="False si el servicio cerró o aún no aplica mostrar ETA activa.",
+    )
+    mensaje: str = Field(..., min_length=1, max_length=500)
+    actualizado_at: datetime
+    taller_id: int | None = None
+    tecnico_id: int | None = None
 
 
 class SeleccionarTallerIn(BaseModel):

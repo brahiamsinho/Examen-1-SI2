@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/utils/bolivia_time.dart';
 import '../../../pagos/presentation/widgets/solicitud_pago_cta_block.dart';
+import '../../application/consultar_eta_providers.dart';
 import '../../application/emergencias_providers.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
 import '../widgets/ai/solicitud_ai_resumen_card.dart';
@@ -13,15 +14,25 @@ import '../widgets/seguimiento/seguimiento_timeline.dart';
 import '../widgets/seguimiento/taller_asignado_card.dart';
 import '../widgets/seguimiento/tecnico_asignado_card.dart';
 
-/// Seguimiento de solicitud: estado, taller, técnico, ETA, historial.
+/// Seguimiento de solicitud — CU44 ETA + estado, taller, técnico, historial.
 class EmergenciaSeguimientoScreen extends ConsumerWidget {
   const EmergenciaSeguimientoScreen({super.key, required this.solicitudId});
 
   final int solicitudId;
 
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(emergenciaSeguimientoProvider(solicitudId));
+    ref.invalidate(consultarEtaProvider(solicitudId));
+    await Future.wait([
+      ref.read(emergenciaSeguimientoProvider(solicitudId).future),
+      ref.read(consultarEtaProvider(solicitudId).future),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(emergenciaSeguimientoProvider(solicitudId));
+    final etaAsync = ref.watch(consultarEtaProvider(solicitudId));
 
     return Scaffold(
       appBar: AppBar(
@@ -35,10 +46,10 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(
           message: e.toString(),
-          onRetry: () => ref.invalidate(emergenciaSeguimientoProvider(solicitudId)),
+          onRetry: () => _refresh(ref),
         ),
         data: (s) => RefreshIndicator(
-          onRefresh: () => ref.refresh(emergenciaSeguimientoProvider(solicitudId).future),
+          onRefresh: () => _refresh(ref),
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -55,7 +66,36 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               Text('Tiempo estimado', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
-              EtaLlegadaCard(minutos: s.tiempoEstimadoMin, actualizadoEn: s.updatedAt),
+              etaAsync.when(
+                loading: () => const ShadCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+                error: (e, _) => ShadCard(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'No se pudo consultar el ETA.',
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(e.toString(), style: Theme.of(context).textTheme.bodySmall),
+                        const SizedBox(height: 12),
+                        ShadButton.outline(
+                          onPressed: () => ref.invalidate(consultarEtaProvider(solicitudId)),
+                          child: const Text('Reintentar ETA'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                data: (r) => EtaReparacionCu44Card(eta: r.eta, fromCache: r.fromCache),
+              ),
               const SizedBox(height: 20),
               Text('Análisis asistido (IA)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),

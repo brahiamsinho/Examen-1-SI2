@@ -53,6 +53,10 @@ class ApiConstants {
   static String appClienteEmergenciaSeguimiento(int id) =>
       '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/seguimiento';
 
+  /// CU44 — tiempo estimado de reparación/atención.
+  static String appClienteEmergenciaEta(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/seguimiento/eta';
+
   static String appClienteEmergenciaUbicacionTecnico(int id) =>
       '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/ubicacion-tecnico';
 

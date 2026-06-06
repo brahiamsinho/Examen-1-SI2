@@ -114,6 +114,13 @@ export class TallerShellComponent implements OnInit {
           permiso: 'comisiones:leer',
         },
         {
+          path: '/taller/panel/reportes-kpis',
+          label: 'Reportes KPIs',
+          exact: true,
+          icon: 'chart',
+          permiso: 'reportes:leer',
+        },
+        {
           path: '/taller/panel/emergencias/disponibilidad',
           label: 'Disponibilidad',
           exact: true,
@@ -242,6 +249,7 @@ export class TallerShellComponent implements OnInit {
       '/taller/panel/emergencias/historial': 'Historial',
       '/taller/panel/emergencias/servicios-asignados': 'Servicios asignados',
       '/taller/panel/emergencias/comisiones': 'Comisiones',
+      '/taller/panel/reportes-kpis': 'Reportes KPIs',
       '/taller/panel/emergencias/disponibilidad': 'Disponibilidad',
       '/taller/panel/comunicacion/notificaciones': 'Notificaciones',
       '/taller/panel/accesos/usuarios': 'Usuarios del taller',

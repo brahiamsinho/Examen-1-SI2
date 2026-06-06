@@ -129,6 +129,13 @@ export const TALLER_ROUTES: Routes = [
           ),
       },
       {
+        path: 'reportes-kpis',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'reportes:leer' },
+        loadComponent: () =>
+          import('./features/kpis/taller-kpis.component').then((m) => m.TallerKpisComponent),
+      },
+      {
         path: 'emergencias/disponibilidad',
         canActivate: [tallerPermisoGuard],
         data: { permiso: 'disponibilidad:gestionar' },

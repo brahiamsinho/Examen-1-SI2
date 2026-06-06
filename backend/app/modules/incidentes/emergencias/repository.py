@@ -111,6 +111,14 @@ async def get_solicitud_for_cliente(
     return r.scalar_one_or_none()
 
 
+async def get_solicitud_cliente_id(db: AsyncSession, *, solicitud_id: int) -> int | None:
+    """CU44 — dueño de la solicitud (sin filtrar por cliente autenticado)."""
+    r = await db.execute(
+        select(SolicitudEmergencia.cliente_id).where(SolicitudEmergencia.id == solicitud_id)
+    )
+    return r.scalar_one_or_none()
+
+
 async def get_solicitud_seguimiento_for_cliente(
     db: AsyncSession, *, solicitud_id: int, cliente_id: int
 ) -> SolicitudEmergencia | None:

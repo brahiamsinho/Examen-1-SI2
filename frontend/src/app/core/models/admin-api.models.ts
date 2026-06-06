@@ -197,6 +197,25 @@ export interface AdminPanelOverview {
   actividad_reciente: BitacoraDto[];
 }
 
+/** CU46 — KPIs operativos + financieros del administrador. */
+export interface AdminKpisDto {
+  periodo_desde: string | null;
+  periodo_hasta: string | null;
+  tenant_id: number | null;
+  total_solicitudes: number;
+  solicitudes_activas: number;
+  solicitudes_finalizadas: number;
+  solicitudes_canceladas: number;
+  solicitudes_por_estado: Record<string, number>;
+  pagos_confirmados: number;
+  monto_pagos_bob: string;
+  tiempo_promedio_atencion_min: number | null;
+  sin_datos_en_periodo: boolean;
+  resumen_financiero: AdminFinanzasResumen;
+  top_talleres: TallerComisionFila[];
+  serie_diaria: AdminComisionSerieFila[];
+}
+
 export interface PricingPlanDto {
   id: number;
   slug: string;

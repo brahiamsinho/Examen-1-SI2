@@ -80,6 +80,7 @@ export class AdminShellComponent implements OnInit {
       items: [
         { path: '/admin/panel', label: 'Resumen', exact: true, icon: 'home' },
         { path: '/admin/panel/finanzas', label: 'Finanzas', exact: true, icon: 'chart' },
+        { path: '/admin/panel/reportes-kpis', label: 'Reportes KPIs', exact: true, icon: 'chart' },
       ],
     },
     {
@@ -206,6 +207,7 @@ export class AdminShellComponent implements OnInit {
     const titles: Record<string, string> = {
       '/admin/panel': 'Resumen',
       '/admin/panel/finanzas': 'Finanzas',
+      '/admin/panel/reportes-kpis': 'Reportes KPIs',
       '/admin/panel/organizaciones': 'Organizaciones',
       '/admin/panel/planes-precios': 'Planes y precios',
       '/admin/panel/usuarios': 'Usuarios',

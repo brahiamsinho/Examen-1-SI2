@@ -1,0 +1,19 @@
+@use '../dashboard/taller-dashboard.component';
+
+.dash__btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: inherit;
+}
+
+.dash__btn--inline {
+  margin-left: 0.75rem;
+}
+
+.dash__empty-state {
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.2);
+}

@@ -79,6 +79,14 @@ export class TallerEmergenciasApiService {
     return this.http.get<ReporteTallerDashboardDto>(`${this.base}/reportes/dashboard`, { params: p });
   }
 
+  /** CU46 — KPIs del taller (permiso reportes:leer). */
+  getReporteKpis(params?: { desde?: string; hasta?: string }): Observable<ReporteTallerDashboardDto> {
+    let p = new HttpParams();
+    if (params?.desde) p = p.set('desde', params.desde);
+    if (params?.hasta) p = p.set('hasta', params.hasta);
+    return this.http.get<ReporteTallerDashboardDto>(`${this.base}/reportes/kpis`, { params: p });
+  }
+
   listHistorialAtenciones(params?: {
     estado?: EstadoSolicitudSeguimiento;
     desde?: string;

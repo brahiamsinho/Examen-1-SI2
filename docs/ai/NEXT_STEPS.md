@@ -1,10 +1,27 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-06-05 — CU43/CU45 implementados; verificar E2E offline
+# Actualizado: 2026-06-05 — CU46 KPIs ✅; verificar E2E Docker
 # =========================================================
 
-## ALTA — Verificar CU43/CU45 sync offline (E2E) ← FOCO ACTUAL
+## HECHO — CU46 Dashboard KPIs (2026-06-05) ✅
+
+- Admin y taller: pantallas dedicadas, export CSV, empty/error states.
+- Migración `0023_reportes_kpis_cu46.sql`.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu46-dashboard-kpis.md`.
+
+## ALTA — Verificar CU46 en Docker
+
+1. `docker compose restart backend` (aplicar migración 0023).
+2. `docker compose build frontend && docker compose up -d --no-deps frontend`.
+3. Admin → Reportes KPIs; Taller → Reportes KPIs; probar filtros y CSV.
+
+## HECHO — CU44 Consultar ETA reparación (2026-06-05) ✅
+
+- Endpoint dedicado + UI Seguimiento mobile con caché offline.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu44-consultar-eta-reparacion.md`.
+
+## ALTA — Verificar CU43/CU45 sync offline (E2E)
 
 Sesión: `docs/ai/sessions/2026-06-05-agent-cu43-cu45-sync-offline.md`.
 

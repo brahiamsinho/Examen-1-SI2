@@ -8,6 +8,12 @@
 
 ## DEC-001 — SQLAlchemy async con asyncpg
 
+## DEC-036 — Migración de subagentes Cursor a opencode (2026-06-07)
+
+**Fecha:** 2026-06-07
+**Decisión:** Mover el sistema de agentes del repo desde `.cursor/agents/` a `.opencode/agents/`, registrar `agents.md` y la memoria `docs/ai/` como instrucciones de carga en `opencode.jsonc`, y mantener compatibilidad de skills con `skills.paths` apuntando a `.cursor/skills` y `.opencode/skills`.
+**Por qué:** opencode es ahora la herramienta activa; necesitamos que la orquestación, el modelo por defecto y los subagentes se carguen desde su formato nativo sin perder la memoria viva ni la skill de diagramas.
+
 **Fecha:** 2026-04-11
 **Decisión:** Usar SQLAlchemy 2.0 con asyncio + asyncpg (no psycopg2)
 **Por qué:** FastAPI es async. Usar un driver síncrono bloquearía el event loop en

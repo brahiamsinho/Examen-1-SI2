@@ -24,6 +24,10 @@
 - OnPush + markForCheck + switchMap en `taller-notificaciones.component.ts`.
 - Sesión: `docs/ai/sessions/2026-06-04-agent-fix-notificaciones-taller-colgado.md`.
 
+## ALTA — Despliegue Azure producción
+
+Guía única: **`docs/ai/PRODUCCION_AZURE.md`** (DNS, NSG, `.env` completo, credenciales, comandos).
+
 ## ALTA — Despliegue Azure HTTPS (Certbot)
 
 1. Azure Portal → IP pública → Nombre DNS `oftalmologia-si2`.

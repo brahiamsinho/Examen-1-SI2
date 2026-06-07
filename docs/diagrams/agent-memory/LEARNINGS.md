@@ -132,4 +132,16 @@ Formato de cada entrada:
 - **Regla:** Leer `docs/ai/PUDS_GUIDE.md` y `DEPLOYMENT_DIAGRAM_UML_GUIDE.md` antes de modelar. **UML 2.5+** en paquetes/secuencia/clases/despliegue; **C4** solo para arquitectura lógica 4 capas. Trazabilidad CU → diagrama → código.
 - **Estado:** ACTIVO
 
+### 2026-06-07 - EA/PUML: Clases BCE robustas vs rectangulares en Análisis
+- **Síntoma:** El usuario pidió Clases UML rectangulares con atributos explícitos, pero el diagrama mostraba círculos BCE sin métodos (Robustness).
+- **Causa:** En PlantUML, usar `boundary`, `control`, `entity` fuerza iconos sin compartments. En EA, crear elementos de análisis con ciertos estereotipos/tipos o usar los del modelo de dominio puede ocultar atributos al dibujarse como íconos.
+- **Regla:** Para Clases de Análisis rectangulares, en `.puml` usar `class` puro. En EA, crear clases con prefijos (`V.`, `C.`, `E.`) dentro del paquete del caso de uso con `type: Class` y `stereotypes: ""` y ponerlas en un diagrama `Class` para visualizar métodos y atributos explícitamente.
+- **Estado:** ACTIVO
+
+### 2026-06-07 - EA/UML: Actor modelado como Class
+- **Síntoma:** El Actor `Tecnico` estaba modelado como una clase de análisis (`Class`) con atributos y métodos, y conectado a la entidad `E.SolicitudEmergencia`.
+- **Causa:** En los diagramas de análisis BCE a veces se confunde o mezcla la entidad del dominio (ej. `E.Tecnico`) con el actor que interactúa con el sistema (`Tecnico`).
+- **Regla:** El Actor que interactúa con la Boundary (Vista) debe ser estrictamente de tipo `Actor` (stickman). La entidad de dominio correspondiente debe ser `Class` (ej. `E.Tecnico`) ubicada del lado derecho y conectada solo a las entidades, **nunca** a la Vista que usa el actor.
+- **Estado:** ACTIVO (Resuelto en diagramas de análisis CU36-CU40).
+
 <!-- Añadir nuevas entradas arriba de esta línea -->

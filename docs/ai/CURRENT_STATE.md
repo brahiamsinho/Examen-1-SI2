@@ -1,7 +1,21 @@
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-04 — Fix página Notificaciones taller colgada ✅
-# Última actualización: 2026-06-04 — Cancelación solicitud + mobile analítica §3 ✅
+# Última actualización: 2026-06-07 — Azure HTTPS Certbot ✅
+# Última actualización: 2026-06-07 — Migración de subagentes a opencode ✅
+
+### Despliegue Azure VM + HTTPS Certbot (2026-06-07) ✅
+- [x] `deploy/docker-compose.azure.yml`, nginx bootstrap/HTTPS, scripts Certbot.
+- [x] `docs/ai/DEPLOYMENT_AZURE.md`.
+- [ ] Ejecutar en VM: `./deploy/scripts/certbot-init.sh`.
+- Sesión: `docs/ai/sessions/2026-06-07-agent-azure-certbot-https.md`.
+
+### Migración de subagentes a opencode (2026-06-07) ✅
+- [x] `opencode.jsonc` ahora carga `agents.md`, `docs/ai/*` núcleo y define `default_agent: orchestrator`.
+- [x] Subagentes migrados de `.cursor/agents/` a `.opencode/agents/`.
+- [x] Skill central `uml-c4-puds-diagrams` migrada a `.opencode/skills/`.
+- [x] Se mantiene `skills.paths` apuntando a `.cursor/skills` y `.opencode/skills` para compatibilidad gradual.
+- [ ] Reiniciar opencode para que cargue la nueva config y los nuevos agentes/skills.
+- Sesión: `docs/ai/sessions/2026-06-07-agent-opencode-migracion-subagentes.md`.
 
 ### Fix página Notificaciones taller (2026-06-04) ✅
 - [x] `taller-notificaciones.component.ts`: OnPush + `markForCheck` + `switchMap` (evita race/polling duplicado).

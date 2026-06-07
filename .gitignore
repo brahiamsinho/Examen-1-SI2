@@ -99,7 +99,7 @@ stripe-credentials.json
 
 # ── Locks / configs locales opcionales ───────────────────
 skills-lock.json
-opencode.jsonc
+#opencode.jsonc
 
 tmp-login.json
 tmp-tenant.json
@@ -114,3 +114,9 @@ data/osrm/*.osm.pbf
 data/osrm/*.osrm
 data/osrm/*.osrm.*
 !data/osrm/.gitkeep
+
+# Certbot / Let's Encrypt (generado en la VM; no versionar claves)
+deploy/certbot/conf/
+deploy/certbot/www/*
+!deploy/certbot/www/.gitkeep
+!deploy/certbot/conf/.gitkeep

@@ -1,13 +1,36 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
+# Actualizado: 2026-06-07 — Migración de subagentes a opencode ✅
 # Actualizado: 2026-06-04 — Fix notificaciones taller colgadas ✅
 # =========================================================
+
+## HECHO — Migración de subagentes a opencode (2026-06-07) ✅
+
+- `opencode.jsonc` actualizado con instrucciones y `default_agent`.
+- `.opencode/agents/` ya contiene los subagentes migrados.
+- `.opencode/skills/uml-c4-puds-diagrams/` ya existe.
+
+## ALTA — Reiniciar opencode y validar carga
+
+1. Cerrar la sesión actual de opencode.
+2. Abrir nuevamente el repo y verificar que aparezca `orchestrator` como agente por defecto.
+3. Confirmar que los subagentes listados en `.opencode/agents/` son detectados.
+4. Confirmar que la skill `uml-c4-puds-diagrams` se puede invocar.
+5. Si algo no carga, revisar `opencode.jsonc` y rutas de `skills.paths`.
 
 ## HECHO — Fix página Notificaciones taller (2026-06-04) ✅
 
 - OnPush + markForCheck + switchMap en `taller-notificaciones.component.ts`.
 - Sesión: `docs/ai/sessions/2026-06-04-agent-fix-notificaciones-taller-colgado.md`.
+
+## ALTA — Despliegue Azure HTTPS (Certbot)
+
+1. Azure Portal → IP pública → Nombre DNS `oftalmologia-si2`.
+2. NSG: puertos 22, 80, 443.
+3. VM: `.env` con `PUBLIC_DOMAIN`, `CERTBOT_EMAIL`, URLs `https://...`.
+4. `./deploy/scripts/certbot-init.sh`
+5. Ver `docs/ai/DEPLOYMENT_AZURE.md`.
 
 ## ALTA — Verificar fix notificaciones taller
 

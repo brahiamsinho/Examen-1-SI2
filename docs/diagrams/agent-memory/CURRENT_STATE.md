@@ -31,6 +31,19 @@
 | D-011 (legacy) | `uml/sequence-auth-login.puml` / EA **11** | Tecnológico | No usar en defensa |
 | **Ciclo 4 UC** | `uml/usecases/ciclo4/CU36`–`CU40.puml` | UML Use Case | Git + EA paquete **7**, diagramas **13–17** (18–21 obsoletos) |
 | D-UC-GEN | `uml/usecases/diagrama-general-casos-uso.puml` | UML Use Case general | **4.1.5 Ciclo 4** EA paquete **7**, diagramID **26** (CU36–CU40) |
+| **Ciclo 5 UC Gen** | `uml/ciclo5/CU41-CU46-diagrama-casos-uso.puml` | UML Use Case general | EA paquete **37**, diagramID **77** |
+| **CU36 Análisis Clases** | `uml/ciclo4/CU36-analisis-clases-bce.puml` | UML Análisis Clases | **EA diagramID 66** (Clases rectangulares: V.UbicacionTecnico, C.SeguimientoController, E.SolicitudEmergencia, E.Tecnico) |
+| **CU37 Análisis Clases** | - | UML Análisis Clases | **EA diagramID 67** (Clases rectangulares V/C/E, asociaciones simples + asociaciones entre Entidades con multiplicidad) |
+| **CU38 Análisis Clases** | - | UML Análisis Clases | **EA diagramID 68** (Clases rectangulares V/C/E, asociaciones simples + asociaciones entre Entidades con multiplicidad) |
+| **CU39 Análisis Clases** | - | UML Análisis Clases | **EA diagramID 69** (Clases rectangulares V/C/E, asociaciones simples + asociaciones entre Entidades con multiplicidad) |
+| **CU40 Análisis Clases** | - | UML Análisis Clases | **EA diagramID 70** (Clases rectangulares V/C/E, asociaciones simples + asociaciones entre Entidades con multiplicidad) |
+| **CU41 Análisis Clases** | `uml/ciclo5/CU41-CU46-analisis-clases.puml` | UML Análisis Clases | **EA diagramID 71** (Clases rectangulares V/C/E, atributos/métodos inyectados, asociaciones simples + multiplicidad 1..1) |
+| **CU42 Análisis Clases** | `uml/ciclo5/CU41-CU46-analisis-clases.puml` | UML Análisis Clases | **EA diagramID 72** (Clases rectangulares V/C/E, atributos/métodos inyectados, asociaciones simples + multiplicidad 1..1) |
+| **CU43 Análisis Clases** | `uml/ciclo5/CU41-CU46-analisis-clases.puml` | UML Análisis Clases | **EA diagramID 73** (Clases rectangulares V/C/E, atributos/métodos inyectados, asociaciones simples + multiplicidad 1..1) |
+| **CU44 Análisis Clases** | `uml/ciclo5/CU41-CU46-analisis-clases.puml` | UML Análisis Clases | **EA diagramID 74** (Clases rectangulares V/C/E, atributos/métodos inyectados, asociaciones simples + multiplicidad 1..1) |
+| **CU45 Análisis Clases** | `uml/ciclo5/CU41-CU46-analisis-clases.puml` | UML Análisis Clases | **EA diagramID 75** (Clases rectangulares V/C/E, atributos/métodos inyectados, asociaciones simples) |
+| **CU46 Análisis Clases** | `uml/ciclo5/CU41-CU46-analisis-clases.puml` | UML Análisis Clases | **EA diagramID 76** (Clases rectangulares V/C/E, atributos/métodos inyectados, asociaciones simples) |
+| **CU36 BCE (obsoleto)** | `uml/ciclo4/CU36-analisis-clases-bce.puml` | UML Análisis BCE | **EA diagramID 62** (Iconos robustos) |
 | D-020 | `uml/class-database-conceptual.puml` | UML clases BD | **Canónico** EA paquete **8**, diagramID **23** |
 | D-020 (obsoleto) | `uml/class-database-multitenant-core.puml` | UML clases BD | EA diagramID **22** — layout ilegible |
 | D-*m | `drawio/mermaid/01`…`04-*-c4.mmd` | Puente draw.io C4 | Notación C4Context/Container/Component |
@@ -58,6 +71,10 @@ Ver tablas en `EA_CLEAN_RESET.md` y `sessions/2026-05-28-ea-reset-y-aprendizajes
 | Diagramas obsoletos | **22** spaghetti, **23** círculos |
 | Clases (147–157) | Tenant, Usuario, Rol, UsuarioRol, Cliente, MarcaVehiculo, Vehiculo, Taller, Tecnico, SolicitudEmergencia, Pago |
 | Asociaciones | **276–290** (verbos: agrupa, es, tiene, define, clasifica, posee, solicita, involucra, emplea, atiende, asigna, genera) |
+
+| D-021 | uml/modelo_conceptual.puml | UML clases BD | **Nuevo** DISEÑO CONCEPTUAL DE LA BASE DE DATOS con TODAS las entidades. EA paquete **38**, diagramID **78** |
+| D-022 | `uml/modelo_conceptual.mermaid` | Mermaid ER | Código fuente ER para draw.io |
+| D-022m| `drawio/diseno_bd_conceptual.drawio` | draw.io ER | Diseño conceptual generado vía MCP draw.io |
 
 ## Pendientes
 

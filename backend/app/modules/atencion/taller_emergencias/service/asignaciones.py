@@ -12,6 +12,8 @@ from app.modules.incidentes.emergencias import repository as emergencias_reposit
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.comunicacion_y_notificaciones.notificaciones import service as notificaciones_service
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
+from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
+from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
 from app.modules.atencion.taller_emergencias import repository
 from app.modules.atencion.taller_emergencias.models import EstadoAsignacionTecnicoEnum
 from app.modules.atencion.taller_emergencias.schemas import AsignacionTecnicoRead, AsignarTecnicoIn, AsignarTecnicoOut
@@ -172,6 +174,44 @@ async def asignar_tecnico_a_solicitud(
         tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
         titulo="Nueva asignación",
         mensaje=f"Te asignaron la emergencia #{solicitud_id}. Abre la app para ver detalles.",
+    )
+
+    payload_estado: dict = {
+        "tecnico_id": body.tecnico_id,
+        "taller_id": taller_id,
+        "asignacion_id": asignacion.id,
+    }
+    if estado_antes != se.estado:
+        payload_estado["estado_anterior"] = estado_antes.value
+        payload_estado["estado_nuevo"] = se.estado.value
+    if body.tiempo_estimado_min is not None:
+        payload_estado["tiempo_estimado_min"] = body.tiempo_estimado_min
+
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud_id,
+        tipo=RealtimeEventType.TECNICO_ASIGNADO,
+        payload=payload_estado,
+        occurred_at=now,
+    )
+    if estado_antes != se.estado:
+        queue_solicitud_event(
+            db,
+            solicitud_id=solicitud_id,
+            tipo=RealtimeEventType.ESTADO_INCIDENTE,
+            payload={
+                "estado_anterior": estado_antes.value,
+                "estado_nuevo": se.estado.value,
+                "tecnico_id": body.tecnico_id,
+            },
+            occurred_at=now,
+        )
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud_id,
+        tipo=RealtimeEventType.SEGUIMIENTO_ACTUALIZADO,
+        payload={"motivo": "tecnico_asignado"},
+        occurred_at=now,
     )
 
     return helpers.to_asignar_out(se, asignacion)

@@ -7,6 +7,7 @@
 
   <h2 class="emg__h">Incidente estructurado</h2>
   <p class="emg__lead" *ngIf="detalle">Solicitud #{{ detalle.solicitud_id }} · Bandeja {{ detalle.bandeja_id }}</p>
+  <p class="emg__muted emg__live" *ngIf="wsLive" role="status">Actualización en vivo (WebSocket)</p>
 
   <div class="emg__alert" *ngIf="error" role="alert">{{ error }}</div>
   <div class="emg__ok" *ngIf="successMsg" role="status">{{ successMsg }}</div>

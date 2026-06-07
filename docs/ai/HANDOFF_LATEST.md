@@ -2,6 +2,37 @@
 # =========================================================
 # Handoff para el próximo agente/sesión
 
+## Cambios (2026-06-04) — Mobile reportes personalizados QBE ✅
+
+- **Pantalla** `taller_reportes_screen.dart`: 3 pestañas (Consulta, Plantillas, Dashboard).
+- **Consulta:** texto natural (`/nl-query`), micrófono (`/voice`), vista previa, export Excel/PDF/CSV (`share_plus`), guardar plantilla.
+- **Fix export (2026-06-04):** `XFile.fromData().name` venía vacío en Android → ruta `cache/` sin archivo (`FileSystemException errno=21`). Ahora se escribe con `File.writeAsBytes` y nombre explícito antes de `Share.shareXFiles`.
+- **Plantillas:** listar todas (sistema + custom), ejecutar, eliminar custom.
+- **Repo:** `executeReportQbe`, `nlReportQuery`, `voiceReportQuery`, `exportReportQbe`, `createReportPlantilla`, `deleteReportPlantilla`.
+- **Dep:** `share_plus` en `pubspec.yaml`.
+
+## Cambios (2026-06-04) — Mobile taller módulos avanzados ✅
+
+- **Antes:** pantallas placeholder redirigían a `http://localhost/taller/panel`.
+- **Ahora:** 7 módulos nativos consumen la misma API que el portal Angular (`/app/taller/...`).
+- **Archivos clave:** `mobile/lib/taller/presentation/screens/taller_*_{comisiones,disponibilidad,historial,reportes,suscripcion,bitacora,backups}_screen.dart`, `cliente_go_router.dart`, `taller_repository.dart`.
+- **Limitaciones mobile vs web:** Stripe checkout y restore backup siguen en portal web.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-mobile-taller-modulos-nativos.md`.
+
+## Cambios (2026-06-04) — WebSocket tiempo real (cierre módulo) ✅
+
+- **Backend:** eventos `taller_seleccionado` y `pago_confirmado`; hooks en `seleccion_taller.py` y `pagos/service.py`.
+- **Mobile:** WS en cliente (lista, chat, elegir taller), técnico (detalle + chat), taller (detalle bandeja).
+- **Test:** `backend/tests/test_tiempo_real.py`.
+- **Pendiente prod:** Redis Pub/Sub; cancelación con WS cuando exista API cancel.
+
+## Cambios (2026-06-04) — WebSocket tiempo real ✅
+
+- **Backend:** `tiempo_real/` — `WS /api/ws/solicitudes/{id}?token=`, bus en memoria, hooks en estado/ubicación/chat/bandeja/asignación.
+- **Mobile:** `web_socket_channel`, seguimiento + mapa escuchan eventos y refrescan providers.
+- **Frontend taller:** `RealtimeWsService` en detalle incidente; nginx/proxy con soporte WS.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-websocket-tiempo-real.md`.
+
 ## Cambios (2026-06-06) — Notificaciones taller ampliadas ✅
 
 - **Backend:** `notificar_responsable_taller_por_solicitud` en estado técnico, chat y pagos; `bandeja_id` en FCM.

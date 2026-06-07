@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/network/solicitud_realtime_providers.dart';
 import '../../application/taller_injection.dart';
 
 class TallerBandejaDetalleScreen extends ConsumerStatefulWidget {
@@ -113,6 +114,16 @@ class _TallerBandejaDetalleScreenState extends ConsumerState<TallerBandejaDetall
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (item) {
+          ref.listen(tallerSolicitudRealtimeEventsProvider(item.solicitudId), (prev, next) {
+            next.whenData((ev) {
+              if (realtimeEventAffectsTallerOperacion(ev.tipo)) {
+                ref.invalidate(tallerBandejaDetalleProvider(widget.bandejaId));
+                ref.invalidate(tallerAsignacionesProvider(item.solicitudId));
+                ref.invalidate(tallerBandejaProvider);
+              }
+            });
+          });
+
           final asignacionesAsync = ref.watch(tallerAsignacionesProvider(item.solicitudId));
           final estadoBandeja = (item.estadoBandeja ?? 'PENDIENTE').toUpperCase();
           final pendiente = estadoBandeja == 'PENDIENTE';

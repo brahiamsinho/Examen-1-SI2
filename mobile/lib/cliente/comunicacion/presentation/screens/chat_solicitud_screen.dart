@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/network/solicitud_realtime_providers.dart';
 import '../../../application/client_auth_provider.dart';
 import '../../../application/cliente_injection.dart';
 import '../../application/comunicacion_providers.dart';
@@ -45,8 +46,18 @@ class _ChatSolicitudScreenState extends ConsumerState<ChatSolicitudScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final detalleAsync = ref.watch(emergenciaDetailProvider(widget.solicitudId));
-    final mensajesAsync = ref.watch(mensajesSolicitudProvider(widget.solicitudId));
+    final solicitudId = widget.solicitudId;
+
+    ref.listen(solicitudRealtimeEventsProvider(solicitudId), (prev, next) {
+      next.whenData((ev) {
+        if (realtimeEventAffectsChat(ev.tipo)) {
+          ref.invalidate(mensajesSolicitudProvider(solicitudId));
+        }
+      });
+    });
+
+    final detalleAsync = ref.watch(emergenciaDetailProvider(solicitudId));
+    final mensajesAsync = ref.watch(mensajesSolicitudProvider(solicitudId));
     final miUsuarioId = ref.watch(clientAuthNotifierProvider).profile?.usuarioId;
 
     return Scaffold(

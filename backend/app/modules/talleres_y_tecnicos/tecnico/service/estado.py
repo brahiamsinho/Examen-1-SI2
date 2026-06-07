@@ -13,6 +13,8 @@ from app.modules.incidentes.emergencias import repository as emergencias_reposit
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.comunicacion_y_notificaciones.notificaciones import service as notificaciones_service
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
+from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
+from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 
 from .. import repository
@@ -151,6 +153,30 @@ async def actualizar_estado_servicio(
         tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
         titulo=titulo_taller,
         mensaje=mensaje_taller,
+    )
+
+    payload: dict = {
+        "estado_anterior": estado_anterior.value,
+        "estado_nuevo": body.nuevo_estado.value,
+        "tecnico_id": t.id,
+    }
+    if body.presupuesto_bob is not None:
+        payload["presupuesto_bob"] = str(body.presupuesto_bob.quantize(Decimal("0.01")))
+    if se.tiempo_estimado_min is not None:
+        payload["tiempo_estimado_min"] = se.tiempo_estimado_min
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud_id,
+        tipo=RealtimeEventType.ESTADO_INCIDENTE,
+        payload=payload,
+        occurred_at=now,
+    )
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud_id,
+        tipo=RealtimeEventType.SEGUIMIENTO_ACTUALIZADO,
+        payload={"motivo": "estado_servicio"},
+        occurred_at=now,
     )
 
     row = await repository.get_servicio_asignado_detalle(db, solicitud_id=solicitud_id, tecnico_id=t.id)

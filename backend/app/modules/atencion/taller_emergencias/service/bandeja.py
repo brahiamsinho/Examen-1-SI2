@@ -11,6 +11,8 @@ from app.modules.acceso_y_administracion.bitacora.service import registrar_accio
 from app.modules.incidentes.emergencias.models import SolicitudEmergencia
 from app.modules.comunicacion_y_notificaciones.notificaciones import service as notificaciones_service
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
+from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
+from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
 from app.modules.atencion.taller_emergencias import repository
 from app.modules.atencion.taller_emergencias.models import EstadoBandejaTallerEnum
 from app.modules.atencion.taller_emergencias.schemas import (
@@ -131,6 +133,20 @@ async def rechazar_solicitud(
                 titulo="Actualización de emergencia",
                 mensaje="Un taller no pudo aceptar tu solicitud. Revisa el estado de tu caso en la app.",
             )
+            queue_solicitud_event(
+                db,
+                solicitud_id=se_n.id,
+                tipo=RealtimeEventType.BANDEJA_ACTUALIZADA,
+                payload={"bandeja_id": bandeja_id, "estado_bandeja": "RECHAZADA"},
+                occurred_at=now,
+            )
+            queue_solicitud_event(
+                db,
+                solicitud_id=se_n.id,
+                tipo=RealtimeEventType.SEGUIMIENTO_ACTUALIZADO,
+                payload={"motivo": "bandeja_rechazada"},
+                occurred_at=now,
+            )
     return await obtener_detalle_bandeja(taller_id, bandeja_id, db)
 
 
@@ -250,6 +266,33 @@ async def aceptar_solicitud(
         tipo=TipoNotificacionEnum.TALLER_ASIGNADO,
         titulo="Taller asignado",
         mensaje="Un taller aceptó atender tu emergencia. Puedes ver el detalle en la app.",
+    )
+
+    queue_solicitud_event(
+        db,
+        solicitud_id=se.id,
+        tipo=RealtimeEventType.ESTADO_INCIDENTE,
+        payload={
+            "estado_anterior": estado_anterior.value,
+            "estado_nuevo": se.estado.value,
+            "taller_id": taller_id,
+            "bandeja_id": bandeja_id,
+        },
+        occurred_at=now,
+    )
+    queue_solicitud_event(
+        db,
+        solicitud_id=se.id,
+        tipo=RealtimeEventType.BANDEJA_ACTUALIZADA,
+        payload={"bandeja_id": bandeja_id, "estado_bandeja": "ACEPTADA"},
+        occurred_at=now,
+    )
+    queue_solicitud_event(
+        db,
+        solicitud_id=se.id,
+        tipo=RealtimeEventType.SEGUIMIENTO_ACTUALIZADO,
+        payload={"motivo": "taller_aceptado"},
+        occurred_at=now,
     )
 
     return await obtener_detalle_bandeja(taller_id, bandeja_id, db)

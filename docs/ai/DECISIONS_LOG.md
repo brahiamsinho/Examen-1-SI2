@@ -265,3 +265,9 @@ es la opción estándar de la comunidad Flutter.
 **Fecha:** 2026-06-06  
 **Decisión:** Contenedor **OSRM** (perfil Docker `routing`, datos Geofabrik Bolivia) como motor de rutas por calles. Backend enriquece `GET .../ubicacion-tecnico` con polyline + ETA. Si OSRM no está disponible, fallback haversine (35 km/h) con línea recta.  
 **Por qué:** Open source, alineado con OSM ya usado en mobile; sin API keys de Google; funciona offline en Docker; CU36 pasa de “punto en mapa” a seguimiento con ruta y llegada estimada (VRT).
+
+## DEC-039 — WebSocket por solicitud + bus en memoria (2026-06-04)
+
+**Fecha:** 2026-06-04  
+**Decisión:** `WS /api/ws/solicitudes/{id}?token=<JWT>` con bus en memoria por `solicitud_id`. Eventos encolados en la sesión ORM y publicados en `after_commit`. Auth reutiliza JWT access; autorización por rol (cliente titular, técnico asignado, responsable del taller o bandeja).  
+**Por qué:** Sustituye polling 12 s en CU36 y refresco manual en seguimiento; mismo contrato REST intacto; path claro a Redis Pub/Sub si hay varias réplicas backend.

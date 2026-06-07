@@ -6,11 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/utils/bolivia_time.dart';
+import '../../../../core/network/solicitud_realtime_providers.dart';
 import '../../application/emergencias_providers.dart';
 import '../widgets/emergencia_ubicacion_osm_map.dart';
 import '../widgets/seguimiento/ruta_vrt_eta_card.dart';
 
-/// Mapa y datos de la última posición compartida por el técnico asignado (CU36 polling).
+/// Mapa y datos de la última posición compartida por el técnico (CU36 — WebSocket + fallback).
 class EmergenciaUbicacionTecnicoScreen extends ConsumerStatefulWidget {
   const EmergenciaUbicacionTecnicoScreen({super.key, required this.solicitudId});
 
@@ -22,19 +23,19 @@ class EmergenciaUbicacionTecnicoScreen extends ConsumerStatefulWidget {
 }
 
 class _EmergenciaUbicacionTecnicoScreenState extends ConsumerState<EmergenciaUbicacionTecnicoScreen> {
-  Timer? _pollTimer;
+  Timer? _fallbackTimer;
 
   @override
   void initState() {
     super.initState();
-    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+    _fallbackTimer = Timer.periodic(const Duration(seconds: 90), (_) {
       ref.invalidate(emergenciaUbicacionTecnicoProvider(widget.solicitudId));
     });
   }
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
+    _fallbackTimer?.cancel();
     super.dispose();
   }
 
@@ -47,17 +48,48 @@ class _EmergenciaUbicacionTecnicoScreenState extends ConsumerState<EmergenciaUbi
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(emergenciaUbicacionTecnicoProvider(widget.solicitudId));
+    final solicitudId = widget.solicitudId;
+
+    ref.listen(solicitudRealtimeEventsProvider(solicitudId), (prev, next) {
+      next.whenData((ev) {
+        if (realtimeEventAffectsUbicacion(ev.tipo)) {
+          ref.invalidate(emergenciaUbicacionTecnicoProvider(solicitudId));
+        }
+      });
+    });
+
+    final async = ref.watch(emergenciaUbicacionTecnicoProvider(solicitudId));
+    final wsLive = ref.watch(solicitudRealtimeEventsProvider(solicitudId)).hasValue;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ubicación del técnico'),
         leading: BackButton(onPressed: () => context.pop()),
         actions: [
+          if (wsLive)
+            Padding(
+              padding: const EdgeInsets.only(right: 4, top: 12, bottom: 12),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.circle, size: 8, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'En vivo',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           IconButton(
             tooltip: 'Actualizar ahora',
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(emergenciaUbicacionTecnicoProvider(widget.solicitudId)),
+            onPressed: () => ref.invalidate(emergenciaUbicacionTecnicoProvider(solicitudId)),
           ),
         ],
       ),
@@ -79,7 +111,9 @@ class _EmergenciaUbicacionTecnicoScreenState extends ConsumerState<EmergenciaUbi
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
             children: [
               Text(
-                'Actualización automática cada 12 s',
+                wsLive
+                    ? 'Actualización en tiempo real vía WebSocket'
+                    : 'Actualización periódica de respaldo cada 90 s',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 8),

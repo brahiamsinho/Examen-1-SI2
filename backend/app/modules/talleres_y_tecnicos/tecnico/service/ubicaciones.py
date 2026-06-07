@@ -11,6 +11,8 @@ from app.modules.incidentes.emergencias import repository as emergencias_reposit
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.incidentes.emergencias.schemas import UbicacionCreateIn, UbicacionTecnicoCompartidaRead
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
+from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
+from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
 
 from .. import repository
 from ..schemas import UbicacionClienteActualRead
@@ -74,6 +76,19 @@ async def compartir_ubicacion_tecnico(
         descripcion=f"solicitud_id={solicitud_id} tecnico_ubicacion_compartida",
         usuario_id=user.id,
         entidad_id=solicitud_id,
+    )
+
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud_id,
+        tipo=RealtimeEventType.UBICACION_TECNICO,
+        payload={
+            "latitud": body.latitud,
+            "longitud": body.longitud,
+            "precision_metros": body.precision_metros,
+            "actualizado_at": now.isoformat(),
+        },
+        occurred_at=now,
     )
 
     return UbicacionTecnicoCompartidaRead(

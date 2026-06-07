@@ -19,6 +19,35 @@
 # Actualizado: 2026-06-06 — Notificaciones taller ampliadas
 # =========================================================
 
+# Actualizado: 2026-06-04 — WebSocket tiempo real
+# =========================================================
+
+# Actualizado: 2026-06-04 — Mobile taller módulos avanzados
+# =========================================================
+
+## MEDIA — Probar reportes personalizados mobile (2026-06-04)
+
+1. Login responsable → Más módulos → Reportes.
+2. Pestaña Consulta: «comisiones pendientes» → Interpretar y ejecutar → ver tabla.
+3. Micrófono: grabar consulta → transcribir → ejecutar.
+4. Export Excel/PDF/CSV → compartir archivo.
+5. Guardar plantilla → pestaña Plantillas → ejecutar/eliminar.
+
+## MEDIA — Probar mobile taller módulos avanzados (2026-06-04)
+
+1. Login responsable taller en app Flutter (`responsable@...` demo).
+2. Panel → ⋮ → «Más módulos» → abrir cada ítem (Comisiones, Disponibilidad, etc.).
+3. Verificar datos reales (no mensaje localhost); Disponibilidad guardar toggle; Backups crear uno.
+4. Reportes: ejecutar plantilla sistema y ver diálogo con filas/columnas.
+
+## ALTA — Probar WebSocket end-to-end (2026-06-04)
+
+1. `docker compose up -d --build backend frontend` (nginx WS headers).
+2. Mobile cliente: abrir seguimiento de solicitud activa → badge «En vivo».
+3. Desde portal taller: aceptar/asignar técnico; desde app técnico: cambiar estado / compartir ubicación.
+4. Verificar que mobile refresca sin pull manual; DevTools → Network → WS en panel taller.
+5. Opcional prod: Redis Pub/Sub si hay >1 réplica backend.
+
 ## ALTA — Probar notificaciones taller ampliadas (2026-06-06)
 
 1. `docker compose up -d --build backend` (aplica cambios de notificaciones).

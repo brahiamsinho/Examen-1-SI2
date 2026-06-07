@@ -1,8 +1,33 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-06 — Notificaciones taller ampliadas ✅
+# Última actualización: 2026-06-04 — Mobile taller módulos avanzados ✅
 # =========================================================
+
+## Mobile taller — módulos avanzados nativos (2026-06-04) ✅
+- [x] Reemplazados placeholders «Abrí localhost/taller/panel» por pantallas nativas con API `/app/taller/*`.
+- [x] Pantallas: **Comisiones**, **Disponibilidad** (toggle + capacidad), **Historial**, **Reportes** (QBE completo), **Suscripción** (lectura plan), **Bitácora**, **Backups** (listar + crear).
+- [x] **Reportes mobile (2026-06-04):** NL query, voz (Whisper/Gemini), vista previa tabular, export Excel/PDF/CSV vía `share_plus`, CRUD plantillas personalizadas, plantillas sistema, dashboard operativo.
+- [x] Rutas GoRouter: `/taller/app/{comisiones|disponibilidad|historial|reportes|suscripcion|bitacora|backups}`; acceso desde «Más módulos».
+- [x] Repository + providers Riverpod en `taller_repository.dart` / `taller_injection.dart`.
+- [ ] Mobile suscripción: checkout Stripe (solo portal web).
+- [ ] Mobile backups: download/restore (solo portal web).
+- [x] Sesión: `docs/ai/sessions/2026-06-04-agent-mobile-taller-modulos-nativos.md`.
+
+## WebSocket tiempo real (2026-06-04) ✅
+- [x] Módulo `comunicacion_y_notificaciones/tiempo_real/` — bus en memoria, auth JWT, router WS.
+- [x] Endpoint `WS /api/ws/solicitudes/{solicitud_id}?token=<JWT>` — roles cliente/técnico/taller responsable.
+- [x] Publicación tras commit: estado técnico, ubicación, chat, bandeja aceptar/rechazar, asignación técnico, **CU37 seleccionar taller**, **pago confirmado**.
+- [x] Envelope JSON: `{ tipo, solicitud_id, payload, occurred_at }` (+ `taller_seleccionado`, `pago_confirmado`).
+- [x] Mobile **cliente**: seguimiento, mapa, chat, lista solicitudes activas, elegir taller.
+- [x] Mobile **técnico**: detalle servicio + chat.
+- [x] Mobile **taller**: detalle bandeja/incidente.
+- [x] Angular taller: detalle incidente.
+- [x] Nginx + `proxy.conf.js`: headers WebSocket.
+- [x] Test unitario: `backend/tests/test_tiempo_real.py`.
+- [ ] Producción multi-réplica: Redis Pub/Sub.
+- [ ] Cancelación solicitud con WS (no hay endpoint cancel en API aún).
+- [x] Sesión: `docs/ai/sessions/2026-06-04-agent-websocket-tiempo-real.md`.
 
 ## Notificaciones taller ampliadas (2026-06-06) ✅
 - [x] Helper `notificar_responsable_taller_por_solicitud` (taller + `bandeja_id` en FCM).
@@ -70,12 +95,12 @@
 
 ### Ciclo 4 — CU36–CU40 (examen SI2; código 2026-06-02) ✅
 - [x] **CU37 Seleccionar taller (cliente):** `GET .../talleres-candidatos`, `POST .../seleccionar-taller`; servicio `incidentes/emergencias/service/seleccion_taller.py`; mobile `emergencia_seleccion_taller_screen.dart`, ruta `.../seleccionar-taller`; `crear_solicitud` ya no reparte bandeja a todos los talleres.
-- [x] **CU36 Ubicación técnico:** `GET .../ubicacion-tecnico`; mobile `emergencia_ubicacion_tecnico_screen.dart` con **polling 12 s** + refresh manual (sin WebSocket).
+- [x] **CU36 Ubicación técnico:** `GET .../ubicacion-tecnico`; mobile mapa con **WebSocket** (+ fallback 90 s) y OSRM/VRT.
 - [x] **CU38 Pago pasarela:** Stripe PaymentIntent + PaymentSheet si `settings.stripe_enabled`; si no hay `STRIPE_*` en contenedor → `proveedor: SIMULADO`. Efectivo/transferencia/QR siempre simulado. Ver `docs/puds/casos-uso/CICLO4_DETALLE_CASOS_USO.md`.
 - [x] **CU39 Estado atención técnico:** PATCH estado + presupuesto BOB (ya documentado Ciclo 2/3).
 - [x] **CU40 Tenant SaaS:** fases 1–3 (tenants, RLS, billing, admin organizaciones, mobile/taller `X-Tenant-Slug`).
 - [x] **PUDS:** matriz y detalle actualizados en `docs/puds/casos-uso/CICLO4_*`; sesión técnica `docs/ai/sessions/2026-06-02-agent-cu37-cu36-mobile.md`.
-- [ ] Opcional: WebSocket ubicación (CU36); tests pytest integración CU37; `TRACEABILITY_MATRIX.md` con filas CU36–40.
+- [ ] Opcional: tests pytest WS; Redis bus prod; `TRACEABILITY_MATRIX.md` con filas CU36–40.
 
 ### SaaS multi-tenant — fase 2 (2026-05-24) ✅
 - [x] Migración `0016_multitenancy_phase2.sql` (Docker `16_`): RLS, email/tel/placa únicos por tenant, Stripe en `tenants`.

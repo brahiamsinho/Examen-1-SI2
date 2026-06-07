@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/bolivia_time.dart';
+import '../../../../core/network/solicitud_realtime_providers.dart';
 import '../../application/tecnico_emergencias_providers.dart';
 import '../../domain/tecnico_servicio_models.dart';
 import '../widgets/tecnico_estado_servicio_badge.dart';
@@ -20,6 +21,16 @@ class TecnicoServicioDetalleScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final solicitudId = this.solicitudId;
+
+    ref.listen(tecnicoSolicitudRealtimeEventsProvider(solicitudId), (prev, next) {
+      next.whenData((ev) {
+        if (realtimeEventAffectsTecnicoServicio(ev.tipo)) {
+          ref.invalidate(tecnicoServiciosAsignadosProvider);
+        }
+      });
+    });
+
     final listAsync = ref.watch(tecnicoServiciosAsignadosProvider);
 
     return Scaffold(

@@ -20,6 +20,8 @@ from app.modules.atencion.taller_emergencias.repository import (
 )
 from app.modules.comunicacion_y_notificaciones.notificaciones import service as notif_service
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
+from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
+from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
 from app.modules.incidentes.emergencias import repository
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.incidentes.emergencias.schemas import SeleccionarTallerOut
@@ -182,6 +184,44 @@ async def seleccionar_taller(
         titulo="Nueva solicitud en tu bandeja",
         mensaje=f"Un cliente eligió tu taller para la solicitud #{s.id}. Revisá la bandeja.",
         extra_data={"bandeja_id": str(bandeja.id)},
+    )
+
+    queue_solicitud_event(
+        db,
+        solicitud_id=s.id,
+        tipo=RealtimeEventType.TALLER_SELECCIONADO,
+        payload={
+            "taller_id": taller_id,
+            "bandeja_id": bandeja.id,
+            "estado": s.estado.value,
+        },
+        occurred_at=now,
+    )
+    if estado_anterior != s.estado:
+        queue_solicitud_event(
+            db,
+            solicitud_id=s.id,
+            tipo=RealtimeEventType.ESTADO_INCIDENTE,
+            payload={
+                "estado_anterior": estado_anterior.value,
+                "estado_nuevo": s.estado.value,
+                "taller_id": taller_id,
+            },
+            occurred_at=now,
+        )
+    queue_solicitud_event(
+        db,
+        solicitud_id=s.id,
+        tipo=RealtimeEventType.BANDEJA_ACTUALIZADA,
+        payload={"bandeja_id": bandeja.id, "estado_bandeja": EstadoBandejaTallerEnum.PENDIENTE.value},
+        occurred_at=now,
+    )
+    queue_solicitud_event(
+        db,
+        solicitud_id=s.id,
+        tipo=RealtimeEventType.SEGUIMIENTO_ACTUALIZADO,
+        payload={"motivo": "taller_seleccionado"},
+        occurred_at=now,
     )
 
     return SeleccionarTallerOut(

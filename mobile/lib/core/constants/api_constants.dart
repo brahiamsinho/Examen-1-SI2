@@ -43,6 +43,43 @@ class ApiConstants {
   static String get appTallerEmergenciasDisponibilidad =>
       '${AppEnv.apiBaseUrl}/app/taller/emergencias/disponibilidad';
 
+  static String get appTallerEmergenciasComisiones =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/comisiones';
+
+  static String get appTallerEmergenciasComisionesResumen =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/comisiones/resumen';
+
+  static String get appTallerEmergenciasHistorial =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/historial-atenciones';
+
+  static String get appTallerEmergenciasReportesDashboard =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/reportes/dashboard';
+
+  static String get appTallerSuscripcion => '${AppEnv.apiBaseUrl}/app/taller/suscripcion';
+
+  static String get appTallerBitacora => '${AppEnv.apiBaseUrl}/app/taller/bitacora';
+
+  static String get appTallerBackups => '${AppEnv.apiBaseUrl}/app/taller/backups/';
+
+  static String appTallerBackupDownload(int id) => '${AppEnv.apiBaseUrl}/app/taller/backups/$id/download';
+
+  static String get appTallerReportesPlantillas => '${AppEnv.apiBaseUrl}/app/taller/reportes/plantillas';
+
+  static String appTallerReportePlantillaRun(int id) =>
+      '${AppEnv.apiBaseUrl}/app/taller/reportes/plantillas/$id/run';
+
+  static String appTallerReportePlantilla(int id) =>
+      '${AppEnv.apiBaseUrl}/app/taller/reportes/plantillas/$id';
+
+  static String get appTallerReportesExecute => '${AppEnv.apiBaseUrl}/app/taller/reportes/execute';
+
+  static String get appTallerReportesNlQuery => '${AppEnv.apiBaseUrl}/app/taller/reportes/nl-query';
+
+  static String get appTallerReportesVoice => '${AppEnv.apiBaseUrl}/app/taller/reportes/voice';
+
+  static String appTallerReporteExport(String fmt) =>
+      '${AppEnv.apiBaseUrl}/app/taller/reportes/export/$fmt';
+
   /// App técnico — emergencias.
   static String get appTecnicoEmergenciasServiciosAsignados =>
       '${AppEnv.apiBaseUrl}/app/tecnico/emergencias/servicios-asignados';

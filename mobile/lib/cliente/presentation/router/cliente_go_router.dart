@@ -49,13 +49,20 @@ import '../../../tecnico/presentation/screens/tecnico_splash_screen.dart';
 import '../../../tecnico/presentation/shell/tecnico_app_shell.dart';
 import '../../../taller/application/taller_auth_provider.dart';
 import '../../../taller/application/taller_auth_state.dart';
+import '../../../taller/presentation/screens/taller_backups_screen.dart';
 import '../../../taller/presentation/screens/taller_bandeja_detalle_screen.dart';
 import '../../../taller/presentation/screens/taller_bandeja_list_screen.dart';
+import '../../../taller/presentation/screens/taller_bitacora_screen.dart';
+import '../../../taller/presentation/screens/taller_comisiones_screen.dart';
+import '../../../taller/presentation/screens/taller_disponibilidad_screen.dart';
+import '../../../taller/presentation/screens/taller_historial_screen.dart';
 import '../../../taller/presentation/screens/taller_home_screen.dart';
 import '../../../taller/presentation/screens/taller_login_screen.dart';
 import '../../../taller/presentation/screens/taller_more_screen.dart';
 import '../../../taller/presentation/screens/taller_perfil_screen.dart';
+import '../../../taller/presentation/screens/taller_reportes_screen.dart';
 import '../../../taller/presentation/screens/taller_splash_screen.dart';
+import '../../../taller/presentation/screens/taller_suscripcion_screen.dart';
 import '../../../taller/presentation/screens/taller_tecnicos_list_screen.dart';
 import '../../../taller/presentation/shell/taller_app_shell.dart';
 
@@ -201,6 +208,34 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/taller/app/mas',
             builder: (context, state) => const TallerMoreScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/comisiones',
+            builder: (context, state) => const TallerComisionesScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/disponibilidad',
+            builder: (context, state) => const TallerDisponibilidadScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/historial',
+            builder: (context, state) => const TallerHistorialScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/reportes',
+            builder: (context, state) => const TallerReportesScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/suscripcion',
+            builder: (context, state) => const TallerSuscripcionScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/bitacora',
+            builder: (context, state) => const TallerBitacoraScreen(),
+          ),
+          GoRoute(
+            path: '/taller/app/backups',
+            builder: (context, state) => const TallerBackupsScreen(),
           ),
         ],
       ),

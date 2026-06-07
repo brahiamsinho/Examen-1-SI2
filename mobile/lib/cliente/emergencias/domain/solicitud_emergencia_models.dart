@@ -58,6 +58,9 @@ enum EstadoSolicitudEmergencia {
   bool get puedeElegirTaller =>
       this == EstadoSolicitudEmergencia.registrada ||
       this == EstadoSolicitudEmergencia.enRevision;
+
+  bool get esTerminal =>
+      this == EstadoSolicitudEmergencia.finalizada || this == EstadoSolicitudEmergencia.cancelada;
 }
 
 enum TipoEvidenciaSolicitud {

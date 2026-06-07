@@ -19,6 +19,13 @@ class TallerAppShell extends StatelessWidget {
   static bool _showBottomNav(String path) {
     if (path.startsWith('/taller/app/bandeja/') && path != '/taller/app/bandeja') return false;
     if (path == '/taller/app/mas') return false;
+    if (path.startsWith('/taller/app/comisiones')) return false;
+    if (path.startsWith('/taller/app/disponibilidad')) return false;
+    if (path.startsWith('/taller/app/historial')) return false;
+    if (path.startsWith('/taller/app/reportes')) return false;
+    if (path.startsWith('/taller/app/suscripcion')) return false;
+    if (path.startsWith('/taller/app/bitacora')) return false;
+    if (path.startsWith('/taller/app/backups')) return false;
     return true;
   }
 

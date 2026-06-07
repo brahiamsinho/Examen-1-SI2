@@ -20,6 +20,8 @@ from app.modules.comunicacion_y_notificaciones.notificaciones.service import (
 from app.modules.clientes_y_vehiculos.clientes.service import get_cliente_row_for_usuario, require_cliente_rol
 from app.modules.talleres_y_tecnicos.tecnico.service import get_tecnico_row_for_usuario, require_tecnico_rol
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
+from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
+from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
 
 
 async def _get_solicitud_or_404(db: AsyncSession, solicitud_id: int) -> SolicitudEmergencia:
@@ -135,6 +137,18 @@ async def enviar_mensaje(
         tipo=TipoNotificacionEnum.MENSAJE_NUEVO,
         titulo=f"Mensaje del {actor_label.lower()}",
         mensaje=f"Emergencia #{solicitud_id} — {actor_label}: {preview}",
+    )
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud_id,
+        tipo=RealtimeEventType.MENSAJE_NUEVO,
+        payload={
+            "mensaje_id": msg.id,
+            "emisor_usuario_id": emisor,
+            "preview": preview,
+            "actor": actor,
+        },
+        occurred_at=now,
     )
     if actor == "cliente" and sol.taller_id is not None:
         await eventos_servicio.on_mensaje_cliente(

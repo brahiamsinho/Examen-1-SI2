@@ -15,6 +15,8 @@ from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEn
 from app.modules.acceso_y_administracion.bitacora.service import registrar_accion
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.notificaciones import service as notificaciones_service
+from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
+from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
 from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.pagos_y_comisiones.pagos import repository
@@ -54,6 +56,27 @@ def _assert_solicitud_pagable(sol) -> None:
 def _monto_a_unidad_menor(monto: Decimal) -> int:
     """Stripe: monto en unidad menor (p. ej. centavos para BOB)."""
     return int((monto * Decimal(100)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _queue_pago_confirmado_ws(db: AsyncSession, *, solicitud, pago) -> None:
+    monto = _quantize_monto(pago.monto)
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud.id,
+        tipo=RealtimeEventType.PAGO_CONFIRMADO,
+        payload={
+            "pago_id": pago.id,
+            "monto": str(monto),
+            "moneda": pago.moneda,
+            "metodo": pago.metodo.value if pago.metodo else None,
+        },
+    )
+    queue_solicitud_event(
+        db,
+        solicitud_id=solicitud.id,
+        tipo=RealtimeEventType.SEGUIMIENTO_ACTUALIZADO,
+        payload={"motivo": "pago_confirmado"},
+    )
 
 
 async def _notificar_pago_confirmado_taller(db: AsyncSession, *, solicitud, pago) -> None:
@@ -107,6 +130,7 @@ async def _aplicar_resultado_pasarela(
             monto_label=f"{pago.monto} {pago.moneda}",
         )
         await _notificar_pago_confirmado_taller(db, solicitud=solicitud, pago=pago)
+        _queue_pago_confirmado_ws(db, solicitud=solicitud, pago=pago)
         await repository.registrar_comision_taller_tras_pago(db, solicitud=solicitud, pago=pago)
     else:
         pago.estado = EstadoPagoEnum.FALLIDO
@@ -438,6 +462,7 @@ async def confirmar_pago_stripe(
         monto_label=f"{pago.monto} {pago.moneda}",
     )
     await _notificar_pago_confirmado_taller(db, solicitud=sol, pago=pago)
+    _queue_pago_confirmado_ws(db, solicitud=sol, pago=pago)
     await repository.registrar_comision_taller_tras_pago(db, solicitud=sol, pago=pago)
     await repository.refresh_pago(db, pago)
     return PagoRead.model_validate(pago)

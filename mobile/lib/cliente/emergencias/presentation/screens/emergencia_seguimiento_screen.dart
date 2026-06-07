@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../../../core/utils/bolivia_time.dart';
 import '../../../pagos/presentation/widgets/solicitud_pago_cta_block.dart';
+import '../../../../core/network/solicitud_realtime_providers.dart';
 import '../../application/consultar_eta_providers.dart';
 import '../../application/emergencias_providers.dart';
 import '../../domain/solicitud_emergencia_models.dart';
@@ -18,6 +19,8 @@ import '../widgets/seguimiento/taller_asignado_card.dart';
 import '../widgets/seguimiento/tecnico_asignado_card.dart';
 import '../widgets/seguimiento/elegir_taller_prompt_card.dart';
 
+/// Seguimiento de solicitud: estado, taller, técnico, ETA, historial (WS + pull).
+class EmergenciaSeguimientoScreen extends ConsumerStatefulWidget {
 /// Seguimiento de solicitud — CU44 ETA + estado, taller, técnico, historial.
 class EmergenciaSeguimientoScreen extends ConsumerWidget {
   const EmergenciaSeguimientoScreen({super.key, required this.solicitudId});
@@ -34,13 +37,52 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EmergenciaSeguimientoScreen> createState() => _EmergenciaSeguimientoScreenState();
+}
+
+class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimientoScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final solicitudId = widget.solicitudId;
+
+    ref.listen(solicitudRealtimeEventsProvider(solicitudId), (prev, next) {
+      next.whenData((ev) {
+        if (realtimeEventAffectsSeguimiento(ev.tipo)) {
+          ref.invalidate(emergenciaSeguimientoProvider(solicitudId));
+        }
+      });
+    });
+
     final async = ref.watch(emergenciaSeguimientoProvider(solicitudId));
+    final wsLive = ref.watch(solicitudRealtimeEventsProvider(solicitudId)).hasValue;
     final etaAsync = ref.watch(consultarEtaProvider(solicitudId));
 
     return ClienteSubpageScaffold(
       title: 'Seguimiento',
       onBack: () => context.canPop() ? context.pop() : context.go('/cliente/app/emergencias/solicitudes/$solicitudId'),
+      actions: wsLive
+          ? [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.circle, size: 8, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'En vivo',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ]
+          : null,
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(

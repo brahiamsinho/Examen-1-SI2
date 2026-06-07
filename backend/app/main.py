@@ -72,6 +72,8 @@ from app.modules.comunicacion_y_notificaciones.comunicaciones.router import (
     taller_router as comunicaciones_taller_router,
 )
 from app.modules.talleres_y_tecnicos.tecnico.router import router as tecnico_router
+from app.modules.comunicacion_y_notificaciones.tiempo_real.router import router as tiempo_real_ws_router
+from app.modules.comunicacion_y_notificaciones.tiempo_real import publish as _tiempo_real_publish  # noqa: F401
 from app.modules.pagos_y_comisiones.pagos.router import emergencias_pagos_cliente_router
 from app.modules.ai.router import router as ai_router
 from app.modules.acceso_y_administracion.reportes.router_taller import (
@@ -141,6 +143,7 @@ app.include_router(tecnico_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 app.include_router(ai_router, prefix=PREFIX)
 app.include_router(reportes_taller_router, prefix=PREFIX)
+app.include_router(tiempo_real_ws_router, prefix=PREFIX)
 
 # Archivos de evidencia (foto/audio) servidos en HTTPS/HTTP según el entorno. si
 _evid_dir = settings.evidencias_upload_dir

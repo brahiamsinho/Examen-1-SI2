@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/utils/bolivia_time.dart';
+import '../../../../core/network/solicitud_realtime_listener.dart';
+import '../../../../core/network/solicitud_realtime_providers.dart';
+import '../../../../core/network/solicitud_realtime_ws_client.dart';
 import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../application/emergencias_providers.dart';
 import '../../application/offline_sync_providers.dart';
@@ -88,6 +91,22 @@ class _EmergenciasMisSolicitudesScreenState extends ConsumerState<EmergenciasMis
           if (list.isEmpty) {
             return _EmptyBody(onNueva: () => context.push('/cliente/app/emergencias'));
           }
+          final activas = list.where((s) => !s.estado.esTerminal).map((s) => s.id).toList();
+          return ClienteMultiSolicitudRealtimeListener(
+            solicitudIds: activas,
+            onEvent: (RealtimeWsEvent ev) {
+              if (realtimeEventAffectsSeguimiento(ev.tipo)) {
+                ref.invalidate(misSolicitudesEmergenciasProvider);
+              }
+            },
+            child: RefreshIndicator(
+              onRefresh: () async => ref.invalidate(misSolicitudesEmergenciasProvider),
+              child: ListView.separated(
+                padding: ClientePanelUi.pagePadding,
+                itemCount: list.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) => _SolicitudTile(solicitud: list[i]),
+              ),
 
           return RefreshIndicator(
             onRefresh: () async {

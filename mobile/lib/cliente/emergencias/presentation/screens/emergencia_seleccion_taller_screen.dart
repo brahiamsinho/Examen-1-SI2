@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../presentation/widgets/cliente_panel_ui.dart';
+import '../../../../core/network/solicitud_realtime_providers.dart';
 import '../../application/emergencias_providers.dart';
 import '../../domain/taller_candidato_models.dart';
 import '../widgets/seguimiento/taller_cliente_resumen_card.dart';
@@ -49,7 +50,18 @@ class _EmergenciaSeleccionTallerScreenState extends ConsumerState<EmergenciaSele
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(talleresCandidatosProvider(widget.solicitudId));
+    final solicitudId = widget.solicitudId;
+
+    ref.listen(solicitudRealtimeEventsProvider(solicitudId), (prev, next) {
+      next.whenData((ev) {
+        if (realtimeEventAffectsSeguimiento(ev.tipo)) {
+          ref.invalidate(emergenciaSeguimientoProvider(solicitudId));
+          ref.invalidate(talleresCandidatosProvider(solicitudId));
+        }
+      });
+    });
+
+    final async = ref.watch(talleresCandidatosProvider(solicitudId));
     final scheme = Theme.of(context).colorScheme;
 
     return ClienteSubpageScaffold(

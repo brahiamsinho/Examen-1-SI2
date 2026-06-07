@@ -4,6 +4,7 @@ import {
   Component,
   DestroyRef,
   inject,
+  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -14,6 +15,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { TallerEmergenciasApiService } from '../../../../core/services/taller-emergencias-api.service';
+import { RealtimeWsService } from '../../../../core/services/realtime-ws.service';
 import { TallerApiService } from '../../../../core/services/taller-api.service';
 import { TallerAuthService } from '../../../../core/services/taller-auth.service';
 import type {
@@ -31,8 +33,9 @@ import type { TecnicoPortalDto } from '../../../../core/models/taller-api.models
   styleUrl: './taller-emergencias-incidente-detalle.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
+export class TallerEmergenciasIncidenteDetalleComponent implements OnInit, OnDestroy {
   private readonly api = inject(TallerEmergenciasApiService);
+  private readonly realtimeWs = inject(RealtimeWsService);
   private readonly tallerApi = inject(TallerApiService);
   readonly auth = inject(TallerAuthService);
   private readonly route = inject(ActivatedRoute);
@@ -58,6 +61,9 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
   modalAceptar = false;
   modalRechazar = false;
   motivoRechazo = '';
+  wsLive = false;
+  private wsConn: { close(): void } | null = null;
+  private wsSolicitudId: number | null = null;
 
   presupuestoBob: number | null = null;
   presupuestoDetalle = '';
@@ -74,6 +80,63 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.closeWs();
+  }
+
+  private closeWs(): void {
+    this.wsConn?.close();
+    this.wsConn = null;
+    this.wsSolicitudId = null;
+    this.wsLive = false;
+  }
+
+  private ensureWs(solicitudId: number): void {
+    if (this.wsSolicitudId === solicitudId && this.wsConn) return;
+    this.connectWs(solicitudId);
+  }
+
+  private connectWs(solicitudId: number): void {
+    this.closeWs();
+    const token = this.auth.getAccessToken();
+    if (!token) return;
+
+    this.wsSolicitudId = solicitudId;
+    const conn = this.realtimeWs.connectSolicitud({ solicitudId, token });
+    this.wsConn = conn;
+    conn.events$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (ev) => {
+          if (ev.tipo === 'conectado') {
+            this.wsLive = true;
+            this.cdr.markForCheck();
+            return;
+          }
+          if (
+            ev.tipo === 'estado_incidente' ||
+            ev.tipo === 'tecnico_asignado' ||
+            ev.tipo === 'bandeja_actualizada' ||
+            ev.tipo === 'seguimiento_actualizado' ||
+            ev.tipo === 'ubicacion_tecnico' ||
+            ev.tipo === 'mensaje_nuevo' ||
+            ev.tipo === 'taller_seleccionado' ||
+            ev.tipo === 'pago_confirmado'
+          ) {
+            this.load();
+          }
+        },
+        error: () => {
+          this.wsLive = false;
+          this.cdr.markForCheck();
+        },
+        complete: () => {
+          this.wsLive = false;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   load(): void {
@@ -101,6 +164,7 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit {
       .subscribe({
         next: (d) => {
           this.detalle = d;
+          this.ensureWs(d.solicitud_id);
           this.cargarDatosAsignacion(d);
           this.cdr.markForCheck();
         },

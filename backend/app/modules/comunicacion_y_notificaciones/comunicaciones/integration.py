@@ -1,10 +1,10 @@
-"""Extensión futura con `emergencias` y tiempo real (CU19).
+"""Tiempo real por solicitud (WebSocket).
 
-- **Push al cambiar estado:** desde `emergencias/service` (tras guardar historial),
-  llamar a `notificaciones.service.crear_notificacion_y_push(...)` con el
-  `usuario_id` del cliente y `TipoNotificacionEnum.ESTADO_ACTUALIZADO` (o el que corresponda).
+Implementado en `comunicacion_y_notificaciones/tiempo_real/`:
+- `WS /api/ws/solicitudes/{solicitud_id}?token=<JWT>`
+- Bus en memoria + publicación tras `commit` (SQLAlchemy `after_commit`)
+- Eventos: estado_incidente, ubicacion_tecnico, mensaje_nuevo, bandeja_actualizada,
+  tecnico_asignado, seguimiento_actualizado
 
-- **WebSocket / SSE:** exponer un `asyncio.Queue` o bus de eventos por `solicitud_id`
-  al que escriba el mismo servicio que hoy inserta en `solicitud_mensajes`; un proceso
-  worker puede fan-out a conexiones WS sin cambiar el contrato REST del chat.
+Para múltiples réplicas backend en producción: sustituir el bus por Redis Pub/Sub.
 """

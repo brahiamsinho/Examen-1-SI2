@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../cliente/comunicacion/presentation/widgets/chat_bubble.dart';
 import '../../../../cliente/comunicacion/presentation/widgets/chat_composer.dart';
+import '../../../../core/network/solicitud_realtime_providers.dart';
 import '../../../application/tecnico_auth_provider.dart';
 import '../../application/tecnico_emergencias_providers.dart';
 import '../../domain/tecnico_servicio_models.dart';
@@ -47,7 +48,17 @@ class _TecnicoServicioChatScreenState extends ConsumerState<TecnicoServicioChatS
 
   @override
   Widget build(BuildContext context) {
-    final mensajesAsync = ref.watch(tecnicoMensajesSolicitudProvider(widget.solicitudId));
+    final solicitudId = widget.solicitudId;
+
+    ref.listen(tecnicoSolicitudRealtimeEventsProvider(solicitudId), (prev, next) {
+      next.whenData((ev) {
+        if (realtimeEventAffectsChat(ev.tipo)) {
+          ref.invalidate(tecnicoMensajesSolicitudProvider(solicitudId));
+        }
+      });
+    });
+
+    final mensajesAsync = ref.watch(tecnicoMensajesSolicitudProvider(solicitudId));
     final miUsuarioId = ref.watch(tecnicoAuthNotifierProvider).perfil?.usuarioId;
     final listAsync = ref.watch(tecnicoServiciosAsignadosProvider);
     var tituloCliente = widget.initial?.clienteNombreCompleto ?? 'Cliente';

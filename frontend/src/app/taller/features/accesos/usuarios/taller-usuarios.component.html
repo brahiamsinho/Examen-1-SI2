@@ -3,7 +3,7 @@
     <h2 class="pg__title">Usuarios del taller</h2>
     <p class="pg__lead">
       Personal de tu organización: responsables de taller y técnicos. Los clientes finales se gestionan en
-      <strong>Cuentas clientes</strong> (registro vía app móvil).
+      <strong>Cuentas clientes</strong>.
     </p>
   </header>
 
@@ -69,6 +69,33 @@
             <button type="button" class="pg__mini" (click)="openDetail(u)">Ver</button>
             <button type="button" class="pg__mini" *ngIf="puedeEditar" (click)="openEdit(u)">Editar</button>
             <button type="button" class="pg__mini" *ngIf="puedeEditar" (click)="openRoles(u)">Roles</button>
+            <button
+              type="button"
+              class="pg__mini"
+              *ngIf="puedeEditar && u.estado !== 'ACTIVO' && !esYo(u)"
+              [disabled]="busy"
+              (click)="activar(u)"
+            >
+              Activar
+            </button>
+            <button
+              type="button"
+              class="pg__mini"
+              *ngIf="puedeEliminar && u.estado === 'ACTIVO' && !esYo(u)"
+              [disabled]="busy"
+              (click)="desactivar(u)"
+            >
+              Desactivar
+            </button>
+            <button
+              type="button"
+              class="pg__mini pg__mini--danger"
+              *ngIf="puedeEliminar && !esYo(u)"
+              [disabled]="busy"
+              (click)="eliminar(u)"
+            >
+              Eliminar
+            </button>
           </td>
         </tr>
       </tbody>

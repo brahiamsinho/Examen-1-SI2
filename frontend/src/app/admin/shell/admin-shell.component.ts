@@ -20,6 +20,8 @@ import { filter } from 'rxjs/operators';
 import { AdminApiService } from '../../core/services/admin-api.service';
 import { AdminAuthService } from '../../core/services/admin-auth.service';
 import { AdminTenantContextService } from '../../core/services/admin-tenant-context.service';
+import { FcmService } from '../../core/services/fcm.service';
+import { NotificationBellComponent } from '../../shared/notifications/notification-bell.component';
 import type { MeResponse } from '../../core/models/auth.models';
 import type { TenantDto } from '../../core/models/admin-api.models';
 
@@ -50,7 +52,7 @@ export interface AdminNavGroup {
 @Component({
   selector: 'app-admin-shell',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   templateUrl: './admin-shell.component.html',
   styleUrl: './admin-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,6 +60,7 @@ export interface AdminNavGroup {
 export class AdminShellComponent implements OnInit {
   readonly auth = inject(AdminAuthService);
   readonly tenantCtx = inject(AdminTenantContextService);
+  private readonly fcm = inject(FcmService);
   private readonly api = inject(AdminApiService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -93,6 +96,13 @@ export class AdminShellComponent implements OnInit {
           icon: 'building',
           superadminOnly: true,
         },
+        {
+          path: '/admin/panel/backups',
+          label: 'Backups',
+          exact: true,
+          icon: 'shield',
+          superadminOnly: true,
+        },
       ],
     },
     {
@@ -121,6 +131,7 @@ export class AdminShellComponent implements OnInit {
     const stored = this.tenantCtx.selectedTenantId();
     this.tenantFilter = stored == null ? 'all' : String(stored);
     this.rebuildNavGroups();
+    void this.fcm.activate('admin');
 
     this.tenantCtx.tenantChanges$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -157,6 +168,10 @@ export class AdminShellComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  logout(): void {
+    void this.fcm.deactivate().finally(() => this.auth.logout());
   }
 
   toggleSidebar(): void {
@@ -209,6 +224,7 @@ export class AdminShellComponent implements OnInit {
       '/admin/panel/finanzas': 'Finanzas',
       '/admin/panel/reportes-kpis': 'Reportes KPIs',
       '/admin/panel/organizaciones': 'Organizaciones',
+      '/admin/panel/backups': 'Backups',
       '/admin/panel/planes-precios': 'Planes y precios',
       '/admin/panel/usuarios': 'Usuarios',
       '/admin/panel/roles': 'Roles',

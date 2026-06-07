@@ -28,3 +28,7 @@ services:
       SEED_CLIENTE_ON_START: "true"
       SEED_TALLER_ON_START: "true"
       SEED_TECNICO_ON_START: "true"
+      SEED_MULTI_ORGS_ON_START: "true"
+      SEED_DEMO_SANTA_CRUZ_ON_START: "true"
+      SEED_DEMO_MEDIA_PRIORIDAD_ON_START: "true"
+      SEED_MULTI_ORG_EMERGENCIAS_ON_START: "true"

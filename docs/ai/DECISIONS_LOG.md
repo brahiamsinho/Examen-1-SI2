@@ -237,3 +237,44 @@ es la opción estándar de la comunidad Flutter.
 **Decisión:** Los diagramas Communication de CU36 en EA siguen `Actor → Vista → Control → Entidad` (como `CU36-comunicacion-ubicacion-tecnico.drawio`), no topología estrella con controlador en el centro. Guía: `docs/ai/EA_COMMUNICATION_DIAGRAM_GUIDE.md`.  
 **Por qué:** La estrella rompe la lectura MVC/BCE y no coincide con el Draw.io de referencia ni con el flujo real (el cliente no llama al API sin pasar por la vista). Los mensajes apilados en EA se resuelven arrastrando etiquetas, no duplicando Associations.  
 **Nota:** `1.3 getUbicacionTecnico()` va al enlace Controlador → **SolicitudEmergencia** (evidencia Draw.io), no simplificar a Tecnico.
+## DEC-032 — Bitácora portal taller: endpoint dedicado + permiso acotado (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** No reutilizar `GET /api/bitacora/` para el taller. Nuevo `GET /api/app/taller/bitacora` con permiso `bitacora_taller:leer`, filtro obligatorio por `tenant_id`, actores (responsable + técnicos del `taller_id`) y whitelist de módulos operativos. Respuesta sin `ip_address`.  
+**Por qué:** El endpoint admin filtra solo por tenant y expondría acciones de clientes u otros talleres de la misma organización. Tres capas (tenant + equipo + módulo) garantizan aislamiento sin `tenant_id` en la tabla `bitacora`.
+
+## DEC-033 — Backups: pg_dump plataforma + export CSV por tenant (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** Módulo `backup` en FastAPI (no Django). **Plataforma:** `pg_dump` completo comprimido. **Tenant:** export lógico CSV de tablas con `tenant_id` (shared schema, sin `--schema=`). **Evidencias:** tarball de `uploads/evidencias`. Scheduler en contenedor Docker aparte (`backup-scheduler`) con volumen `backup_data`. Restore automático solo para dumps `PLATAFORMA` (destructivo, requiere confirmación).  
+**Por qué:** Oftalmología usaba schema-per-tenant; EmergenciasViales usa RLS/shared schema — un dump por schema no aplica. CSV por tenant permite respaldo selectivo sin romper otras orgs; `pg_dump` global cubre desastre total de plataforma.
+
+## DEC-034 — Portal taller: CRUD técnicos y clientes (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** El responsable de taller puede **desactivar** (baja lógica técnico + usuario) y **eliminar** (físico solo sin historial) técnicos vía `/api/app/taller/tecnicos`. Puede **CRUD clientes** de su tenant vía `/api/clientes/` con permisos `clientes:crear|actualizar|eliminar` (migración `0023`). Eliminar físico bloqueado con 409 si hay solicitudes, vehículos, pagos o asignaciones.  
+**Por qué:** Requerimiento explícito de operación desde el panel web; se mantiene integridad referencial y trazabilidad (desactivar como vía segura cuando hay historial).
+
+## DEC-035 — Backup taller incluye cuentas de técnicos (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** El export `TALLER` incluye `usuarios` y `usuario_rol` de los técnicos del taller (no todo el tenant). En restore se recrean esas cuentas antes de `COPY tecnicos`. Backups sin esos CSV omiten filas huérfanas en lugar de abortar.  
+**Por qué:** Hard-delete de técnico borra también `usuarios`; restore solo con `tecnicos.csv` violaba `fk_tecnicos_usuario`. Incluir cuentas permite deshacer eliminaciones; filtrar mantiene compatibilidad con backups ya creados.
+
+## DEC-036 — Reportes QBE en portal taller (2026-06-05)
+
+**Fecha:** 2026-06-05  
+**Decisión:** Módulo `reportes` con motor QBE (whitelist SQLAlchemy), export Excel/PDF/CSV en memoria, traductor NL por reglas en español, micrófono Web Speech en frontend y endpoint `/voice` opcional vía Whisper. Scope automático `tenant_id` + `taller_id`.  
+**Por qué:** Reutiliza patrón probado en Oftalmología sin SQL generado por IA; aislamiento multi-tenant en el motor; tres formatos de exportación pedidos por voz (“en excel y pdf”).
+
+## DEC-037 — Horarios de atención por taller (2026-06-04)
+
+**Fecha:** 2026-06-04  
+**Decisión:** Tabla `taller_horarios` (7 filas max por taller, franja TIME, `activo`). Zona fija `America/La_Paz`. Default Lun–Sáb 08:00–18:00, Dom cerrado. Mismo permiso `disponibilidad:gestionar` para editar horarios. Ranking CU37 expone `abierto_ahora`; selección cliente y aceptar bandeja rechazan fuera de horario.  
+**Por qué:** Red multi-taller por tenant requiere disponibilidad temporal real; evita asignar emergencias cuando el taller no opera.
+
+## DEC-038 — VRT/ETA con OSRM + fallback haversine (2026-06-06)
+
+**Fecha:** 2026-06-06  
+**Decisión:** Contenedor **OSRM** (perfil Docker `routing`, datos Geofabrik Bolivia) como motor de rutas por calles. Backend enriquece `GET .../ubicacion-tecnico` con polyline + ETA. Si OSRM no está disponible, fallback haversine (35 km/h) con línea recta.  
+**Por qué:** Open source, alineado con OSM ya usado en mobile; sin API keys de Google; funciona offline en Docker; CU36 pasa de “punto en mapa” a seguimiento con ruta y llegada estimada (VRT).

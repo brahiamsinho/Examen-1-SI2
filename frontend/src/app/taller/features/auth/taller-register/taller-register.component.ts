@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -7,10 +7,15 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { TallerApiService } from '../../../../core/services/taller-api.service';
+import {
+  PublicApiService,
+  PublicTenantOption,
+} from '../../../../core/services/public-api.service';
+import { TenantSlugService } from '../../../../core/services/tenant-slug.service';
 
 function passwordsMatch(c: AbstractControl): ValidationErrors | null {
   const p = c.get('password')?.value;
@@ -26,12 +31,20 @@ function passwordsMatch(c: AbstractControl): ValidationErrors | null {
   templateUrl: './taller-register.component.html',
   styleUrl: './taller-register.component.scss',
 })
-export class TallerRegisterComponent {
+export class TallerRegisterComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(TallerApiService);
+  private readonly publicApi = inject(PublicApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly tenantSlug = inject(TenantSlugService);
+
+  tenants: PublicTenantOption[] = [];
+  loadingTenants = true;
+  registeredOrgSlug: string | null = null;
 
   readonly form = this.fb.nonNullable.group(
     {
+      orgSlug: ['', Validators.required],
       nombre_comercial: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       telefono: ['', [Validators.required, Validators.minLength(5)]],
@@ -53,6 +66,58 @@ export class TallerRegisterComponent {
   pendienteVerificacion = false;
   readonly mailhogWebUrl = environment.mailhogWebUrl;
 
+  ngOnInit(): void {
+    const org = this.route.snapshot.queryParamMap.get('org');
+    const preferred = this.tenantSlug.resolveFromQueryParam(org);
+    this.form.controls.orgSlug.disable();
+
+    this.publicApi.listActiveTenants().subscribe({
+      next: (tenants) => {
+        this.tenants = tenants;
+        this.loadingTenants = false;
+        const slug = this.resolveOrgSlug(preferred, tenants);
+        if (slug) {
+          this.form.patchValue({ orgSlug: slug });
+        }
+        if (tenants.length === 0) {
+          this.form.controls.orgSlug.disable();
+        } else {
+          this.form.controls.orgSlug.enable();
+        }
+      },
+      error: () => {
+        this.loadingTenants = false;
+        if (preferred) {
+          this.form.patchValue({ orgSlug: preferred });
+          this.form.controls.orgSlug.enable();
+        }
+      },
+    });
+  }
+
+  tenantLabel(t: PublicTenantOption): string {
+    return `${t.nombre} (${t.slug})`;
+  }
+
+  private resolveOrgSlug(
+    preferred: string | null,
+    tenants: PublicTenantOption[],
+  ): string | null {
+    if (preferred && tenants.some((t) => t.slug === preferred)) {
+      return preferred;
+    }
+    const stored = this.tenantSlug.get();
+    if (stored && tenants.some((t) => t.slug === stored)) {
+      return stored;
+    }
+    return tenants.length > 0 ? tenants[0].slug : preferred ?? stored;
+  }
+
+  loginQuery(): { org?: string } {
+    const slug = this.registeredOrgSlug ?? this.form.controls.orgSlug.value?.trim();
+    return slug ? { org: slug } : {};
+  }
+
   submit(): void {
     this.errorMsg = null;
     this.success = false;
@@ -61,9 +126,11 @@ export class TallerRegisterComponent {
       return;
     }
     const v = this.form.getRawValue();
+    this.tenantSlug.set(v.orgSlug);
     this.submitting = true;
     this.api
       .registro({
+        tenant_slug: v.orgSlug.trim().toLowerCase(),
         nombre_comercial: v.nombre_comercial.trim(),
         email: v.email.trim(),
         telefono: v.telefono.trim(),
@@ -77,6 +144,7 @@ export class TallerRegisterComponent {
         next: (dto) => {
           this.submitting = false;
           this.success = true;
+          this.registeredOrgSlug = v.orgSlug.trim().toLowerCase();
           this.pendienteVerificacion = dto.pendiente_verificacion_email !== false;
         },
         error: (err: unknown) => {

@@ -57,6 +57,116 @@ Backlog completo en Engram: `topic_key: examen-si2/cu41-notificaciones-pendiente
 - `X-Tenant-Slug` interceptor Angular taller (revisar cobertura).
 - Dropdown campana, TRACEABILITY_MATRIX CU41, diagrama comunicación PUDS.
 - In-app taller **ya implementado** (campana, inbox, hooks cliente→taller).
+# Actualizado: 2026-06-05 — Módulo backups
+# =========================================================
+
+# Actualizado: 2026-06-05 — Reportes personalizados QBE
+# =========================================================
+
+# Actualizado: 2026-06-04 — Red talleres + horarios
+# =========================================================
+
+# Actualizado: 2026-06-04 — FCM web + notificaciones
+# =========================================================
+
+# Actualizado: 2026-06-06 — Fix push FCM mobile
+# =========================================================
+
+# Actualizado: 2026-06-06 — Notificaciones taller ampliadas
+# =========================================================
+
+## ALTA — Probar notificaciones taller ampliadas (2026-06-06)
+
+1. `docker compose up -d --build backend` (aplica cambios de notificaciones).
+2. Portal taller: login responsable, campana activa + permiso push navegador.
+3. Flujo completo: CU37 → aceptar bandeja → asignar técnico → técnico en camino/atención/finalizada → chat → pago.
+4. Verificar campana + push en cada paso; click debe abrir detalle de la solicitud.
+
+## ALTA — Activar rutas por calles OSRM (2026-06-06)
+
+1. `.\scripts\osrm-setup.ps1` (descarga Bolivia OSM + preprocesa; ~10–20 min).
+2. `docker compose --profile routing up -d osrm backend`.
+3. Mobile cliente → solicitud con técnico en camino → «Ver ubicación del técnico».
+4. Verificar tarjeta «Llegada estimada (VRT)» y polyline curva (`proveedor: osrm` en JSON API).
+
+## ALTA — Probar push mobile tras fix (2026-06-06)
+
+1. Backend ya con `FCM_ENABLED=true` y credenciales JSON válidas — reiniciar si hace falta: `docker compose up -d backend`.
+2. Mobile: logout/login cliente → aceptar permiso notificaciones Android.
+3. Esperar push «Bienvenido a Emergencias Viales» (primer registro token).
+4. Logs: `FCM multicast enviado: success=1`.
+5. CU37 elige taller → push va al **portal taller** (responsable), no al cliente. Para probar push cliente: mensaje chat, cambio estado, pago simulado.
+
+## ALTA — Activar y probar push web (2026-06-04)
+
+1. `.env` raíz: `FCM_ENABLED=true`, `FIREBASE_WEB_ENABLED=true` + claves `FIREBASE_WEB_*` (proyecto `transporte-si2`).
+2. `cd frontend && npm run env:sync` y rebuild frontend.
+3. Aplicar migración `0027_taller_fcm_notificaciones.sql` (DB existente: `docker compose exec db psql ...` o reinicio init).
+4. Login portal taller → campana notificaciones; aceptar permiso navegador; verificar token en `usuario_fcm_tokens`.
+5. Desde mobile cliente: CU37 elegir taller → push + fila in-app en bandeja taller.
+
+## ALTA — Validar red talleres + horarios (2026-06-04)
+
+1. `docker compose up -d --build backend frontend` (migración `0026_taller_horarios.sql`).
+2. Seeds: `docker compose exec backend python -m app.seeds`.
+3. Verificar **6 talleres** en org `demo-sc` (cada uno con ≥1 técnico) — ver `docs/CREDENCIALES_DEMO.md`.
+4. Portal taller → **Horarios** — cambiar franja; probar fuera de horario (ranking mobile + aceptar bandeja).
+5. Login móvil técnico: p. ej. `marco.salas@sc-demo.test` / `scdemo1` org `demo-sc`; probar `andres.vargas@` (4to Anillo).
+
+## MEDIA — Validar panel cliente mobile Paleta A (2026-06-05)
+
+1. `cd mobile && flutter run` (o hot reload si ya corre).
+2. Login cliente `carlos.vega@sc-demo.test` / `scdemo1` org `demo-sc`.
+3. Revisar home, bottom nav, perfil, vehículos, notificaciones, flujo emergencia.
+4. Probar chip org (cambia slug persistido; requests usan nuevo `X-Tenant-Slug`).
+
+## ALTA — Reportes portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend frontend` (migración `0025_reportes_modulo.sql` + `openpyxl`/`reportlab`).
+2. **Cerrar sesión y volver a entrar** en `/taller` (permisos `reportes:*` en JWT).
+3. Ir a **Emergencias → Reportes** (`/taller/panel/reportes`).
+4. Probar texto: `comisiones pendientes de este mes en excel y pdf` → vista previa + descargas automáticas.
+5. Probar plantilla sistema «Comisiones pendientes» → Ejecutar → export manual Excel/PDF/CSV.
+6. Guardar plantilla personalizada y eliminarla.
+7. Micrófono: Chrome/Edge; si falla, usar textarea o `POST .../voice` con IA (`AI_ENABLED=true`).
+
+## ALTA — Restore backup taller tras eliminar técnico (2026-06-05)
+
+1. `docker compose up -d --build backend` (fix FK `tecnicos` → `usuarios`).
+2. Crear **backup manual nuevo** (los viejos no traen `usuarios.csv`).
+3. Eliminar un técnico sin historial → Restaurar el backup nuevo → debe reaparecer técnico + cuenta.
+4. Backup antiguo (#9 etc.): restore ya **no falla**, pero no recupera técnicos cuya cuenta fue borrada.
+
+## ALTA — CRUD técnicos y clientes (2026-06-05)
+
+1. Aplicar migración `0023_taller_clientes_crud_permisos.sql` (`docker compose exec db psql ...` o rebuild en volumen nuevo).
+2. `docker compose up -d --build backend frontend`.
+3. **Cerrar sesión y volver a entrar** en `/taller` (permisos `clientes:crear|actualizar|eliminar` en JWT).
+4. Probar **Técnicos**: desactivar / eliminar (409 si tiene atenciones).
+5. Probar **Cuentas clientes**: crear, editar, desactivar, eliminar (409 si tiene vehículos/solicitudes/pagos).
+
+## ALTA — Backups portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend backup-scheduler frontend` (migración `0022_taller_backup.sql`).
+2. Login `/taller` como responsable → **Equipo y taller → Backups**.
+3. Configurar hora **03:00**, activar automático, guardar.
+4. Crear backup manual → Descargar / Restaurar (con confirmación).
+5. Si 403: cerrar sesión y volver a entrar (permiso `backup_taller:gestionar` en JWT).
+
+## ALTA — Verificar backups plataforma (admin)
+
+1. `docker compose up -d --build backend backup-scheduler frontend` (migración `0021_backup_modulo.sql`).
+2. Login admin superadmin `patricio.mendez@sc-demo.test` / `scdemo1` → **Plataforma SaaS → Backups**.
+3. Crear backup **Plataforma** → estado `COMPLETADO` → Descargar `.sql.gz`.
+4. Verificar contenedor: `docker compose logs backup-scheduler --tail 50` (runner periódico + retención).
+5. Opcional: backup **TENANT** eligiendo org `demo-sc`; backup **EVIDENCIAS** si hay archivos en `uploads/evidencias`.
+
+## ALTA — Bitácora portal taller (2026-06-05)
+
+1. `docker compose up -d --build backend frontend` (aplica migración `0020_taller_bitacora_permiso.sql`).
+2. Login `/taller` como responsable demo → **Equipo y taller → Bitácora**.
+3. Verificar: aparecen login, técnicos, bandeja, suscripción; no aparecen acciones de clientes ni otros talleres.
+4. Si el menú no muestra Bitácora: cerrar sesión y volver a entrar (permisos en JWT/`/auth/me`).
 
 ## ALTA — Verificar panel taller (2026-06-05)
 
@@ -64,13 +174,14 @@ Backlog completo en Engram: `topic_key: examen-si2/cu41-notificaciones-pendiente
 2. Navegar sidebar: Resumen, Solicitudes, Mis solicitudes, Historial, Mi taller, Técnicos, Roles, Clientes.
 3. Si algo sigue en "Cargando…", revisar consola DevTools (Network debe ser 200) y el componente hijo de esa ruta.
 
-## ALTA — Planes y precios + Stripe (2026-06-04)
+## ALTA — Planes y precios + Stripe (2026-06-05)
 
-1. Reiniciar backend: `docker compose up -d --build backend` (migración `0019_pricing_plans.sql`).
-2. Admin superadmin → **Comercial → Planes y precios** → editar plan Pro → pegar `stripe_price_id` de Stripe.
-3. Configurar `.env`: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`.
-4. Landing `#precios` → plan de pago → email → redirect Stripe Checkout.
-5. Rebuild frontend si usas Docker: `docker compose up -d --build frontend`.
+1. `.env` raíz: `STRIPE_SECRET_KEY=sk_test_...`, `STRIPE_PUBLISHABLE_KEY=pk_test_...` (y opcional `STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES=true`).
+2. `docker compose up -d --build backend` — al arrancar crea/sincroniza `price_...` en Stripe test y en `pricing_plans`.
+3. Panel taller → **Planes SaaS** → Upgrade Pro/Max → Stripe Checkout → tarjeta test `4242...` → vuelta con plan actualizado (confirm por `session_id`, sin webhook en local).
+4. **Producción:** configurar webhook Stripe → `/api/webhooks/stripe-saas` + `STRIPE_SAAS_WEBHOOK_SECRET`.
+5. **Dev alternativo:** `stripe listen --forward-to localhost:8000/api/webhooks/stripe-saas`.
+6. Opcional override manual: `STRIPE_SAAS_PRICE_PRO` / `STRIPE_SAAS_PRICE_MAX` o Admin → Planes y precios.
 
 ## ALTA — Login panel admin (verificado 2026-06-04)
 
@@ -82,8 +193,10 @@ Backlog completo en Engram: `topic_key: examen-si2/cu41-notificaciones-pendiente
 ## MEDIA — Admin SaaS organizaciones
 
 1. ~~Fix 422 al crear org (slug mayúsculas)~~ — hecho 2026-06-04.
-2. Probar en UI: `/admin/panel/organizaciones` → slug `Mi Empresa` o `Nueva-Org` → debe crear OK; slug `mi-empresa` → 409 con mensaje claro.
-3. Si el frontend Docker no refleja cambios: `docker compose up -d --build frontend`.
+2. ~~Dropdown planes comerciales Free / Pro / Max~~ — hecho 2026-06-05 (`saas-plan-tiers.ts`).
+3. Probar en UI: crear org con plan **Pro** → en `/taller/panel/suscripcion` debe mostrarse Pro (no enum interno).
+4. Revisar en `/admin/panel/planes-precios` que Pro y Max tengan `stripe_price_id` distintos si ambos son de pago.
+5. Si el frontend Docker no refleja cambios: `docker compose up -d --build frontend`.
 
 ## MEDIA — Admin SaaS talleres (provision)
 

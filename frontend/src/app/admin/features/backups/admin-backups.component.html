@@ -1,0 +1,71 @@
+<div class="bk">
+  <header class="bk__head">
+    <h2 class="bk__h">Backups de plataforma</h2>
+    <p class="bk__lead">
+      Respaldos con <code>pg_dump</code> (BD completa) o export CSV por organización. El contenedor
+      <strong>backup-scheduler</strong> ejecuta backups automáticos según la configuración.
+    </p>
+  </header>
+
+  <div class="bk__alert bk__alert--error" *ngIf="error" role="alert">{{ error }}</div>
+  <div class="bk__alert bk__alert--ok" *ngIf="success" role="status">{{ success }}</div>
+
+  <section class="bk__card">
+    <h3>Crear backup manual</h3>
+    <div class="bk__form">
+      <label class="bk__lbl">
+        Tipo
+        <select class="bk__inp" [(ngModel)]="createTipo">
+          <option value="PLATAFORMA">Plataforma (pg_dump completo)</option>
+          <option value="TENANT">Organización (CSV por tenant)</option>
+          <option value="EVIDENCIAS">Solo evidencias (uploads)</option>
+        </select>
+      </label>
+      <label class="bk__lbl" *ngIf="createTipo === 'TENANT'">
+        Organización
+        <select class="bk__inp" [(ngModel)]="createTenantId">
+          <option value="">Seleccionar…</option>
+          <option *ngFor="let t of tenants" [value]="t.id">{{ t.nombre }} ({{ t.slug }})</option>
+        </select>
+      </label>
+      <label class="bk__lbl bk__lbl--check" *ngIf="createTipo === 'PLATAFORMA'">
+        <input type="checkbox" [(ngModel)]="incluirEvidencias" />
+        Incluir también archivo de evidencias
+      </label>
+      <button type="button" class="bk__btn bk__btn--primary" (click)="crear()">Crear backup</button>
+    </div>
+  </section>
+
+  <p class="bk__muted" *ngIf="loading">Cargando…</p>
+
+  <div class="bk__tablewrap" *ngIf="!loading">
+    <table class="bk__table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tipo</th>
+          <th>Organización</th>
+          <th>Estado</th>
+          <th>Tamaño</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows">
+          <td>{{ row.id }}</td>
+          <td>{{ row.tipo }}</td>
+          <td>{{ row.tenant_nombre || '—' }}</td>
+          <td><span class="bk__pill">{{ row.estado }}</span></td>
+          <td>{{ row.tamano_mb != null ? row.tamano_mb + ' MB' : '—' }}</td>
+          <td>{{ row.creado_en | date : 'medium' }}</td>
+          <td class="bk__actions">
+            <button type="button" class="bk__mini" (click)="descargar(row)" [disabled]="row.estado !== 'COMPLETADO' && row.estado !== 'RESTAURADO'">Descargar</button>
+            <button type="button" class="bk__mini bk__mini--danger" (click)="eliminar(row)">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="bk__empty" *ngIf="!rows.length">Sin backups registrados.</p>
+  </div>
+</div>

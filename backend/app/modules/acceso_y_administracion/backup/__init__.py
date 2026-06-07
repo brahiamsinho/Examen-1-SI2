@@ -1,0 +1,1 @@
+# Módulo backup/restore — plataforma (pg_dump) y export por tenant (shared schema).

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/app_env.dart';
+import '../../../core/widgets/mobile/mobile_shell_widgets.dart';
 import '../../application/client_auth_provider.dart';
 import '../../application/client_auth_state.dart';
 
@@ -50,9 +51,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     ref.watch(clientAuthNotifierProvider);
 
     final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      backgroundColor: scheme.surface,
-      body: Center(
+    return MobileGradientBackground(
+      safeArea: false,
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

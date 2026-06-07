@@ -5,6 +5,7 @@
 // Angular sustituye automáticamente el archivo al compilar con --configuration production
 // =========================================================
 import { mailhogWebUrl as mailhogWebUrlFromEnv } from './mailhog-url.generated';
+import { firebaseWebConfig } from './firebase-config.generated';
 
 export const environment = {
   production: false,
@@ -13,4 +14,5 @@ export const environment = {
   appName: 'Plataforma Emergencias Vehiculares',
   /** UI MailHog: definir MAILHOG_WEB_URL en `.env` raíz y ejecutar `npm run env:sync` (o `npm start`). */
   mailhogWebUrl: mailhogWebUrlFromEnv,
+  firebase: firebaseWebConfig,
 };

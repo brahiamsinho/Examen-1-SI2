@@ -19,6 +19,7 @@ from .schemas import (
     AsignarTecnicoIn,
     AsignarTecnicoOut,
     BandejaIncidenteBaseRead,
+    BandejaIdPorSolicitudRead,
     ComisionTallerRead,
     HistorialAtencionRead,
     RechazarBandejaIn,
@@ -122,6 +123,21 @@ async def put_disponibilidad(
     """CU29 — actualizar banderas y capacidad declarada."""
     user, taller = ctx
     return await service.actualizar_disponibilidad(user, taller.id, body, db)
+
+
+@router.get(
+    "/solicitudes/{solicitud_id}/bandeja-id",
+    response_model=BandejaIdPorSolicitudRead,
+    dependencies=[Depends(require_permission("solicitudes_taller:leer"))],
+)
+async def bandeja_id_por_solicitud(
+    solicitud_id: int,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    """Deep-link desde notificaciones del portal taller hacia el detalle de bandeja."""
+    _, taller = ctx
+    return await service.resolver_bandeja_id_por_solicitud(taller.id, solicitud_id, db)
 
 
 @router.post(

@@ -13,12 +13,16 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
 import { AdminApiService } from '../../../core/services/admin-api.service';
-import type {
-  PlanTenant,
-  TenantCreatePayload,
-  TenantDto,
-  TenantUpdatePayload,
-} from '../../../core/models/admin-api.models';
+import type { TenantCreatePayload, TenantDto, TenantUpdatePayload } from '../../../core/models/admin-api.models';
+import {
+  commercialPlanDisplayName,
+  commercialSlugToPlanTenant,
+  DEFAULT_COMMERCIAL_PLANS,
+  formatPlanPrice,
+  planTenantToCommercialSlug,
+  type CommercialPlanOption,
+  type CommercialPlanSlug,
+} from '../../../core/utils/saas-plan-tiers';
 
 const TENANT_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -37,25 +41,57 @@ export class AdminOrganizacionesComponent implements OnInit {
 
   readonly tenants = signal<TenantDto[]>([]);
   readonly loading = signal(true);
+  readonly commercialPlans = signal<CommercialPlanOption[]>(DEFAULT_COMMERCIAL_PLANS);
+
   error: string | null = null;
   busy = false;
   modalCreate = false;
   modalEdit = false;
   selected: TenantDto | null = null;
 
-  createForm: TenantCreatePayload = {
+  createForm = {
     slug: '',
     nombre: '',
-    plan: 'STARTER',
+    commercialPlanSlug: 'free' as CommercialPlanSlug,
   };
 
   editForm: TenantUpdatePayload = {};
+  editCommercialPlanSlug: CommercialPlanSlug = 'free';
   stripeCustomerId = '';
 
-  readonly plans: PlanTenant[] = ['FREE', 'STARTER', 'PRO', 'ENTERPRISE'];
+  readonly planDisplayName = commercialPlanDisplayName;
+
+  planDescription(slug: CommercialPlanSlug): string {
+    return this.commercialPlans().find((p) => p.slug === slug)?.description ?? '';
+  }
 
   ngOnInit(): void {
+    this.loadCommercialPlans();
     this.reload();
+  }
+
+  private loadCommercialPlans(): void {
+    this.api
+      .listPricingPlans()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (rows) => {
+          const sorted = [...rows].sort((a, b) => a.sort_order - b.sort_order);
+          this.commercialPlans.set(
+            sorted.map((p) => ({
+              slug: p.slug as CommercialPlanSlug,
+              name: p.name,
+              priceLabel: formatPlanPrice(Number(p.price_monthly_bob), p.currency),
+              description: p.description?.trim() || '',
+            })),
+          );
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.commercialPlans.set(DEFAULT_COMMERCIAL_PLANS);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   reload(force = false): void {
@@ -93,7 +129,7 @@ export class AdminOrganizacionesComponent implements OnInit {
   }
 
   openCreate(): void {
-    this.createForm = { slug: '', nombre: '', plan: 'STARTER' };
+    this.createForm = { slug: '', nombre: '', commercialPlanSlug: 'free' };
     this.error = null;
     this.modalCreate = true;
     this.cdr.markForCheck();
@@ -151,7 +187,7 @@ export class AdminOrganizacionesComponent implements OnInit {
     const body: TenantCreatePayload = {
       slug,
       nombre,
-      plan: this.createForm.plan,
+      plan: commercialSlugToPlanTenant(this.createForm.commercialPlanSlug),
     };
     this.api
       .createTenant(body)
@@ -172,10 +208,10 @@ export class AdminOrganizacionesComponent implements OnInit {
 
   openEdit(t: TenantDto): void {
     this.selected = t;
+    this.editCommercialPlanSlug = planTenantToCommercialSlug(t.plan);
     this.editForm = {
       nombre: t.nombre,
       estado: t.estado,
-      plan: t.plan,
       dominio_custom: t.dominio_custom,
       subscription_status: t.subscription_status,
     };
@@ -222,8 +258,12 @@ export class AdminOrganizacionesComponent implements OnInit {
   submitEdit(): void {
     if (!this.selected) return;
     this.busy = true;
+    const payload: TenantUpdatePayload = {
+      ...this.editForm,
+      plan: commercialSlugToPlanTenant(this.editCommercialPlanSlug),
+    };
     this.api
-      .updateTenant(this.selected.id, this.editForm)
+      .updateTenant(this.selected.id, payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

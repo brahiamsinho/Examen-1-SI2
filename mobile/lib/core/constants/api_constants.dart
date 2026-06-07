@@ -18,6 +18,30 @@ class ApiConstants {
 
   /// App taller (responsable): taller y datos del responsable.
   static String get appTallerMiTaller => '${AppEnv.apiBaseUrl}/app/taller/mi-taller';
+  static String get appTallerDashboard => '${AppEnv.apiBaseUrl}/app/taller/dashboard';
+  static String get appTallerTecnicos => '${AppEnv.apiBaseUrl}/app/taller/tecnicos';
+  static String appTallerTecnico(int id) => '${AppEnv.apiBaseUrl}/app/taller/tecnicos/$id';
+
+  static String get appTallerEmergenciasBandejaDisponibles =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/bandeja/disponibles';
+
+  static String appTallerEmergenciasBandejaDetalle(int bandejaId) =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/bandeja/$bandejaId';
+
+  static String appTallerEmergenciasBandejaAceptar(int bandejaId) =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/bandeja/$bandejaId/aceptar';
+
+  static String appTallerEmergenciasBandejaRechazar(int bandejaId) =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/bandeja/$bandejaId/rechazar';
+
+  static String appTallerEmergenciasAsignarTecnico(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/solicitudes/$solicitudId/asignar-tecnico';
+
+  static String appTallerEmergenciasAsignaciones(int solicitudId) =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/solicitudes/$solicitudId/asignaciones';
+
+  static String get appTallerEmergenciasDisponibilidad =>
+      '${AppEnv.apiBaseUrl}/app/taller/emergencias/disponibilidad';
 
   /// App técnico — emergencias.
   static String get appTecnicoEmergenciasServiciosAsignados =>

@@ -29,7 +29,8 @@
         </span>
         <span class="shell__brand-text" *ngIf="!sidebarCollapsed">
           <span class="shell__brand-name">EmergenciasViales</span>
-          <span class="shell__brand-tag">Panel taller</span>
+          <span class="shell__brand-tag">{{ miTaller?.nombre_comercial ?? 'Panel taller' }}</span>
+          <span class="shell__brand-city" *ngIf="miTaller?.ciudad">{{ miTaller?.ciudad }}</span>
         </span>
       </a>
       <button
@@ -149,12 +150,60 @@
                 <circle cx="8" cy="15" r="4" stroke="currentColor" stroke-width="1.75" />
                 <path d="M12 15h8M16 11v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
               </svg>
+              <svg *ngSwitchCase="'layers'" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 3 3 8l9 5 9-5-9-5ZM3 13l9 5 9-5M3 18l9 5 9-5"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </ng-container>
           </span>
           <span class="shell__nav-text" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
         </a>
       </div>
     </nav>
+
+    <div class="shell__plans" *ngIf="subscription">
+      <p class="shell__plans-label" *ngIf="!sidebarCollapsed">Planes SaaS</p>
+      <ul class="shell__plans-list" *ngIf="!sidebarCollapsed">
+        <li
+          *ngFor="let p of subscription.plans"
+          class="shell__plan-item"
+          [class.shell__plan-item--current]="p.is_current"
+        >
+          <span class="shell__plan-name">{{ p.name }}</span>
+          <span class="shell__plan-tag" *ngIf="p.is_current">Actual</span>
+          <button
+            *ngIf="p.can_upgrade"
+            type="button"
+            class="shell__plan-up"
+            [attr.title]="'Upgrade a ' + p.name"
+            (click)="goUpgrade(p.slug, $event)"
+          >
+            ↑
+          </button>
+        </li>
+      </ul>
+      <a
+        routerLink="/taller/panel/suscripcion"
+        class="shell__plans-compact"
+        *ngIf="sidebarCollapsed"
+        [attr.title]="'Plan: ' + subscription.current_plan_name"
+        (click)="closeMobileNav()"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path
+            d="M12 3 3 8l9 5 9-5-9-5ZM3 13l9 5 9-5M3 18l9 5 9-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
+    </div>
 
     <div class="shell__aside-foot">
       <a routerLink="/" class="shell__public" (click)="closeMobileNav()">
@@ -212,18 +261,21 @@
             {{ unreadNotificaciones() > 99 ? '99+' : unreadNotificaciones() }}
           </span>
         </a>
+        <app-notification-bell portal="taller" />
 
         <div class="shell__user-card">
           <div class="shell__avatar" aria-hidden="true">{{ userInitials(me.email) }}</div>
           <div class="shell__user-meta">
+            <span class="shell__taller-name" *ngIf="miTaller">{{ miTaller.nombre_comercial }}</span>
             <span class="shell__email">{{ me.email }}</span>
             <span class="shell__roles">
               <span class="shell__badge shell__badge--role" *ngFor="let r of me.roles ?? []">{{ r }}</span>
+              <span class="shell__badge shell__badge--estado" *ngIf="miTaller">{{ miTaller.estado }}</span>
             </span>
           </div>
         </div>
 
-        <button type="button" class="shell__logout" (click)="auth.logout()">
+        <button type="button" class="shell__logout" (click)="logout()">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path
               d="M10 17l5-5-5-5M15 12H4M20 4v16"

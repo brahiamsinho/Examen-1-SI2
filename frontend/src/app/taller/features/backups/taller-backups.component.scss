@@ -1,0 +1,185 @@
+@use '../../../admin/admin-theme' as t;
+@use '../../../admin/admin-ui' as ui;
+@use '../../taller-page' as tp;
+
+.t-bk__h {
+  @include tp.taller-page-title;
+}
+
+.t-bk__lead {
+  @include tp.taller-page-lead;
+}
+
+.t-bk__alert {
+  @include ui.ev-alert-error;
+  margin-bottom: 1rem;
+}
+
+.t-bk__ok {
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+  font-size: 0.875rem;
+}
+
+.t-bk__card {
+  @include ui.ev-card;
+  margin-bottom: 1.25rem;
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+  }
+}
+
+.t-bk__rowhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.t-bk__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.t-bk__lbl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: t.$ev-muted;
+
+  &--check {
+    flex-direction: row;
+    align-items: center;
+    text-transform: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: t.$ev-text;
+  }
+}
+
+.t-bk__inp {
+  @include ui.ev-input;
+
+  &--area {
+    min-height: 4.5rem;
+    resize: vertical;
+  }
+}
+
+.t-bk__btn {
+  @include ui.ev-btn-ghost;
+  height: fit-content;
+
+  &--primary {
+    @include ui.ev-btn-primary;
+  }
+
+  &--danger {
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
+
+    &:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.12);
+    }
+  }
+}
+
+.t-bk__hint,
+.t-bk__muted {
+  color: t.$ev-muted;
+  font-size: 0.8125rem;
+  margin-top: 0.75rem;
+}
+
+.t-bk__tablewrap {
+  @include ui.ev-card;
+  padding: 0;
+  overflow: auto;
+}
+
+.t-bk__table {
+  @include ui.ev-table;
+}
+
+.t-bk__pill {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  background: rgba(76, 201, 240, 0.12);
+  color: t.$ev-cyan;
+}
+
+.t-bk__actions {
+  white-space: nowrap;
+}
+
+.t-bk__mini {
+  @include ui.ev-btn-ghost;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.75rem;
+  margin-right: 0.25rem;
+
+  &--danger:hover {
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+}
+
+.t-bk__empty {
+  padding: 1rem;
+  color: t.$ev-muted;
+}
+
+.t-bk__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.t-bk__modalbox {
+  @include ui.ev-card;
+  width: min(100%, 28rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.t-bk__warn {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #fcd34d;
+}
+
+.t-bk__modalactions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

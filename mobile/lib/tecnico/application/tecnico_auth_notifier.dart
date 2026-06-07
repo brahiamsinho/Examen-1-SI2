@@ -30,6 +30,11 @@ final class TecnicoAuthNotifier extends Notifier<TecnicoAuthState> {
         state = const TecnicoAuthState(status: TecnicoAuthStatus.guest);
         return;
       }
+      if (me.roles.contains('TALLER_RESPONSABLE')) {
+        await repo.logoutLocal();
+        state = const TecnicoAuthState(status: TecnicoAuthStatus.guest);
+        return;
+      }
       final perfil = await repo.fetchPerfilCompleto(me);
       state = TecnicoAuthState(status: TecnicoAuthStatus.authenticated, perfil: perfil);
       unawaited(ref.read(fcmRegistrationProvider).onTecnicoSessionActive());

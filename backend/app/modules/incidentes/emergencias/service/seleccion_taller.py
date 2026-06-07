@@ -18,11 +18,14 @@ from app.modules.atencion.taller_emergencias.repository import (
     expirar_todas_bandeja_pendientes,
     get_bandeja_por_solicitud_taller,
 )
+from app.modules.comunicacion_y_notificaciones.notificaciones import service as notif_service
+from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.incidentes.emergencias import repository
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.incidentes.emergencias.schemas import SeleccionarTallerOut
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, Taller
 from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
+from app.modules.talleres_y_tecnicos.talleres import horarios_service
 
 
 def _ubicacion_actual(solicitud) -> object | None:
@@ -124,6 +127,8 @@ async def seleccionar_taller(
             detail="El taller no pertenece a tu organización.",
         )
 
+    await horarios_service.assert_taller_abierto(db, taller_id, accion="recibir tu solicitud")
+
     existing = await get_bandeja_por_solicitud_taller(
         db, solicitud_id=solicitud_id, taller_id=taller_id
     )
@@ -156,6 +161,8 @@ async def seleccionar_taller(
             observacion="Cliente eligió taller",
             created_at=now,
         )
+    # Referencia al taller elegido (confirmación formal al aceptar en bandeja → TALLER_ASIGNADO).
+    s.taller_id = taller_id
     s.updated_at = now
 
     await registrar_accion(
@@ -170,6 +177,14 @@ async def seleccionar_taller(
 
     await eventos_servicio.on_solicitud_pendiente_taller(
         db, solicitud=s, taller_id=taller_id
+    await notif_service.notificar_responsable_taller(
+        db,
+        taller=taller,
+        solicitud_id=s.id,
+        tipo=TipoNotificacionEnum.SOLICITUD_CREADA,
+        titulo="Nueva solicitud en tu bandeja",
+        mensaje=f"Un cliente eligió tu taller para la solicitud #{s.id}. Revisá la bandeja.",
+        extra_data={"bandeja_id": str(bandeja.id)},
     )
 
     return SeleccionarTallerOut(

@@ -131,6 +131,20 @@ class SolicitudEmergenciaRead(BaseModel):
     )
 
 
+class RutaSeguimientoRead(BaseModel):
+    """Polyline + ETA calculados en backend (CU36 ampliado — VRT)."""
+
+    distancia_metros: float = Field(..., ge=0)
+    duracion_segundos: int = Field(..., ge=0)
+    duracion_minutos: int = Field(..., ge=0)
+    eta_llegada_at: datetime
+    geometria: list[list[float]] = Field(
+        ...,
+        description="Lista de puntos [latitud, longitud] para dibujar la ruta en el mapa.",
+    )
+    proveedor: str = Field(..., description="osrm | haversine")
+
+
 class UbicacionTecnicoCompartidaRead(BaseModel):
     """Última posición compartida por el técnico en la solicitud (lectura cliente o confirmación POST)."""
 
@@ -139,11 +153,24 @@ class UbicacionTecnicoCompartidaRead(BaseModel):
     longitud: Decimal
     precision_metros: Decimal | None = None
     actualizado_at: datetime
+    cliente_latitud: Decimal | None = Field(
+        default=None,
+        description="Última ubicación actual del cliente en la solicitud (destino de la ruta).",
+    )
+    cliente_longitud: Decimal | None = None
+    ruta: RutaSeguimientoRead | None = Field(
+        default=None,
+        description="Ruta VRT técnico→cliente con ETA (OSRM por calles o fallback haversine).",
+    )
 
 
 class SolicitudEmergenciaDetailRead(SolicitudEmergenciaRead):
     ubicaciones: list[SolicitudUbicacionRead]
     evidencias: list[SolicitudEvidenciaRead]
+    taller: TallerSeguimientoRead | None = Field(
+        default=None,
+        description="Taller elegido por el cliente o ya confirmado en bandeja.",
+    )
 
 
 class TallerSeguimientoRead(BaseModel):

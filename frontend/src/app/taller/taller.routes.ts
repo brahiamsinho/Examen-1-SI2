@@ -119,13 +119,29 @@ export const TALLER_ROUTES: Routes = [
             (m) => m.TallerEmergenciasHistorialListComponent,
           ),
       },
+        {
+          path: 'emergencias/comisiones',
+          canActivate: [tallerPermisoGuard],
+          data: { permiso: 'comisiones:leer' },
+          loadComponent: () =>
+            import('./features/emergencias/comisiones/taller-emergencias-comisiones.component').then(
+              (m) => m.TallerEmergenciasComisionesComponent,
+            ),
+        },
+        {
+          path: 'reportes',
+          canActivate: [tallerPermisoGuard],
+          data: { permiso: 'reportes:leer' },
+          loadComponent: () =>
+            import('./features/reportes/taller-reportes.component').then((m) => m.TallerReportesComponent),
+        },
       {
-        path: 'emergencias/comisiones',
+        path: 'emergencias/disponibilidad',
         canActivate: [tallerPermisoGuard],
-        data: { permiso: 'comisiones:leer' },
+        data: { permiso: 'disponibilidad:gestionar' },
         loadComponent: () =>
-          import('./features/emergencias/comisiones/taller-emergencias-comisiones.component').then(
-            (m) => m.TallerEmergenciasComisionesComponent,
+          import('./features/emergencias/disponibilidad/taller-emergencias-disponibilidad.component').then(
+            (m) => m.TallerEmergenciasDisponibilidadComponent,
           ),
       },
       {
@@ -137,12 +153,26 @@ export const TALLER_ROUTES: Routes = [
       },
       {
         path: 'emergencias/disponibilidad',
+        path: 'horarios',
         canActivate: [tallerPermisoGuard],
         data: { permiso: 'disponibilidad:gestionar' },
         loadComponent: () =>
-          import('./features/emergencias/disponibilidad/taller-emergencias-disponibilidad.component').then(
-            (m) => m.TallerEmergenciasDisponibilidadComponent,
-          ),
+          import('./features/horarios/taller-horarios.component').then((m) => m.TallerHorariosComponent),
+      },
+      {
+        path: 'suscripcion',
+        loadComponent: () =>
+          import('./features/suscripcion/taller-suscripcion.component').then((m) => m.TallerSuscripcionComponent),
+      },
+      {
+        path: 'bitacora',
+        loadComponent: () =>
+          import('./features/bitacora/taller-bitacora.component').then((m) => m.TallerBitacoraComponent),
+      },
+      {
+        path: 'backups',
+        loadComponent: () =>
+          import('./features/backups/taller-backups.component').then((m) => m.TallerBackupsComponent),
       },
       {
         path: 'comunicacion/notificaciones',

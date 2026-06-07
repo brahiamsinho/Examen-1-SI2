@@ -4,8 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 /// Vista de mapa con tiles de [OpenStreetMap](https://www.openstreetmap.org/) vía [flutter_map](https://pub.dev/packages/flutter_map).
 ///
-/// Si [routeToLatitude] y [routeToLongitude] están definidos, dibuja un segmento recto
-/// (no sigue calles; es la opción más simple sin API de routing tipo OSRM/GraphHopper).
+/// Soporta polyline de ruta VRT (OSRM) o segmento recto entre dos puntos.
 class EmergenciaUbicacionOsmMap extends StatelessWidget {
   const EmergenciaUbicacionOsmMap({
     super.key,
@@ -13,30 +12,56 @@ class EmergenciaUbicacionOsmMap extends StatelessWidget {
     required this.longitude,
     this.routeToLatitude,
     this.routeToLongitude,
+    this.routePoints,
     this.height = 220,
     this.initialZoom = 15,
+    this.routeLabel,
   });
 
   final double latitude;
   final double longitude;
-  /// Segundo extremo del segmento (p. ej. ubicación del cliente si el primero es el técnico).
+  /// Segundo extremo del segmento si no hay [routePoints].
   final double? routeToLatitude;
   final double? routeToLongitude;
+  /// Polyline completa [[lat, lon], ...] desde backend (OSRM o fallback).
+  final List<List<double>>? routePoints;
   final double height;
   final double initialZoom;
+  final String? routeLabel;
 
   static const _osmTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  static const _routeColor = Color(0xFF1565C0);
+
+  List<LatLng> get _polylinePoints {
+    if (routePoints != null && routePoints!.length >= 2) {
+      return routePoints!.map((p) => LatLng(p[0], p[1])).toList(growable: false);
+    }
+    if (routeToLatitude != null && routeToLongitude != null) {
+      return [
+        LatLng(latitude, longitude),
+        LatLng(routeToLatitude!, routeToLongitude!),
+      ];
+    }
+    return const [];
+  }
+
+  LatLng? get _destino =>
+      routePoints != null && routePoints!.length >= 2
+          ? LatLng(routePoints!.last[0], routePoints!.last[1])
+          : (routeToLatitude != null && routeToLongitude != null
+              ? LatLng(routeToLatitude!, routeToLongitude!)
+              : null);
 
   @override
   Widget build(BuildContext context) {
-    final point = LatLng(latitude, longitude);
-    final LatLng? routeEnd = routeToLatitude != null && routeToLongitude != null
-        ? LatLng(routeToLatitude!, routeToLongitude!)
-        : null;
+    final origen = LatLng(latitude, longitude);
+    final polyline = _polylinePoints;
+    final destino = _destino;
+    final tieneRuta = polyline.length >= 2;
 
     final MapOptions mapOptions;
-    if (routeEnd != null) {
-      final bounds = LatLngBounds.fromPoints([point, routeEnd]);
+    if (tieneRuta) {
+      final bounds = LatLngBounds.fromPoints(polyline);
       mapOptions = MapOptions(
         initialCameraFit: CameraFit.bounds(
           bounds: bounds,
@@ -48,7 +73,7 @@ class EmergenciaUbicacionOsmMap extends StatelessWidget {
       );
     } else {
       mapOptions = MapOptions(
-        initialCenter: point,
+        initialCenter: origen,
         initialZoom: initialZoom,
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
@@ -58,21 +83,21 @@ class EmergenciaUbicacionOsmMap extends StatelessWidget {
 
     final markers = <Marker>[
       Marker(
-        point: point,
+        point: origen,
         width: 48,
         height: 48,
         alignment: Alignment.center,
         child: Icon(
-          routeEnd != null ? Icons.engineering : Icons.location_on,
-          color: routeEnd != null ? const Color(0xFF1565C0) : const Color(0xFFE53935),
+          destino != null ? Icons.engineering : Icons.location_on,
+          color: destino != null ? _routeColor : const Color(0xFFE53935),
           size: 44,
         ),
       ),
     ];
-    if (routeEnd != null) {
+    if (destino != null) {
       markers.add(
         Marker(
-          point: routeEnd,
+          point: destino,
           width: 48,
           height: 48,
           alignment: Alignment.center,
@@ -80,6 +105,11 @@ class EmergenciaUbicacionOsmMap extends StatelessWidget {
         ),
       );
     }
+
+    final caption = routeLabel ??
+        (tieneRuta
+            ? 'Ruta técnico → cliente. Mapa © OpenStreetMap'
+            : 'Mapa © colaboradores de OpenStreetMap');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -95,13 +125,13 @@ class EmergenciaUbicacionOsmMap extends StatelessWidget {
                   urlTemplate: _osmTemplate,
                   userAgentPackageName: 'mobile_emergencias',
                 ),
-                if (routeEnd != null)
+                if (tieneRuta)
                   PolylineLayer(
                     polylines: [
                       Polyline(
-                        points: [point, routeEnd],
-                        strokeWidth: 4,
-                        color: const Color(0xFF1565C0).withValues(alpha: 0.85),
+                        points: polyline,
+                        strokeWidth: 5,
+                        color: _routeColor.withValues(alpha: 0.9),
                       ),
                     ],
                   ),
@@ -112,9 +142,7 @@ class EmergenciaUbicacionOsmMap extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          routeEnd != null
-              ? 'Línea aproximada entre puntos (no sigue calles). Mapa © OpenStreetMap'
-              : 'Mapa © colaboradores de OpenStreetMap',
+          caption,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

@@ -72,6 +72,72 @@ TALLER2_NOMBRE_COMERCIAL = "Auxilio Vial 4to Anillo SC"
 TALLER2_CIUDAD = CIUDAD_SANTA_CRUZ
 TALLER2_DIRECCION = "Radial 27 casi 4to anillo, Galpón 12, zona norte"
 TALLER2_DESCRIPCION = "Grúa liviana, cambio de batería y asistencia en ruta en Santa Cruz."
+TALLER2_LAT = Decimal("-17.7580")
+TALLER2_LNG = Decimal("-63.1880")
+
+# --- Red de talleres (3–5) demo-sc -----------------------------------------
+TALLER3_EMAIL = "sandra.miranda@sc-demo.test"
+TALLER3_TELEFONO = "+59177010015"
+TALLER3_RESPONSABLE_NOMBRES = "Sandra"
+TALLER3_RESPONSABLE_APELLIDOS = "Miranda"
+TALLER3_NOMBRE_COMERCIAL = "Auxilio Sur SC — Zona Piraí"
+TALLER3_DIRECCION = "Av. Pirai esq. 2do anillo, galpón 7"
+TALLER3_LAT = Decimal("-17.8020")
+TALLER3_LNG = Decimal("-63.2100")
+
+TALLER4_EMAIL = "felipe.guzman@sc-demo.test"
+TALLER4_TELEFONO = "+59177010016"
+TALLER4_RESPONSABLE_NOMBRES = "Felipe"
+TALLER4_RESPONSABLE_APELLIDOS = "Guzmán"
+TALLER4_NOMBRE_COMERCIAL = "Mecánica Express Urubó"
+TALLER4_DIRECCION = "Zona Urubó, entrada principal km 8"
+TALLER4_LAT = Decimal("-17.8200")
+TALLER4_LNG = Decimal("-63.1200")
+
+TALLER5_EMAIL = "elena.cortez@sc-demo.test"
+TALLER5_TELEFONO = "+59177010017"
+TALLER5_RESPONSABLE_NOMBRES = "Elena"
+TALLER5_RESPONSABLE_APELLIDOS = "Cortez"
+TALLER5_NOMBRE_COMERCIAL = "Grúas Palermo Norte SC"
+TALLER5_DIRECCION = "4to anillo y Radial 13, Palermo norte"
+TALLER5_LAT = Decimal("-17.7450")
+TALLER5_LNG = Decimal("-63.1550")
+
+TALLER6_EMAIL = "pablo.ramos@sc-demo.test"
+TALLER6_TELEFONO = "+59177010018"
+TALLER6_RESPONSABLE_NOMBRES = "Pablo"
+TALLER6_RESPONSABLE_APELLIDOS = "Ramos"
+TALLER6_NOMBRE_COMERCIAL = "Auxilio Centro SC — 2do anillo"
+TALLER6_DIRECCION = "2do anillo y Av. Busch, edificio azul"
+TALLER6_LAT = Decimal("-17.7750")
+TALLER6_LNG = Decimal("-63.1750")
+
+# --- Técnicos por taller (red demo-sc — app móvil técnico) -----------------
+# Cada fila va ligada al responsable del taller (mismo índice 1..6).
+TECNICO2_EMAIL = "andres.vargas@sc-demo.test"
+TECNICO2_TELEFONO = "+59177010024"
+TECNICO2_NOMBRES = "Andrés"
+TECNICO2_APELLIDOS = "Vargas"
+
+TECNICO3_EMAIL = "mateo.rios@sc-demo.test"
+TECNICO3_TELEFONO = "+59177010025"
+TECNICO3_NOMBRES = "Mateo"
+TECNICO3_APELLIDOS = "Ríos"
+
+TECNICO4_EMAIL = "julia.meza@sc-demo.test"
+TECNICO4_TELEFONO = "+59177010026"
+TECNICO4_NOMBRES = "Julia"
+TECNICO4_APELLIDOS = "Meza"
+
+TECNICO5_EMAIL = "renato.paz@sc-demo.test"
+TECNICO5_TELEFONO = "+59177010027"
+TECNICO5_NOMBRES = "Renato"
+TECNICO5_APELLIDOS = "Paz"
+
+TECNICO6_EMAIL = "diego.flores@sc-demo.test"
+TECNICO6_TELEFONO = "+59177010028"
+TECNICO6_NOMBRES = "Diego"
+TECNICO6_APELLIDOS = "Flores"
 
 # --- Stress visual: más clientes (nombres comunes BO / SC) -----------------
 STRESS_EMAIL_DOMAIN = "lista.sc-demo.test"

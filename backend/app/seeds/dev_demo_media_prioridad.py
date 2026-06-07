@@ -24,6 +24,7 @@ from app.modules.atencion.taller_emergencias import repository as pt_repo
 from app.modules.atencion.taller_emergencias.models import EstadoBandejaTallerEnum, SolicitudTallerBandeja
 from app.modules.talleres_y_tecnicos.talleres import service as talleres_service
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, Taller
+from app.modules.clientes_y_vehiculos.clientes.models import Cliente
 from app.modules.acceso_y_administracion.usuarios import service as usuarios_service
 from app.modules.acceso_y_administracion.usuarios.models import EstadoUsuarioEnum, Usuario
 from app.seeds.dev_demo_santa_cruz import DEMO_MARKER, _ctx_demo
@@ -131,6 +132,7 @@ async def _ensure_taller_competidor_sc(
     db: AsyncSession,
     *,
     rol_id: int,
+    tenant_id: int,
 ) -> int | None:
     email = (settings.SEED_TALLER2_EMAIL or "").strip().lower()
     password = settings.SEED_TALLER2_PASSWORD or ""
@@ -155,6 +157,7 @@ async def _ensure_taller_competidor_sc(
                 "password": password,
                 "username": None,
                 "estado": EstadoUsuarioEnum.ACTIVO,
+                "tenant_id": tenant_id,
             },
             db,
             ejecutor_id=None,
@@ -169,6 +172,9 @@ async def _ensure_taller_competidor_sc(
         if user.estado != EstadoUsuarioEnum.ACTIVO:
             user.estado = EstadoUsuarioEnum.ACTIVO
             user.updated_at = now
+        if user.tenant_id != tenant_id:
+            user.tenant_id = tenant_id
+            user.updated_at = now
         await asignar_roles_usuario(user.id, [rol_id], db)
 
     tr = await db.execute(select(Taller).where(Taller.usuario_responsable_id == user.id))
@@ -178,6 +184,7 @@ async def _ensure_taller_competidor_sc(
             try:
                 taller = await talleres_service.create_taller(
                     {
+                        "tenant_id": tenant_id,
                         "usuario_responsable_id": user.id,
                         "nombre_comercial": settings.SEED_TALLER2_NOMBRE_COMERCIAL,
                         "telefono_contacto": telefono,
@@ -209,6 +216,7 @@ async def _ensure_taller_competidor_sc(
     taller.longitud = TALLER_SECUNDARIO_LNG
     taller.descripcion = settings.SEED_TALLER2_DESCRIPCION
     taller.estado = EstadoTallerEnum.ACTIVO
+    taller.tenant_id = tenant_id
     taller.updated_at = now
     await db.flush()
 
@@ -454,6 +462,11 @@ async def ensure_demo_media_prioridad(
         logger.warning("Demo media: sin contexto demo (cliente/taller).")
         return
     cliente_id, taller_id, tecnico_id, uid_cliente, uid_resp, _vids = ctx
+    tr = await db.execute(select(Cliente.tenant_id).where(Cliente.id == cliente_id))
+    tenant_id = tr.scalar_one_or_none()
+    if tenant_id is None:
+        logger.warning("Demo media: cliente sin tenant_id.")
+        return
     if await _gate_aplicado(db, usuario_cliente_id=uid_cliente):
         logger.info("Demo media: ya aplicado (gate), se omite.")
         return
@@ -474,7 +487,7 @@ async def ensure_demo_media_prioridad(
     if rol_id is None:
         return
 
-    taller2_id = await _ensure_taller_competidor_sc(db, rol_id=rol_id)
+    taller2_id = await _ensure_taller_competidor_sc(db, rol_id=rol_id, tenant_id=int(tenant_id))
     now = utc_now_naive()
     if taller2_id is not None:
         await _backfill_bandeja_para_taller(db, taller_id=taller2_id, creado_at=now)

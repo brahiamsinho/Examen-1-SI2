@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../application/emergencias_providers.dart';
 import '../../domain/taller_candidato_models.dart';
+import '../widgets/seguimiento/taller_cliente_resumen_card.dart';
 
 /// CU37 — el cliente elige el taller que atenderá la emergencia.
 class EmergenciaSeleccionTallerScreen extends ConsumerStatefulWidget {
@@ -50,11 +52,8 @@ class _EmergenciaSeleccionTallerScreenState extends ConsumerState<EmergenciaSele
     final async = ref.watch(talleresCandidatosProvider(widget.solicitudId));
     final scheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Elegir taller'),
-        leading: BackButton(onPressed: () => context.pop()),
-      ),
+    return ClienteSubpageScaffold(
+      title: 'Elegir taller',
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(
@@ -76,13 +75,19 @@ class _EmergenciaSeleccionTallerScreenState extends ConsumerState<EmergenciaSele
           }
 
           final mejor = data.mejorTallerId;
-          final effectiveSelected = _selectedId ?? mejor ?? data.candidatos.first.tallerId;
+          final abiertos = data.candidatos.where((c) => c.abiertoAhora).toList();
+          final effectiveSelected = _selectedId ??
+              mejor ??
+              (abiertos.isNotEmpty ? abiertos.first.tallerId : data.candidatos.first.tallerId);
+          final selected = data.candidatos.firstWhere((c) => c.tallerId == effectiveSelected);
+          final compatPct = (selected.score * 100).clamp(0, 100).round();
+          final puedeConfirmar = selected.abiertoAhora && !_submitting;
 
           return Column(
             children: [
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  padding: ClientePanelUi.pagePadding.copyWith(bottom: 12),
                   children: [
                     Text(
                       'Talleres recomendados',
@@ -100,18 +105,35 @@ class _EmergenciaSeleccionTallerScreenState extends ConsumerState<EmergenciaSele
                     for (final c in data.candidatos)
                       _CandidatoTile(
                         candidato: c,
-                        recomendado: c.tallerId == mejor,
+                        recomendado: c.tallerId == mejor && c.abiertoAhora,
                         selected: c.tallerId == effectiveSelected,
-                        onTap: () => setState(() => _selectedId = c.tallerId),
+                        onTap: c.abiertoAhora ? () => setState(() => _selectedId = c.tallerId) : null,
                       ),
                   ],
                 ),
               ),
               SafeArea(
                 minimum: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: ShadButton(
-                  onPressed: _submitting ? null : _confirmar,
-                  child: Text(_submitting ? 'Enviando…' : 'Confirmar taller'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TallerSeleccionResumenBanner(
+                      nombreComercial: selected.nombreComercial,
+                      distanciaKm: selected.distanciaKm,
+                      compatibilidadPct: compatPct,
+                    ),
+                    const SizedBox(height: 12),
+                    ShadButton(
+                      onPressed: puedeConfirmar ? _confirmar : null,
+                      child: Text(
+                        _submitting
+                            ? 'Enviando…'
+                            : selected.abiertoAhora
+                                ? 'Confirmar taller'
+                                : 'Taller cerrado (fuera de horario)',
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -133,7 +155,7 @@ class _CandidatoTile extends StatelessWidget {
   final TallerCandidato candidato;
   final bool recomendado;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +208,20 @@ class _CandidatoTile extends StatelessWidget {
                                     ),
                               ),
                             ),
+                          if (!candidato.abiertoAhora)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: scheme.errorContainer,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                'Cerrado',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: scheme.onErrorContainer,
+                                    ),
+                              ),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -214,18 +250,12 @@ class _ErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ShadButton.outline(onPressed: onRetry, child: const Text('Reintentar')),
-          ],
-        ),
-      ),
+    return ClienteEmptyState(
+      icon: Icons.error_outline,
+      title: 'Error al cargar',
+      message: message,
+      actionLabel: 'Reintentar',
+      onAction: onRetry,
     );
   }
 }

@@ -1,0 +1,57 @@
+<div class="emg">
+  <h2 class="emg__h">Horarios de atención</h2>
+  <p class="emg__lead">
+    Definí en qué franja horaria tu taller puede recibir y aceptar emergencias (zona
+    {{ data?.zona_horaria ?? 'America/La_Paz' }}).
+  </p>
+
+  <div class="emg__status" *ngIf="data" [class.emg__status--open]="data.abierto_ahora" [class.emg__status--closed]="!data.abierto_ahora">
+    {{ data.abierto_ahora ? 'Abierto ahora según estos horarios' : 'Cerrado ahora según estos horarios' }}
+  </div>
+
+  <div class="emg__alert" *ngIf="error" role="alert">{{ error }}</div>
+  <div class="emg__success" *ngIf="success" role="status">{{ success }}</div>
+
+  <p class="emg__muted" *ngIf="loading()">Cargando…</p>
+
+  <form class="emg__form" *ngIf="!loading() && data" (ngSubmit)="guardar()">
+    <section class="emg__card emg__grid-head" aria-hidden="true">
+      <span>Día</span>
+      <span>Activo</span>
+      <span>Apertura</span>
+      <span>Cierre</span>
+    </section>
+
+    <section class="emg__card emg__grid-row" *ngFor="let row of rows">
+      <span class="emg__day">{{ row.nombre_dia }}</span>
+      <label class="emg__switch emg__switch--inline">
+        <input type="checkbox" [(ngModel)]="row.activo" [name]="'activo-' + row.dia_semana" />
+        <span class="emg__sr-only">Atiende {{ row.nombre_dia }}</span>
+      </label>
+      <input
+        class="emg__inp"
+        type="time"
+        [(ngModel)]="row.aperturaInput"
+        [name]="'apertura-' + row.dia_semana"
+        [disabled]="!row.activo"
+      />
+      <input
+        class="emg__inp"
+        type="time"
+        [(ngModel)]="row.cierreInput"
+        [name]="'cierre-' + row.dia_semana"
+        [disabled]="!row.activo"
+      />
+    </section>
+
+    <p class="emg__hint">
+      Ejemplo: Lun–Vie 08:00–18:00. Fuera de ese rango el taller no aparecerá como recomendado al cliente y no podrá
+      aceptar nuevas solicitudes en bandeja.
+    </p>
+
+    <div class="emg__form-actions">
+      <button type="button" class="emg__btn" (click)="reload()" [disabled]="saving">Descartar cambios</button>
+      <button type="submit" class="emg__btn emg__btn--primary" [disabled]="saving">Guardar horarios</button>
+    </div>
+  </form>
+</div>

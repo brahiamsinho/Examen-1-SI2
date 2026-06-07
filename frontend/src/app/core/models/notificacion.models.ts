@@ -1,0 +1,25 @@
+export type NotificacionPortal = 'taller' | 'admin';
+
+export type TipoNotificacion =
+  | 'SOLICITUD_CREADA'
+  | 'ESTADO_ACTUALIZADO'
+  | 'TALLER_ASIGNADO'
+  | 'TECNICO_ASIGNADO'
+  | 'MENSAJE_NUEVO';
+
+export interface NotificacionDto {
+  id: number;
+  usuario_id: number;
+  solicitud_id: number | null;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  leida: boolean;
+  created_at: string;
+  leida_at: string | null;
+}
+
+export interface FcmTokenPayload {
+  token: string;
+  platform?: string;
+}

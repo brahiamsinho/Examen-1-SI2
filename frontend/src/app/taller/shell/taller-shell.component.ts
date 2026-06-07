@@ -20,7 +20,11 @@ import { filter } from 'rxjs/operators';
 import { catchError, interval, of, startWith, switchMap, take } from 'rxjs';
 import { TallerAuthService } from '../../core/services/taller-auth.service';
 import { TallerComunicacionApiService } from '../../core/services/taller-comunicacion-api.service';
+import { TallerApiService } from '../../core/services/taller-api.service';
+import { FcmService } from '../../core/services/fcm.service';
+import { NotificationBellComponent } from '../../shared/notifications/notification-bell.component';
 import type { MeResponse } from '../../core/models/auth.models';
+import type { MiTallerDto, TallerSuscripcionDto } from '../../core/models/taller-api.models';
 
 export type TallerNavIcon =
   | 'home'
@@ -32,6 +36,7 @@ export type TallerNavIcon =
   | 'key'
   | 'inbox'
   | 'bell';
+  | 'layers';
 
 export interface TallerNavItem {
   path: string;
@@ -49,7 +54,7 @@ export interface TallerNavGroup {
 @Component({
   selector: 'app-taller-shell',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   templateUrl: './taller-shell.component.html',
   styleUrl: './taller-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,11 +62,15 @@ export interface TallerNavGroup {
 export class TallerShellComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
   private readonly comunicacion = inject(TallerComunicacionApiService);
+  private readonly fcm = inject(FcmService);
+  private readonly tallerApi = inject(TallerApiService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
   me: MeResponse | null = null;
+  miTaller: MiTallerDto | null = null;
+  subscription: TallerSuscripcionDto | null = null;
   pageTitle = 'Resumen';
   sidebarCollapsed = false;
   mobileNavOpen = false;
@@ -116,6 +125,8 @@ export class TallerShellComponent implements OnInit {
         {
           path: '/taller/panel/reportes-kpis',
           label: 'Reportes KPIs',
+          path: '/taller/panel/reportes',
+          label: 'Reportes',
           exact: true,
           icon: 'chart',
           permiso: 'reportes:leer',
@@ -133,6 +144,11 @@ export class TallerShellComponent implements OnInit {
           exact: true,
           icon: 'bell',
           permiso: 'notificaciones:leer',
+          path: '/taller/panel/horarios',
+          label: 'Horarios',
+          exact: true,
+          icon: 'chart',
+          permiso: 'disponibilidad:gestionar',
         },
       ],
     },
@@ -141,6 +157,19 @@ export class TallerShellComponent implements OnInit {
       items: [
         { path: '/taller/panel/mi-taller', label: 'Mi taller', exact: false, icon: 'wrench' },
         { path: '/taller/panel/tecnicos', label: 'Técnicos', exact: false, icon: 'wrench' },
+        { path: '/taller/panel/bitacora', label: 'Bitácora', exact: true, icon: 'clipboard' },
+        { path: '/taller/panel/backups', label: 'Backups', exact: true, icon: 'shield' },
+      ],
+    },
+    {
+      label: 'Suscripción',
+      items: [
+        {
+          path: '/taller/panel/suscripcion',
+          label: 'Planes SaaS',
+          exact: true,
+          icon: 'layers',
+        },
       ],
     },
     {
@@ -183,6 +212,8 @@ export class TallerShellComponent implements OnInit {
     this.actualizarAccesoNotificaciones();
     this.rebuildNavGroups();
     this.iniciarPollingNotificaciones();
+    this.loadSubscription();
+    this.loadMiTaller();
 
     this.auth
       .refreshMeSiHaySesion()
@@ -195,6 +226,10 @@ export class TallerShellComponent implements OnInit {
         this.cdr.markForCheck();
       });
 
+    // Mientras llega /auth/me, usa caché local para no dejar el menú vacío.
+    this.me = this.auth.getMe();
+    this.rebuildNavGroups();
+
     this.syncPageTitle(this.router.url);
     this.router.events
       .pipe(
@@ -206,6 +241,12 @@ export class TallerShellComponent implements OnInit {
         this.mobileNavOpen = false;
         this.cdr.markForCheck();
       });
+
+    void this.fcm.activate('taller');
+  }
+
+  logout(): void {
+    void this.fcm.deactivate().finally(() => this.auth.logout());
   }
 
   toggleSidebar(): void {
@@ -221,6 +262,13 @@ export class TallerShellComponent implements OnInit {
   closeMobileNav(): void {
     this.mobileNavOpen = false;
     this.cdr.markForCheck();
+  }
+
+  goUpgrade(slug: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    void this.router.navigate(['/taller/panel/suscripcion'], { queryParams: { upgrade: slug } });
+    this.closeMobileNav();
   }
 
   userInitials(email: string | undefined): string {
@@ -252,10 +300,14 @@ export class TallerShellComponent implements OnInit {
       '/taller/panel/reportes-kpis': 'Reportes KPIs',
       '/taller/panel/emergencias/disponibilidad': 'Disponibilidad',
       '/taller/panel/comunicacion/notificaciones': 'Notificaciones',
+      '/taller/panel/horarios': 'Horarios',
       '/taller/panel/accesos/usuarios': 'Usuarios del taller',
       '/taller/panel/accesos/clientes': 'Cuentas clientes',
       '/taller/panel/accesos/roles': 'Roles',
       '/taller/panel/accesos/permisos': 'Permisos',
+      '/taller/panel/suscripcion': 'Planes SaaS',
+      '/taller/panel/bitacora': 'Bitácora',
+      '/taller/panel/backups': 'Backups',
     };
     if (titles[path]) {
       this.pageTitle = titles[path];
@@ -287,6 +339,38 @@ export class TallerShellComponent implements OnInit {
       .subscribe((list) => {
         this.unreadNotificaciones.set(list.length);
         this.cdr.markForCheck();
+      });
+  }
+
+  private loadSubscription(): void {
+    this.tallerApi
+      .getSuscripcion()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.subscription = data;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.subscription = null;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private loadMiTaller(): void {
+    this.tallerApi
+      .getMiTaller()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.miTaller = data;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.miTaller = null;
+          this.cdr.markForCheck();
+        },
       });
   }
 }

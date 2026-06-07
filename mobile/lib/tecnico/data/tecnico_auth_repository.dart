@@ -16,7 +16,7 @@ final class TecnicoAuthRepository {
   final TecnicoApiClient _api;
 
   static bool rolesPermitidosTecnicoApp(List<String> roles) {
-    return roles.any((r) => r == 'TECNICO' || r == 'TALLER_RESPONSABLE');
+    return roles.contains('TECNICO');
   }
 
   Future<AuthMe> login({
@@ -51,8 +51,8 @@ final class TecnicoAuthRepository {
       if (!rolesPermitidosTecnicoApp(me.roles)) {
         await logoutLocal();
         throw Exception(
-          'Esta cuenta no tiene rol de técnico o responsable de taller. '
-          'Usá el acceso cliente si sos propietario.',
+          'Esta cuenta no tiene rol de técnico. '
+          'Usá acceso responsable de taller o cliente según tu rol.',
         );
       }
       return me;

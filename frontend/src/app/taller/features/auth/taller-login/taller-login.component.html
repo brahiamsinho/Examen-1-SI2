@@ -7,12 +7,11 @@
         <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="lg-taller" x1="8" y1="6" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#22C55E" />
-              <stop offset="0.55" stop-color="#4361EE" />
-              <stop offset="1" stop-color="#7209B7" />
+              <stop stop-color="#38BDF8" />
+              <stop offset="1" stop-color="#0EA5E9" />
             </linearGradient>
           </defs>
-          <rect width="40" height="40" rx="10" fill="url(#lg-taller)" />
+          <rect width="40" height="40" rx="11" fill="url(#lg-taller)" />
           <path
             d="M20 9L12 12.5V19.2C12 24.35 15.2 29.05 20 30.5C24.8 29.05 28 24.35 28 19.2V12.5L20 9Z"
             stroke="white"
@@ -22,14 +21,18 @@
           />
         </svg>
       </div>
-      <p class="taller-login__eyebrow">EMERGENCIASVIALES</p>
+      <p class="taller-login__eyebrow">EmergenciasViales</p>
       <h1 class="taller-login__title">Portal Taller</h1>
-      <p class="taller-login__subtitle">Taller web — Plataforma Inteligente de Atención</p>
+      <p class="taller-login__subtitle">Gestiona emergencias, técnicos y operación de tu taller en la nube.</p>
+      <div class="taller-login__pill-row" aria-hidden="true">
+        <span class="taller-login__pill">Multi-tenant SaaS</span>
+        <span class="taller-login__pill">Bandeja en tiempo real</span>
+      </div>
     </header>
 
     <section class="taller-login__card" aria-labelledby="taller-login-heading">
       <h2 id="taller-login-heading" class="taller-login__card-title">Iniciar sesión</h2>
-      <p class="taller-login__card-desc">Credenciales del responsable del taller</p>
+      <p class="taller-login__card-desc">Accede con tu organización y credenciales de responsable.</p>
 
       <div class="taller-login__alert" *ngIf="errorMsg" role="alert">{{ errorMsg }}</div>
 
@@ -49,6 +52,7 @@
             <option *ngFor="let t of tenants" [value]="t.slug">{{ tenantLabel(t) }}</option>
           </select>
         </div>
+
         <div class="taller-login__field">
           <label class="taller-login__label" for="taller-email">Correo electrónico</label>
           <input
@@ -117,7 +121,9 @@
 
         <p class="taller-login__subrow">
           ¿Aún no tienes cuenta?
-          <a class="taller-login__link" routerLink="/taller/registro">Registrar taller</a>
+          <a class="taller-login__link" [routerLink]="['/taller/registro']" [queryParams]="registroQuery()">
+            Registrar taller
+          </a>
         </p>
       </form>
 
@@ -127,8 +133,8 @@
           <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 8v5M12 16h.01" />
         </svg>
         <span>
-          Solo cuentas con rol <strong>TALLER_RESPONSABLE</strong> y taller asociado acceden aquí. La administración
-          global usa <a class="taller-login__link" routerLink="/admin">/admin</a>.
+          Solo cuentas <strong>TALLER_RESPONSABLE</strong> con taller asociado. Administración global en
+          <a class="taller-login__link" routerLink="/admin">/admin</a>.
         </span>
       </div>
     </section>

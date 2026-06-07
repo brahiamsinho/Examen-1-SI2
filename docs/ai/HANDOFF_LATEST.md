@@ -50,6 +50,228 @@
 - **Mobile técnico:** `/tecnico/app/notificaciones`.
 - **Sesión:** `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`.
 
+## Cambios (2026-06-06) — Notificaciones taller ampliadas ✅
+
+- **Backend:** `notificar_responsable_taller_por_solicitud` en estado técnico, chat y pagos; `bandeja_id` en FCM.
+- **Frontend:** campana taller abre detalle de solicitud vía `GET .../bandeja-id`.
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-notificaciones-taller-ampliadas.md`.
+
+## Cambios (2026-06-06) — VRT + ETA con OSRM (CU36) ✅
+
+- **OSRM** contenedor Docker (perfil `routing`) + script `scripts/osrm-setup.ps1`.
+- **Backend:** `core/routing/osrm_client.py`; respuesta `ubicacion-tecnico` incluye polyline + ETA.
+- **Mobile:** mapa con ruta real + `RutaVrtEtaCard`.
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-vrt-eta-osrm.md`.
+
+## Cambios (2026-06-06) — Fix push FCM mobile ✅
+
+- **Causa:** `FCM_ENABLED=false` + `backend/firebase-credentials.json` era directorio vacío (no JSON).
+- **Fix:** credenciales restauradas, `FCM_ENABLED=true`, canal Android en manifest + `fcm_client.py`, race `onMessage` corregido, `onTokenRefresh`.
+- **Verificado en contenedor:** `FCM_ENABLED=True`, `credentials is_file=True`.
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-fix-fcm-mobile-push.md`.
+
+## Cambios (2026-06-04) — Notificaciones web + push FCM ✅
+
+- **Backend:** migración `0027`; routers `/api/app/taller/...` y `/api/admin/...` (FCM + notificaciones); push a responsable en CU37.
+- **Frontend:** `firebase` npm; `FcmService` + campana `NotificationBellComponent` en shells; SW dedicado bajo `/firebase-cloud-messaging-push-scope/`.
+- **Config:** claves en `.env` raíz (`FIREBASE_WEB_*`, `FIREBASE_WEB_ENABLED`); credenciales backend/mobile copiadas desde Downloads (gitignored).
+- **Activar push:** `FCM_ENABLED=true` en backend + variables Firebase web en `.env` + `npm run env:sync` + recargar panel taller/admin y aceptar permiso del navegador.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-frontend-fcm-notificaciones.md`.
+
+## Cambios (2026-06-04) — Técnicos por taller + credenciales demo ✅
+
+- **Seeds:** `ensure_tecnicos_red` / `ensure_tecnicos_red_for_extra_defs` — 1 técnico móvil por sucursal; demo-sc incluye taller 2 (4to Anillo, `rodrigo.torrez@`).
+- **`dev_talleres_red`:** `min_count=6` para demo-sc (Rivero + 5 sucursales).
+- **Doc:** `docs/CREDENCIALES_DEMO.md` — matriz completa demo-sc + 6 orgs multi-org (responsable + técnico por sucursal).
+- **Verificado:** `python -m app.seeds` → 6 talleres demo-sc, cada uno con ≥1 técnico.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-tecnicos-red-credenciales.md`.
+
+## Cambios (2026-06-04) — Red talleres + horarios por tenant ✅
+
+- **Migración `0026_taller_horarios.sql`**: franja horaria por día (Bolivia); default Lun–Sáb 08:00–18:00.
+- **API** `GET/PUT /api/app/taller/horarios`; UI `/taller/panel/horarios`.
+- **Negocio**: ranking CU37 marca `abierto_ahora`; selección y aceptar bandeja validan horario.
+- **Seeds**: mín. 5 talleres/tenant (`SEED_TALLERES_RED_ON_START`, multi-org +4 sucursales); demo-sc talleres 3–6.
+- **Mobile**: badge «Cerrado» en selección de taller.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-red-talleres-horarios.md`.
+
+## Cambios (2026-06-05) — Paleta oscura global mobile (Paleta A) ✅
+
+- **`MobileAuthTheme.themeData`** — tema Material explícito (sin `fromSeed` que aclara superficies): fondo `#0B1020`, cards `#141B2E`, texto suave `#E8EAF6` (no blanco puro).
+- **Shadcn** alineado en `EmergenciasShadTheme.dark()`.
+- **Shells** cliente/técnico/taller con gradiente + bottom nav pill (`mobile_shell_widgets.dart`).
+- **Splash y onboarding** con gradiente oscuro.
+
+## Cambios (2026-06-05) — Mobile panel cliente UI Paleta A ✅
+
+- **Design system:** `mobile/lib/cliente/presentation/widgets/cliente_panel_ui.dart` — gradiente, bottom nav pill, action tiles, banners, subpage scaffold, empty/error states, filter chips.
+- **Org chip:** `ClienteOrgChip` en home y perfil (bottom sheet reutilizable `showOrgSlugPicker`).
+- **Pantallas:** home, shell, perfil, vehículos (lista/detalle/form), mis solicitudes, notificaciones, selección vehículo, wizard emergencia, detalle/seguimiento solicitud.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-mobile-cliente-panel-ui.md`.
+
+## Cambios (2026-06-05) — Limpieza `.env` local ✅
+
+- **`RUN_SEEDS_IN_LIFESPAN=false`** — alineado con Docker dev (override ya lo forzaba).
+- **`SEED_MULTI_ORGS_ON_START=true`** + **`SEED_MULTI_ORGS_PASSWORD=scdemo1`** — multi-org sin depender solo del override.
+- **Stripe** — una sola definición (claves test); eliminado bloque duplicado al final.
+- **`AI_INFERENCE_STUB=false`** — una sola definición (worker YOLO/Whisper real si levantás `--profile ai`).
+- **Gemini** — sección única al final; eliminado `#si` y duplicados.
+- **`.gitignore`** — `.env` descomentado (ya no se versiona).
+
+## Cambios (2026-06-05) — Seed 6 organizaciones SaaS demo ✅
+
+- **Nuevo:** `identidades_multi_org.py` + `dev_multi_orgs.py` — 6 orgs (2 Free, 2 Pro, 2 Max).
+- **Por org:** 1 taller ACTIVO, 2 técnicos, 2 clientes con vehículo Toyota Corolla; `tenant_id` en todo.
+- **Flag:** `SEED_MULTI_ORGS_ON_START` (true en `docker-compose.override.yml` dev); incluido en `python -m app.seeds`.
+- **Login taller:** slug org + `responsable@{slug}.demo.test` / `scdemo1`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-seed-multi-org-saas.md`.
+
+## Cambios (2026-06-05) — Portal taller login/registro UI + registro multi-tenant ✅
+
+- **UI:** login `/taller` y registro `/taller/registro` rediseñados (Paleta A, `_taller-auth-ui.scss`); labels sin superposición.
+- **SaaS registro:** `tenant_slug` obligatorio en `POST /app/taller/registro`; usuario y taller reciben `tenant_id`; selector org en registro.
+- **Flujo:** registro ↔ login con `?org=`; `FLOWS_PORTAL_TALLER.md` actualizado.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-auth-ui-multitenant-registro.md`.
+
+## Cambios (2026-06-05) — Fix UI admin: títulos superpuestos + backups loading ✅
+
+- **Síntoma:** en Bitácora y Backups el subtítulo se superponía al título (texto “fantasma”); Backups también en "Cargando…" infinito.
+- **Causa UI:** `.bit__lead` / `.bk__lead` usaban `margin: -1rem` (tiraba el párrafo hacia arriba sobre el h2). Mismo patrón en roles, permisos y talleres.
+- **Fix UI:** usar mixin `ev-page-lead` + `<header>` con espaciado; eliminados todos los `margin: -1rem` del admin.
+- **Fix backups:** OnPush + `markForCheck` (igual que bitácora).
+
+# Fecha: 2026-06-05 (Fix bitácora admin loading)
+
+## Cambios (2026-06-05) — Fix bitácora admin atascada en "Cargando…" ✅
+
+- **Síntoma:** `/admin/panel/bitacora` quedaba en "Cargando…" aunque `GET /api/bitacora/` respondía 200.
+- **Causa:** mismo bug OnPush del shell admin: `admin-bitacora` no usaba `ChangeDetectionStrategy.OnPush` ni `markForCheck` tras HTTP.
+- **Fix:** `admin-bitacora.component.ts` — OnPush, `finalize`, `takeUntilDestroyed`, `markForCheck` (patrón igual que `taller-bitacora` y organizaciones).
+- **Pendiente similar:** `admin-backups` aún sin OnPush (puede repetir el bug).
+
+# Fecha: 2026-06-05 (Admin organizaciones — planes comerciales)
+
+## Cambios (2026-06-05) — Admin organizaciones: planes Free / Pro / Max ✅
+
+- **Problema:** modal «Nueva organización» mostraba enums internos `FREE/STARTER/PRO/ENTERPRISE` (confuso vs landing y portal taller).
+- **Frontend:** `frontend/src/app/core/utils/saas-plan-tiers.ts` — mapeo comercial ↔ enum BD; `admin-organizaciones` carga catálogo vía `listPricingPlans()`; tabla muestra nombre comercial + badge `legacy` si `STARTER`.
+- **Backend:** default al crear tenant pasa de `STARTER` a `FREE` (`tenants/schemas.py`, `tenants/service.py`, `plan_tiers.py`); `demo-sc` seed conserva `STARTER` como legacy.
+- **Build:** `npm run build` OK.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-admin-org-planes-comerciales.md`.
+
+# Fecha: 2026-06-05 (PWA Angular frontend)
+
+## Cambios (2026-06-05) — PWA en portal web Angular ✅
+
+- **Paquete:** `@angular/pwa` + `@angular/service-worker` en `frontend/`.
+- **Manifest:** `Emergencias Vehiculares`, tema `#0B1020`, `start_url` `/taller/panel`, shortcuts bandeja/reportes.
+- **SW:** cache de shell + assets; API autenticada **no** cacheada; `/api/public/**` freshness 1h.
+- **UX:** banner «Actualizar ahora» cuando hay nueva versión del build.
+- **Nginx:** `ngsw-worker.js`, `ngsw.json`, `manifest.webmanifest` sin cache immutable.
+- **Nota:** SW solo en build **production** (Docker/nginx); `ng serve` dev no lo activa.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-pwa-angular-frontend.md`.
+
+# Fecha: 2026-06-05 (Mobile panel taller responsable)
+
+## Cambios (2026-06-05) — Mobile: panel responsable de taller ✅
+
+- **Módulo:** `mobile/lib/taller/` (auth, data, domain, presentation) + `core/network/taller_api_client.dart`.
+- **Flujo:** `/modo` → Responsable de taller → login (`X-Tenant-Slug`) → panel con dashboard, bandeja, técnicos, perfil.
+- **API:** mismos endpoints que portal web `/api/app/taller/*` y `/api/app/taller/emergencias/*`.
+- **Sesiones separadas:** `taller_access_token` vs `tecnico_access_token` vs cliente; técnico ya no admite `TALLER_RESPONSABLE`.
+- **Pendiente mobile taller:** comisiones, disponibilidad, reportes QBE/voz, suscripción, bitácora, backups (placeholders → web).
+- **Admin SaaS:** no implementado en mobile (Angular `/admin`).
+
+# Fecha: 2026-06-05 (Reportes QBE + voz + export + fix restore backup)
+
+## Cambios (2026-06-05) — Reportes personalizados (voz + Excel/PDF/CSV) ✅
+
+- **Origen referencia:** `Oftalmologia-Si2/backend/apps/reportes` (QBE engine, export engine, export intent).
+- **Adaptación:** FastAPI + SQLAlchemy async + multi-tenant (`tenant_id`/`taller_id` en scope QBE).
+- **Backend:** `app/modules/acceso_y_administracion/reportes/`; deps `openpyxl`, `reportlab`; migración `0025_reportes_modulo.sql`.
+- **API:** `/api/app/taller/reportes/plantillas`, `execute`, `nl-query`, `voice`, `export/{excel|pdf|csv}`.
+- **Plantillas sistema:** solicitudes recientes, finalizadas, comisiones pendientes, técnicos activos.
+- **Frontend:** `/taller/panel/reportes` — textarea + micrófono (Web Speech `es-BO`), vista previa, export, guardar plantilla.
+- **Permisos:** `reportes:leer|crear|actualizar|eliminar|exportar` — **re-login** en `/taller` tras migración.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-reportes-qbe-voz-export.md`.
+
+## Fix (2026-06-05) — Restore backup taller `fk_tecnicos_usuario` ✅
+
+- **Bug:** hard-delete de técnico borra `usuarios`; restore hacía `COPY tecnicos` con `usuario_id` huérfano → FK error.
+- **Fix:** export incluye `usuarios` + `usuario_rol` de técnicos; restore recrea cuentas antes de `tecnicos`; backups viejos omiten filas huérfanas (no fallan).
+- **Importante:** backups **anteriores** a este fix restauran sin error pero **no** recuperan técnicos ya eliminados; crear backup **nuevo** tras el fix.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-restore-backup-tecnicos-fk.md`.
+
+## Cambios (2026-06-05) — Usuarios del taller: desactivar y eliminar ✅
+
+- **Permiso:** `usuarios:eliminar` → `TALLER_RESPONSABLE` (migración `0024`).
+- **API:** `POST /usuarios/{id}/desactivar` (soft); `DELETE /usuarios/{id}` (hard, con validaciones).
+- **UI:** `/taller/panel/accesos/usuarios` — Activar, Desactivar, Eliminar (no sobre la propia cuenta).
+- **Admin:** desactivar usa `POST .../desactivar` (antes `DELETE` soft).
+
+## Cambios (2026-06-05) — CRUD técnicos y clientes en portal taller ✅
+
+- **Pedido:** desactivar/eliminar técnicos; crear/editar/desactivar/eliminar clientes del tenant.
+- **Backend:** migración `0023_taller_clientes_crud_permisos.sql`; endpoints técnicos `desactivar` + `DELETE`; API `/clientes/` CRUD con permisos.
+- **Frontend:** `taller-tecnicos` y `taller-clientes` con acciones completas.
+- **Importante:** tras migración, **cerrar sesión y volver a entrar** en `/taller` para refrescar permisos JWT.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-crud-tecnicos-clientes.md`.
+
+## Fix (2026-06-05) — Restore backup taller `talleres_pkey` ✅
+
+- **Bug:** restore hacía `COPY talleres` sobre fila existente → `duplicate key value violates unique constraint "talleres_pkey"`.
+- **Fix:** `_restore_taller_row_from_csv` hace **UPDATE** de metadatos del taller; tablas hijas siguen con DELETE + COPY.
+- **Scheduler:** `runner.py` importa `app.db_metadata` antes de usar SQLAlchemy (error `Cliente` no resuelto).
+- **Verificado:** restore manual OK; `backup-scheduler --force` → `2 ok, 0 errores` (rebuild imagen `backup-scheduler`).
+
+## Cambios recientes (2026-06-05) — Backups por taller (portal responsable) ✅
+
+- **Pedido:** cada taller gestiona sus backups (crear, descargar, restaurar) + hora automática (ej. 03:00).
+- **Backend:** tipo `TALLER`, `taller_backup_config`, API `/api/app/taller/backups`, restore CSV por taller.
+- **Scheduler:** `backup-scheduler` ejecuta backups automáticos de plataforma y de cada taller activo.
+- **UI:** `/taller/panel/backups` en sidebar «Equipo y taller».
+- **Migración:** `0022_taller_backup.sql` + permiso `backup_taller:gestionar`.
+
+## Cambios recientes (2026-06-05) — Módulo backups (adaptado Oftalmología → EmergenciasViales) ✅
+
+- **Origen:** `Oftalmologia-Si2/backend/apps/backup` (Django + `pg_dump --schema=`).
+- **Adaptación:** multi-tenant **shared schema** → export tenant por CSV filtrado; plataforma con `pg_dump` completo.
+- **Backend:** `app/modules/acceso_y_administracion/backup/` + migración `0021_backup_modulo.sql`.
+- **Docker:** servicio `backup-scheduler`, volumen `backup_data`, vars `BACKUP_*` en `.env.example`.
+- **Admin UI:** `/admin/panel/backups` — crear, listar, descargar, eliminar.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-backup-modulo.md`.
+
+## Cambios recientes (2026-06-05) — Bitácora portal taller (multi-tenant seguro) ✅
+
+- **Pedido:** auditoría en panel taller sin exponer datos de otros talleres ni clientes.
+- **API:** `GET /api/app/taller/bitacora` + permiso `bitacora_taller:leer` (migración `0020`).
+- **Filtros:** tenant del usuario + solo responsable/técnicos del taller + whitelist de módulos operativos.
+- **UI:** `/taller/panel/bitacora`, nav en «Equipo y taller».
+- **Logging extra:** checkout/confirm suscripción (`taller_portal`).
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-bitacora.md`.
+
+## Cambios recientes (2026-06-05) — Confirmación post-checkout Stripe (dev local) ✅
+
+- **Problema:** plan no se actualizaba tras pagar en Checkout; webhook no llega a `localhost`.
+- **Fix:** `POST /api/app/taller/suscripcion/confirm` + `session_id={CHECKOUT_SESSION_ID}` en success URL.
+- **Lógica compartida:** `aplicar_checkout_session_completada` (webhook + confirm).
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-stripe-confirm-checkout.md`.
+
+## Cambios recientes (2026-06-05) — Stripe test desde `.env` + bootstrap automático ✅
+
+- **Pedido:** usar credenciales test del `.env` sin pegar `price_...` a mano en admin.
+- **Backend:** `stripe_price_resolver`, `stripe_saas_bootstrap` en lifespan; vars `STRIPE_SAAS_PRICE_PRO/MAX`, `STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES`.
+- **Docker:** compose pasa todas las vars `STRIPE_SAAS_*`.
+- **Verificado:** checkout Pro devuelve `cs_test_...` con solo `sk_test_`/`pk_test_` en `.env`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-stripe-env-bootstrap.md`.
+
+## Cambios recientes (2026-06-05) — Planes SaaS en panel taller + upgrade Stripe ✅
+
+- **Pedido:** sidebar del taller muestra planes SaaS, plan actual, upgrade (sin downgrade) con Stripe del `.env`.
+- **Backend:** `GET/POST /api/app/taller/suscripcion` (+ checkout); validación por `sort_order`; webhook actualiza `tenant.plan`.
+- **Frontend:** bloque planes en sidebar, ruta `/taller/panel/suscripcion`, nav «Suscripción».
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-planes-saas-stripe.md`.
+
 ## Cambios recientes (2026-06-05) — Fix panel taller atascado en "Cargando…" ✅
 
 - **Síntoma:** casi todo el sidebar del panel taller (`/taller/panel/*`) quedaba en "Cargando…" aunque las APIs respondían 200.

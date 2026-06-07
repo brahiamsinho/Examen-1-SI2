@@ -1,11 +1,14 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 from typing import Optional
 from datetime import datetime
 
+from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEnum
+from app.modules.acceso_y_administracion.tenants.schemas import normalize_tenant_slug
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, EstadoTecnicoEnum
 
 
 class RegistroTallerIn(BaseModel):
+    tenant_slug: str = Field(..., min_length=2, max_length=80)
     nombre_comercial: str = Field(..., min_length=2, max_length=150)
     email: EmailStr
     telefono: str = Field(..., min_length=5, max_length=30)
@@ -14,6 +17,11 @@ class RegistroTallerIn(BaseModel):
     descripcion: Optional[str] = None
     responsable_nombre_completo: str = Field(..., min_length=3, max_length=200)
     password: str = Field(..., min_length=4, max_length=128)
+
+    @field_validator("tenant_slug", mode="before")
+    @classmethod
+    def normalize_tenant(cls, value: object) -> str:
+        return normalize_tenant_slug(value)
 
 
 class MiTallerUsuarioUpdate(BaseModel):
@@ -96,3 +104,58 @@ class TallerDashboardRead(BaseModel):
     taller_estado: EstadoTallerEnum
     usuarios_activos: int = 0
     clientes_registrados: int = 0
+
+
+class TallerPlanOptionRead(BaseModel):
+    slug: str
+    name: str
+    description: Optional[str] = None
+    price_monthly_bob: float
+    currency: str
+    benefits: list[str]
+    featured: bool
+    badge: Optional[str] = None
+    sort_order: int
+    is_current: bool
+    can_upgrade: bool
+    stripe_checkout_available: bool
+
+
+class TallerSuscripcionRead(BaseModel):
+    tenant_nombre: str
+    tenant_slug: str
+    current_plan_slug: str
+    current_plan_name: str
+    subscription_status: str
+    subscription_ends_at: Optional[datetime] = None
+    stripe_enabled: bool
+    plans: list[TallerPlanOptionRead]
+
+
+class TallerSuscripcionCheckoutIn(BaseModel):
+    plan_slug: str = Field(..., min_length=1, max_length=50)
+    success_url: str = Field(..., min_length=8, max_length=2048)
+    cancel_url: str = Field(..., min_length=8, max_length=2048)
+
+
+class TallerSuscripcionCheckoutOut(BaseModel):
+    checkout_url: str
+    session_id: str
+
+
+class TallerSuscripcionConfirmIn(BaseModel):
+    session_id: str = Field(..., min_length=3, max_length=255)
+
+
+class TallerBitacoraRead(BaseModel):
+    """Registro de auditoría visible en el portal taller (sin IP ni datos de otros talleres)."""
+
+    id: int
+    usuario_id: Optional[int]
+    usuario_nombre: Optional[str]
+    modulo: str
+    entidad: str
+    entidad_id: Optional[int]
+    accion: AccionBitacoraEnum
+    descripcion: Optional[str]
+    created_at: datetime

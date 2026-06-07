@@ -23,6 +23,9 @@ def seeds_enabled_for_startup(*, run_all: bool = False) -> bool:
         or settings.SEED_DEMO_SANTA_CRUZ_ON_START
         or settings.SEED_DEMO_MEDIA_PRIORIDAD_ON_START
         or settings.SEED_STRESS_VISUAL_ON_START
+        or settings.SEED_MULTI_ORGS_ON_START
+        or settings.SEED_MULTI_ORG_EMERGENCIAS_ON_START
+        or settings.SEED_TALLERES_RED_ON_START
     )
 
 
@@ -40,8 +43,11 @@ async def run_startup_seeds(*, run_all: bool = False, max_attempts: int = 8) -> 
     from app.seeds.dev_demo_media_prioridad import ensure_demo_media_prioridad
     from app.seeds.dev_demo_santa_cruz import ensure_demo_santa_cruz_datos
     from app.seeds.dev_stress_visual import ensure_stress_visual_seed
+    from app.seeds.dev_multi_orgs import ensure_multi_orgs_seed
+    from app.seeds.dev_multi_org_emergencias import ensure_multi_org_emergencias_seed
     from app.seeds.dev_tecnico import ensure_dev_tecnico
     from app.seeds.dev_taller import ensure_dev_taller
+    from app.seeds.dev_talleres_red import ensure_talleres_red_demo_sc
     from app.seeds.dev_tenant import ensure_default_tenant
 
     async with _startup_seed_lock:
@@ -73,6 +79,14 @@ async def run_startup_seeds(*, run_all: bool = False, max_attempts: int = 8) -> 
                         await ensure_demo_media_prioridad(session, require_enabled_flag=False)
                     if run_all or settings.SEED_STRESS_VISUAL_ON_START:
                         await ensure_stress_visual_seed(session, require_enabled_flag=False)
+                    if run_all or settings.SEED_MULTI_ORGS_ON_START:
+                        await ensure_multi_orgs_seed(session, require_enabled_flag=False)
+                    if run_all or settings.SEED_MULTI_ORG_EMERGENCIAS_ON_START:
+                        await ensure_multi_org_emergencias_seed(session, require_enabled_flag=False)
+                    if run_all or settings.SEED_TALLERES_RED_ON_START:
+                        await ensure_talleres_red_demo_sc(
+                            session, tenant_id=tenant_id, require_enabled_flag=False
+                        )
 
                     await session.commit()
                 _log.info("Seeds aplicados correctamente")

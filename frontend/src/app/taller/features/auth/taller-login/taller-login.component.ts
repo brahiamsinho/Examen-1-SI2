@@ -99,6 +99,11 @@ export class TallerLoginComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
+  registroQuery(): { org?: string } {
+    const slug = this.form.controls.orgSlug.value?.trim();
+    return slug ? { org: slug } : {};
+  }
+
   submit(): void {
     this.errorMsg = null;
     if (this.form.invalid) {

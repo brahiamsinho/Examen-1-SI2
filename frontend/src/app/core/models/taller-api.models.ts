@@ -2,6 +2,7 @@ export type EstadoTaller = 'PENDIENTE' | 'ACTIVO' | 'SUSPENDIDO' | 'INACTIVO';
 export type EstadoTecnico = 'ACTIVO' | 'INACTIVO';
 
 export interface RegistroTallerPayload {
+  tenant_slug: string;
   nombre_comercial: string;
   email: string;
   telefono: string;
@@ -94,4 +95,200 @@ export interface TecnicoPortalUpdatePayload {
   especialidad_id?: number | null;
   disponibilidad?: string | null;
   estado?: EstadoTecnico;
+}
+
+export interface TallerPlanOptionDto {
+  slug: string;
+  name: string;
+  description?: string | null;
+  price_monthly_bob: number;
+  currency: string;
+  benefits: string[];
+  featured: boolean;
+  badge?: string | null;
+  sort_order: number;
+  is_current: boolean;
+  can_upgrade: boolean;
+  stripe_checkout_available: boolean;
+}
+
+export interface TallerSuscripcionDto {
+  tenant_nombre: string;
+  tenant_slug: string;
+  current_plan_slug: string;
+  current_plan_name: string;
+  subscription_status: string;
+  subscription_ends_at?: string | null;
+  stripe_enabled: boolean;
+  plans: TallerPlanOptionDto[];
+}
+
+export interface TallerSuscripcionCheckoutPayload {
+  plan_slug: string;
+  success_url: string;
+  cancel_url: string;
+}
+
+export interface TallerSuscripcionCheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface TallerSuscripcionConfirmPayload {
+  session_id: string;
+}
+
+export type TallerAccionBitacora =
+  | 'CREAR'
+  | 'ACTUALIZAR'
+  | 'ELIMINAR'
+  | 'INICIAR_SESION'
+  | 'CERRAR_SESION'
+  | 'RESTABLECER_CONTRASENA'
+  | 'ASIGNAR_ROL'
+  | 'ASIGNAR_PERMISO'
+  | 'CONSULTAR';
+
+export interface TallerBitacoraDto {
+  id: number;
+  usuario_id: number | null;
+  usuario_nombre: string | null;
+  modulo: string;
+  entidad: string;
+  entidad_id: number | null;
+  accion: TallerAccionBitacora;
+  descripcion: string | null;
+  created_at: string;
+}
+
+export interface TallerBitacoraListParams {
+  usuario_id?: number;
+  modulo?: string;
+  accion?: TallerAccionBitacora;
+  desde?: string;
+  hasta?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export type TallerBackupEstado =
+  | 'PENDIENTE'
+  | 'EN_PROGRESO'
+  | 'COMPLETADO'
+  | 'FALLIDO'
+  | 'RESTAURADO'
+  | 'EXPIRADO';
+
+export interface TallerBackupDto {
+  id: number;
+  tenant_id: number | null;
+  taller_id: number | null;
+  tipo: string;
+  archivo: string;
+  tamano_mb: number | null;
+  estado: TallerBackupEstado;
+  incluye_evidencias: boolean;
+  creado_en: string;
+  expira_en: string | null;
+  error_mensaje: string | null;
+  restaurado_en: string | null;
+  motivo_restore: string | null;
+}
+
+export interface TallerBackupConfigDto {
+  id: number;
+  taller_id: number;
+  backup_automatico: boolean;
+  hora_backup: string;
+  frecuencia: 'daily' | 'weekly';
+  retencion_dias: number;
+  ultimo_backup_auto: string | null;
+  actualizado_en: string;
+}
+
+export interface TallerBackupConfigUpdatePayload {
+  backup_automatico?: boolean;
+  hora_backup?: string;
+  frecuencia?: 'daily' | 'weekly';
+  retencion_dias?: number;
+}
+
+export interface TallerBackupRestorePayload {
+  confirmar: boolean;
+  motivo: string;
+}
+
+export interface QbePayload {
+  model: string;
+  filters?: Record<string, unknown>;
+  fields?: string[] | null;
+  order_by?: string[];
+}
+
+export interface ReportTemplateDto {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  qbe_payload: QbePayload;
+  is_system_report: boolean;
+  tenant_id: number | null;
+  taller_id: number | null;
+  created_by_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportExecuteResultDto {
+  meta: {
+    model: string;
+    total_records: number;
+    columns: string[];
+    truncated?: boolean;
+  };
+  data: Record<string, unknown>[];
+}
+
+export interface ReportNlQueryResultDto {
+  qbe: QbePayload;
+  export_formats: Array<'excel' | 'pdf' | 'csv'>;
+  interpretation: string;
+}
+
+export interface ReportVoiceTranscribeResultDto {
+  transcripcion: string;
+  confianza: number;
+  provider?: string;
+}
+
+export interface ReportTemplateCreatePayload {
+  nombre: string;
+  descripcion?: string;
+  qbe_payload: QbePayload;
+}
+
+export type ReportExportFormat = 'excel' | 'pdf' | 'csv';
+
+export interface TallerHorarioDiaDto {
+  dia_semana: number;
+  nombre_dia: string;
+  hora_apertura: string | null;
+  hora_cierre: string | null;
+  activo: boolean;
+}
+
+export interface TallerHorariosDto {
+  horarios: TallerHorarioDiaDto[];
+  abierto_ahora: boolean;
+  zona_horaria: string;
+}
+
+export interface TallerHorarioDiaUpdatePayload {
+  dia_semana: number;
+  hora_apertura: string | null;
+  hora_cierre: string | null;
+  activo: boolean;
+}
+
+export interface TallerHorariosUpdatePayload {
+  horarios: TallerHorarioDiaUpdatePayload[];
 }

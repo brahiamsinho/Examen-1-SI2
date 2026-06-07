@@ -2,14 +2,10 @@
   <header class="pg__header">
     <h2 class="pg__title">Cuentas clientes</h2>
     <p class="pg__lead">
-      Clientes finales registrados en la app móvil bajo el slug de tu organización. Aquí consultas identidad y estado;
-      el alta ocurre desde la app, no desde el panel taller.
+      Clientes finales de tu organización. Puedes crear cuentas manualmente, editar datos, desactivar acceso o
+      eliminar registros sin historial operativo.
     </p>
   </header>
-
-  <div class="pg__info" role="note">
-    Solo lectura en este ciclo: el responsable de taller puede auditar cuentas, no crear clientes manualmente.
-  </div>
 
   <div class="pg__alert" *ngIf="error" role="alert">{{ error }}</div>
 
@@ -26,6 +22,9 @@
       <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
     </select>
     <button type="button" class="pg__btn" (click)="reload()">Actualizar</button>
+    <button type="button" class="pg__btn pg__btn--primary" *ngIf="puedeCrear" (click)="openCreateModal()">
+      Crear cliente
+    </button>
   </div>
 
   <p class="pg__muted" *ngIf="loading()">Cargando…</p>
@@ -39,6 +38,7 @@
           <th>Teléfono</th>
           <th>Ciudad</th>
           <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -48,9 +48,109 @@
           <td>{{ c.telefono || '—' }}</td>
           <td>{{ c.ciudad || '—' }}</td>
           <td><span class="pg__pill">{{ c.estado }}</span></td>
+          <td class="pg__actions">
+            <button type="button" class="pg__mini" (click)="openDetail(c)">Ver</button>
+            <button type="button" class="pg__mini" *ngIf="puedeEditar" (click)="openEdit(c)">Editar</button>
+            <button
+              type="button"
+              class="pg__mini"
+              *ngIf="puedeEditar && c.estado !== 'ACTIVO'"
+              [disabled]="busy"
+              (click)="activar(c)"
+            >
+              Activar
+            </button>
+            <button
+              type="button"
+              class="pg__mini"
+              *ngIf="puedeEditar && c.estado === 'ACTIVO'"
+              [disabled]="busy"
+              (click)="desactivar(c)"
+            >
+              Desactivar
+            </button>
+            <button
+              type="button"
+              class="pg__mini pg__mini--danger"
+              *ngIf="puedeEliminar"
+              [disabled]="busy"
+              (click)="eliminar(c)"
+            >
+              Eliminar
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
     <p class="pg__empty" *ngIf="!filtered.length">Sin clientes registrados en tu organización.</p>
+  </div>
+
+  <div class="pg__backdrop" *ngIf="modalCreate || modalEdit || modalDetail" (click)="closeModals()"></div>
+
+  <div class="pg__modal" *ngIf="modalDetail && selected" role="dialog" aria-modal="true">
+    <h3>{{ selected.nombres }} {{ selected.apellidos }}</h3>
+    <dl class="pg__dl">
+      <dt>Email</dt>
+      <dd>{{ selected.email }}</dd>
+      <dt>Teléfono</dt>
+      <dd>{{ selected.telefono || '—' }}</dd>
+      <dt>Ciudad</dt>
+      <dd>{{ selected.ciudad || '—' }}</dd>
+      <dt>Dirección</dt>
+      <dd>{{ selected.direccion || '—' }}</dd>
+      <dt>Estado</dt>
+      <dd>{{ selected.estado }}</dd>
+    </dl>
+    <div class="pg__modal-actions">
+      <button type="button" class="pg__btn" (click)="closeModals()">Cerrar</button>
+      <button type="button" class="pg__btn pg__btn--primary" *ngIf="puedeEditar" (click)="openEdit(selected!)">
+        Editar
+      </button>
+    </div>
+  </div>
+
+  <div class="pg__modal pg__modal--wide" *ngIf="modalCreate" role="dialog" aria-modal="true">
+    <h3>Crear cliente</h3>
+    <div class="pg__grid2">
+      <label class="pg__lbl">Nombres<input class="pg__inp" [(ngModel)]="createForm.nombres" /></label>
+      <label class="pg__lbl">Apellidos<input class="pg__inp" [(ngModel)]="createForm.apellidos" /></label>
+      <label class="pg__lbl">Email<input class="pg__inp" [(ngModel)]="createForm.email" type="email" /></label>
+      <label class="pg__lbl">Teléfono<input class="pg__inp" [(ngModel)]="createForm.telefono" /></label>
+      <label class="pg__lbl">Contraseña<input class="pg__inp" [(ngModel)]="createForm.password" type="password" /></label>
+      <label class="pg__lbl"
+        >Estado
+        <select class="pg__inp" [(ngModel)]="createForm.estado">
+          <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+        </select>
+      </label>
+      <label class="pg__lbl">Ciudad<input class="pg__inp" [(ngModel)]="createForm.ciudad" /></label>
+      <label class="pg__lbl">Dirección<input class="pg__inp" [(ngModel)]="createForm.direccion" /></label>
+    </div>
+    <div class="pg__modal-actions">
+      <button type="button" class="pg__btn" (click)="closeModals()">Cancelar</button>
+      <button type="button" class="pg__btn pg__btn--primary" [disabled]="busy" (click)="create()">Crear</button>
+    </div>
+  </div>
+
+  <div class="pg__modal pg__modal--wide" *ngIf="modalEdit && selected" role="dialog" aria-modal="true">
+    <h3>Editar cliente</h3>
+    <div class="pg__grid2">
+      <label class="pg__lbl">Nombres<input class="pg__inp" [(ngModel)]="editForm.nombres" /></label>
+      <label class="pg__lbl">Apellidos<input class="pg__inp" [(ngModel)]="editForm.apellidos" /></label>
+      <label class="pg__lbl">Email<input class="pg__inp" [(ngModel)]="editForm.email" type="email" /></label>
+      <label class="pg__lbl">Teléfono<input class="pg__inp" [(ngModel)]="editForm.telefono" /></label>
+      <label class="pg__lbl">Ciudad<input class="pg__inp" [(ngModel)]="editForm.ciudad" /></label>
+      <label class="pg__lbl">Dirección<input class="pg__inp" [(ngModel)]="editForm.direccion" /></label>
+      <label class="pg__lbl"
+        >Estado
+        <select class="pg__inp" [(ngModel)]="editForm.estado">
+          <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+        </select>
+      </label>
+    </div>
+    <div class="pg__modal-actions">
+      <button type="button" class="pg__btn" (click)="closeModals()">Cancelar</button>
+      <button type="button" class="pg__btn pg__btn--primary" [disabled]="busy" (click)="saveEdit()">Guardar</button>
+    </div>
   </div>
 </div>

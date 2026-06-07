@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/utils/bolivia_time.dart';
+import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../application/emergencias_providers.dart';
 import '../../application/offline_sync_providers.dart';
 import '../../domain/solicitud_draft.dart';
 import '../../domain/solicitud_emergencia_models.dart';
-import '../widgets/seguimiento/estado_solicitud_badge.dart';
 
 /// Lista de solicitudes del cliente + borradores offline (CU43/CU45).
 class EmergenciasMisSolicitudesScreen extends ConsumerStatefulWidget {
@@ -66,6 +65,9 @@ class _EmergenciasMisSolicitudesScreenState extends ConsumerState<EmergenciasMis
             ),
         ],
       ),
+    return ClienteSubpageScaffold(
+      title: 'Mis solicitudes',
+      onBack: () => context.canPop() ? context.pop() : context.go('/cliente/app/home'),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(
@@ -83,6 +85,8 @@ class _EmergenciasMisSolicitudesScreenState extends ConsumerState<EmergenciasMis
             return _EmptyBody(
               onNueva: () => context.push('/cliente/app/emergencias'),
             );
+          if (list.isEmpty) {
+            return _EmptyBody(onNueva: () => context.push('/cliente/app/emergencias'));
           }
 
           return RefreshIndicator(
@@ -125,6 +129,12 @@ class _EmergenciasMisSolicitudesScreenState extends ConsumerState<EmergenciasMis
                   if (i < list.length - 1) const SizedBox(height: 10),
                 ],
               ],
+            onRefresh: () async => ref.invalidate(misSolicitudesEmergenciasProvider),
+            child: ListView.separated(
+              padding: ClientePanelUi.pagePadding,
+              itemCount: list.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, i) => _SolicitudTile(solicitud: list[i]),
             ),
           );
         },
@@ -252,56 +262,22 @@ class _SolicitudTile extends StatelessWidget {
 
   final SolicitudEmergenciaListItem solicitud;
 
-  String _fecha(DateTime d) {
-    return BoliviaTime.format(d, pattern: 'dd/MM/yyyy');
-  }
+  String _fecha(DateTime d) => BoliviaTime.format(d, pattern: 'dd/MM/yyyy');
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/cliente/app/emergencias/solicitudes/${solicitud.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.emergency_outlined, color: scheme.primary, size: 28),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Solicitud #${solicitud.id}',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                    ),
-                    const SizedBox(height: 6),
-                    EstadoSolicitudBadge(estado: solicitud.estado, compact: true),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Vehículo #${solicitud.vehiculoId} · ${_fecha(solicitud.createdAt)}',
-                      style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-                    ),
-                    if (solicitud.tiempoEstimadoMin != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'ETA: ${solicitud.tiempoEstimadoMin} min',
-                        style: TextStyle(fontSize: 12, color: scheme.primary, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
-            ],
-          ),
-        ),
-      ),
+    return ClienteActionTile(
+      icon: Icons.emergency_outlined,
+      title: 'Solicitud #${solicitud.id}',
+      subtitle: [
+        'Vehículo #${solicitud.vehiculoId} · ${_fecha(solicitud.createdAt)}',
+        if (solicitud.tallerId == null && solicitud.estado.puedeElegirTaller)
+          'Pendiente: elegir taller'
+        else if (solicitud.tiempoEstimadoMin != null)
+          'ETA: ${solicitud.tiempoEstimadoMin} min',
+      ].join('\n'),
+      accent: Theme.of(context).colorScheme.error.withValues(alpha: 0.85),
+      onTap: () => context.push('/cliente/app/emergencias/solicitudes/${solicitud.id}'),
     );
   }
 }
@@ -313,36 +289,12 @@ class _EmptyBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: ShadCard(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.inbox_outlined, size: 48, color: scheme.onSurfaceVariant),
-                const SizedBox(height: 16),
-                Text(
-                  'No tenés solicitudes aún',
-                  style: Theme.of(context).textTheme.titleMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Cuando reportes una emergencia, aparecerá acá para seguimiento.',
-                  style: TextStyle(color: scheme.onSurfaceVariant, height: 1.4),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ShadButton(onPressed: onNueva, child: const Text('Reportar emergencia')),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return ClienteEmptyState(
+      icon: Icons.inbox_outlined,
+      title: 'No tenés solicitudes aún',
+      message: 'Cuando reportes una emergencia, aparecerá acá para seguimiento.',
+      actionLabel: 'Reportar emergencia',
+      onAction: onNueva,
     );
   }
 }
@@ -355,18 +307,12 @@ class _ErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            const SizedBox(height: 16),
-            ShadButton.outline(onPressed: onRetry, child: const Text('Reintentar')),
-          ],
-        ),
-      ),
+    return ClienteEmptyState(
+      icon: Icons.error_outline,
+      title: 'Error al cargar',
+      message: message,
+      actionLabel: 'Reintentar',
+      onAction: onRetry,
     );
   }
 }

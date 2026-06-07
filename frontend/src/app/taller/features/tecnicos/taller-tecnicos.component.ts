@@ -228,6 +228,60 @@ export class TallerTecnicosComponent implements OnInit {
       });
   }
 
+  desactivar(t: TecnicoPortalDto): void {
+    if (!confirm(`¿Desactivar la cuenta de ${t.nombres} ${t.apellidos}? No podrá iniciar sesión.`)) {
+      return;
+    }
+    this.busy = true;
+    this.api
+      .desactivarTecnico(t.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.cdr.markForCheck();
+          this.reload();
+          this.closeModals();
+        },
+        error: () => {
+          this.busy = false;
+          this.error = 'No se pudo desactivar el técnico.';
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  eliminar(t: TecnicoPortalDto): void {
+    if (
+      !confirm(
+        `¿Eliminar permanentemente a ${t.nombres} ${t.apellidos}? Solo es posible si no tiene atenciones registradas.`,
+      )
+    ) {
+      return;
+    }
+    this.busy = true;
+    this.api
+      .deleteTecnico(t.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.cdr.markForCheck();
+          this.reload();
+          this.closeModals();
+        },
+        error: (err) => {
+          this.busy = false;
+          const msg = err?.error?.detail;
+          this.error =
+            typeof msg === 'string'
+              ? msg
+              : 'No se pudo eliminar el técnico (puede tener historial de atenciones).';
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   closeModals(): void {
     this.modalCreate = this.modalEdit = this.modalDetail = false;
     this.selected = null;

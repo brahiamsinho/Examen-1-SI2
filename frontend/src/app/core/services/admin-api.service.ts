@@ -10,7 +10,9 @@ import type {
   AdminKpisDto,
   AdminPanelOverview,
   BitacoraDto,
+  ClienteCreatePayload,
   ClienteListDto,
+  ClienteUpdatePayload,
   PermisoDto,
   RolDto,
   RolPermisosDto,
@@ -27,6 +29,8 @@ import type {
   UsuarioUpdatePayload,
   PricingPlanDto,
   PricingPlanUpdatePayload,
+  BackupCreatePayload,
+  BackupDto,
 } from '../models/admin-api.models';
 
 @Injectable({ providedIn: 'root' })
@@ -110,6 +114,22 @@ export class AdminApiService {
     return this.http.get<ClienteListDto[]>(`${this.base}/clientes/`, { params });
   }
 
+  createCliente(body: ClienteCreatePayload): Observable<ClienteListDto> {
+    return this.http.post<ClienteListDto>(`${this.base}/clientes/`, body);
+  }
+
+  updateCliente(id: number, body: ClienteUpdatePayload): Observable<ClienteListDto> {
+    return this.http.put<ClienteListDto>(`${this.base}/clientes/${id}`, body);
+  }
+
+  desactivarCliente(id: number): Observable<ClienteListDto> {
+    return this.http.post<ClienteListDto>(`${this.base}/clientes/${id}/desactivar`, {});
+  }
+
+  deleteCliente(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/clientes/${id}`);
+  }
+
   getUsuario(id: number): Observable<UsuarioListDto> {
     return this.http.get<UsuarioListDto>(`${this.base}/usuarios/${id}`);
   }
@@ -121,6 +141,10 @@ export class AdminApiService {
   updateUsuario(id: number, body: UsuarioUpdatePayload): Observable<UsuarioListDto> {
     // Backend devuelve UsuarioRead; reinyectamos roles en el componente si hace falta.
     return this.http.put<UsuarioListDto>(`${this.base}/usuarios/${id}`, body);
+  }
+
+  desactivarUsuario(id: number): Observable<UsuarioListDto> {
+    return this.http.post<UsuarioListDto>(`${this.base}/usuarios/${id}/desactivar`, {});
   }
 
   deleteUsuario(id: number): Observable<void> {
@@ -263,5 +287,27 @@ export class AdminApiService {
     return this.http
       .patch<PricingPlanDto>(`${this.base}/admin/pricing-plans/${slug}`, payload)
       .pipe(tap(() => this.invalidatePricingPlansList()));
+  }
+
+  listBackups(tenantId?: number): Observable<BackupDto[]> {
+    let params = new HttpParams();
+    if (tenantId != null) {
+      params = params.set('tenant_id', String(tenantId));
+    }
+    return this.http.get<BackupDto[]>(`${this.base}/admin/backups/`, { params });
+  }
+
+  createBackup(payload: BackupCreatePayload): Observable<BackupDto> {
+    return this.http.post<BackupDto>(`${this.base}/admin/backups/`, payload);
+  }
+
+  downloadBackup(id: number): Observable<Blob> {
+    return this.http.get(`${this.base}/admin/backups/${id}/download`, {
+      responseType: 'blob',
+    });
+  }
+
+  deleteBackup(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/admin/backups/${id}`);
   }
 }

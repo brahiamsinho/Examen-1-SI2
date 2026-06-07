@@ -39,9 +39,11 @@ class Settings(BaseSettings):
         "STRIPE_SAAS_WEBHOOK_SECRET",
         "STRIPE_SAAS_PRICE_STARTER",
         "STRIPE_SAAS_PRICE_PRO",
+        "STRIPE_SAAS_PRICE_MAX",
         "SAAS_PLATFORM_BASE_DOMAIN",
         "SMTP_USER",
         "SMTP_PASSWORD",
+        "GEMINI_API_KEY",
         mode="before",
     )
     @classmethod
@@ -144,6 +146,16 @@ class Settings(BaseSettings):
     SEED_STRESS_VISUAL_ON_START: bool = False
     SEED_STRESS_CLIENT_PASSWORD: str | None = _seed_sc.STRESS_PASSWORD
 
+    # ── Seed multi-org SaaS (6 tenants: 2 Free, 2 Pro, 2 Max) ──
+    SEED_MULTI_ORGS_ON_START: bool = False
+    # Misma contraseña demo que identidades_demo_sc / identidades_multi_org (no importar ese módulo aquí: circular import).
+    SEED_MULTI_ORGS_PASSWORD: str | None = _seed_sc.DEMO_PASSWORD
+    # Emergencias operativas por taller multi-org (bandeja, historial, comisiones).
+    SEED_MULTI_ORG_EMERGENCIAS_ON_START: bool = False
+
+    # Red mínima de talleres por tenant (demo-sc y multi-org)
+    SEED_TALLERES_RED_ON_START: bool = False
+
     # ── Pagos CU20 — simulación local; desactivar autocmpletar para flujo tipo pasarela (2 pasos) ──
     PAGO_SIMULADO_AUTOCOMPLETE: bool = True
     PAGO_PROVEEDOR_DEFAULT: str = "SIMULADO"
@@ -154,6 +166,9 @@ class Settings(BaseSettings):
     STRIPE_SAAS_WEBHOOK_SECRET: str | None = None
     STRIPE_SAAS_PRICE_STARTER: str | None = None
     STRIPE_SAAS_PRICE_PRO: str | None = None
+    STRIPE_SAAS_PRICE_MAX: str | None = None
+    # true (default en dev): crea price_... en Stripe test si faltan en BD y .env
+    STRIPE_SAAS_AUTO_BOOTSTRAP_PRICES: bool = True
     # Subdominio: demo-sc.<SAAS_PLATFORM_BASE_DOMAIN>
     SAAS_PLATFORM_BASE_DOMAIN: str | None = None
 
@@ -165,9 +180,23 @@ class Settings(BaseSettings):
     def stripe_saas_price_id(self) -> str | None:
         return (self.STRIPE_SAAS_PRICE_STARTER or "").strip() or None
 
+    def stripe_saas_price_id_for_slug(self, slug: str) -> str | None:
+        """Price ID opcional por plan desde `.env` (pro/max/starter)."""
+        from app.modules.acceso_y_administracion.billing.stripe_price_resolver import (
+            env_stripe_price_id_for_slug,
+        )
+
+        return env_stripe_price_id_for_slug(slug)
+
     # ── Firebase Cloud Messaging (CU19) — opcional; ruta al JSON de cuenta de servicio ──
     FCM_ENABLED: bool = False
     FIREBASE_CREDENTIALS_PATH: str | None = None  # ej. firebase-credentials.json (relativo a backend/)
+
+    # ── OSRM — routing VRT/ETA técnico→cliente (contenedor `osrm`, perfil compose `routing`) ──
+    OSRM_ENABLED: bool = True
+    OSRM_BASE_URL: str | None = None  # ej. http://osrm:5000
+    OSRM_TIMEOUT_SECONDS: float = 8.0
+    OSRM_FALLBACK_SPEED_KMH: float = 35.0
 
     @property
     def firebase_credentials_file(self) -> Path | None:
@@ -209,6 +238,14 @@ class Settings(BaseSettings):
     # Si true, no llama al worker: útil en tests o sin contenedor IA.
     AI_INFERENCE_STUB: bool = False
 
+    # Google Gemini — transcripción real en reportes por voz (prioridad sobre Whisper/stub).
+    GEMINI_API_KEY: str | None = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+
+    @property
+    def gemini_enabled(self) -> bool:
+        return bool((self.GEMINI_API_KEY or "").strip())
+
     # Evidencias CU13/CU14 — subida directa al API (multipart). URL pública del fichero (IA / taller).
     # Si es None, se usa API_PUBLIC_URL o el Host de cada petición. En Docker interno a veces conviene
     # fijar EVIDENCIAS_PUBLIC_BASE_URL al origen alcanzable desde otros servicios.
@@ -226,6 +263,21 @@ class Settings(BaseSettings):
         """URL pública del front (SPA Angular): `APP_PUBLIC_URL` o `FRONTEND_PUBLIC_URL`."""
         u = (self.APP_PUBLIC_URL or self.FRONTEND_PUBLIC_URL or "").strip()
         return u.rstrip("/")
+
+    # ── Backup / restore (pg_dump + scheduler Docker) ───────
+    BACKUP_ENABLED: bool = True
+    BACKUP_STORAGE_DIR: str = "backups"
+    BACKUP_TIMEOUT_SECONDS: int = 600
+    BACKUP_MAX_SIZE_MB: int = 2048
+    BACKUP_RETENTION_DAYS_DEFAULT: int = 7
+    BACKUP_SCHEDULER_INTERVAL_SECONDS: int = 3600
+
+    @property
+    def backup_storage_path(self) -> Path:
+        p = Path(self.BACKUP_STORAGE_DIR)
+        if not p.is_absolute():
+            p = _BACKEND_DIR / p
+        return p
 
     @property
     def evidencias_upload_dir(self) -> Path:

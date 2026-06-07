@@ -6,9 +6,8 @@
 }
 
 .tal__lead {
-  margin: -1rem 0 1rem;
-  color: t.$ev-muted;
-  font-size: 0.875rem;
+  @include ui.ev-page-lead;
+  margin-bottom: calc(t.$ev-space * 2);
 }
 
 .tal__alert {

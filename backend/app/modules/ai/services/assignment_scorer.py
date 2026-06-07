@@ -68,11 +68,24 @@ def rank_talleres(
     for row in taller_rows:
         tid = int(row["taller_id"])
         nombre = str(row["nombre_comercial"])
+        abierto = bool(row.get("abierto_ahora", True))
         ciudad = str(row.get("ciudad") or "")
         plat = row.get("latitud")
         plng = row.get("longitud")
         pend = int(row.get("pendientes_bandeja") or 0)
         specs: list[str] = list(row.get("especialidad_nombres") or [])
+
+        if not abierto:
+            scored.append(
+                TallerCandidatoScore(
+                    taller_id=tid,
+                    nombre_comercial=nombre,
+                    score=0.0,
+                    abierto_ahora=False,
+                    detalle={"motivo": "fuera_de_horario"},
+                )
+            )
+            continue
 
         if plat is not None and plng is not None:
             dist = _haversine_km(ilat, ilng, float(plat), float(plng))
@@ -107,10 +120,12 @@ def rank_talleres(
                 taller_id=tid,
                 nombre_comercial=nombre,
                 score=round(score, 4),
+                abierto_ahora=True,
                 detalle=detalle,
             )
         )
 
-    scored.sort(key=lambda x: x.score, reverse=True)
-    best_id = scored[0].taller_id if scored else None
+    scored.sort(key=lambda x: (x.abierto_ahora, x.score), reverse=True)
+    open_scored = [x for x in scored if x.abierto_ahora]
+    best_id = open_scored[0].taller_id if open_scored else None
     return AssignmentRankOut(candidatos=scored, mejor_taller_id=best_id)

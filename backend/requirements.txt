@@ -16,3 +16,5 @@ email-validator==2.1.1
 python-dotenv==1.0.1
 firebase-admin==6.5.0
 stripe==11.1.1
+openpyxl==3.1.5
+reportlab==4.2.5

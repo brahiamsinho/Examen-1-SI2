@@ -13,6 +13,10 @@ from app.modules.comunicacion_y_notificaciones.mensajes_solicitud.schemas import
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.notificaciones.service import crear_notificacion_y_push
 from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
+from app.modules.comunicacion_y_notificaciones.notificaciones.service import (
+    crear_notificacion_y_push,
+    notificar_responsable_taller_por_solicitud,
+)
 from app.modules.clientes_y_vehiculos.clientes.service import get_cliente_row_for_usuario, require_cliente_rol
 from app.modules.talleres_y_tecnicos.tecnico.service import get_tecnico_row_for_usuario, require_tecnico_rol
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
@@ -115,13 +119,22 @@ async def enviar_mensaje(
     )
     await db.flush()
 
+    preview = texto[:120] + ("…" if len(texto) > 120 else "")
     await crear_notificacion_y_push(
         db,
         usuario_destino_id=receptor,
         solicitud_id=solicitud_id,
         tipo=TipoNotificacionEnum.MENSAJE_NUEVO,
         titulo="Nuevo mensaje",
-        mensaje=texto[:120] + ("…" if len(texto) > 120 else ""),
+        mensaje=preview,
+    )
+    actor_label = "Cliente" if actor == "cliente" else "Técnico"
+    await notificar_responsable_taller_por_solicitud(
+        db,
+        solicitud=sol,
+        tipo=TipoNotificacionEnum.MENSAJE_NUEVO,
+        titulo=f"Mensaje del {actor_label.lower()}",
+        mensaje=f"Emergencia #{solicitud_id} — {actor_label}: {preview}",
     )
     if actor == "cliente" and sol.taller_id is not None:
         await eventos_servicio.on_mensaje_cliente(

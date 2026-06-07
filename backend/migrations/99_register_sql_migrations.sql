@@ -28,4 +28,12 @@ INSERT INTO app_sql_migrations (filename) VALUES
     ('0021_presupuesto_taller_cu42.sql'),
     ('0022_client_request_id_cu43.sql'),
     ('0023_reportes_kpis_cu46.sql')
+    ('0020_taller_bitacora_permiso.sql'),
+    ('0021_backup_modulo.sql'),
+    ('0022_taller_backup.sql'),
+    ('0023_taller_clientes_crud_permisos.sql'),
+    ('0024_taller_usuarios_eliminar_permiso.sql'),
+    ('0025_reportes_modulo.sql'),
+    ('0026_taller_horarios.sql'),
+    ('0027_taller_fcm_notificaciones.sql')
 ON CONFLICT (filename) DO NOTHING;

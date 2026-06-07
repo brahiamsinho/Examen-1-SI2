@@ -2,7 +2,10 @@
   <header class="org__head">
     <div>
       <h2 class="org__h">Organizaciones (SaaS)</h2>
-      <p class="org__lead">Clientes B2B de la plataforma. Solo superadmin de plataforma.</p>
+      <p class="org__lead">
+        Clientes B2B de la plataforma. Los planes coinciden con
+        <strong>Planes y precios</strong> y el portal taller.
+      </p>
     </div>
     <button type="button" class="org__btn org__btn--primary" (click)="openCreate()">
       Nueva organización
@@ -30,7 +33,10 @@
           <td>{{ t.id }}</td>
           <td><code class="org__code">{{ t.slug }}</code></td>
           <td>{{ t.nombre }}</td>
-          <td>{{ t.plan }}</td>
+          <td>
+            <span class="org__plan-name">{{ planDisplayName(t.plan) }}</span>
+            <span *ngIf="t.plan === 'STARTER'" class="org__plan-legacy">legacy</span>
+          </td>
           <td>{{ t.estado }}</td>
           <td>{{ t.subscription_status || 'TRIAL' }}</td>
           <td class="org__actions">
@@ -72,10 +78,13 @@
       <input class="org__inp" [(ngModel)]="createForm.nombre" placeholder="Mi empresa S.R.L." />
     </label>
     <label class="org__lbl">
-      Plan
-      <select class="org__inp" [(ngModel)]="createForm.plan">
-        <option *ngFor="let p of plans" [value]="p">{{ p }}</option>
+      Plan comercial
+      <select class="org__inp" [(ngModel)]="createForm.commercialPlanSlug">
+        <option *ngFor="let p of commercialPlans()" [ngValue]="p.slug">
+          {{ p.name }} — {{ p.priceLabel }}
+        </option>
       </select>
+      <span class="org__hint">{{ planDescription(createForm.commercialPlanSlug) }}</span>
     </label>
     <div class="org__modal-actions">
       <button type="button" class="org__btn org__btn--ghost" (click)="closeModals()">Cancelar</button>
@@ -98,10 +107,15 @@
       <input class="org__inp" [(ngModel)]="editForm.nombre" />
     </label>
     <label class="org__lbl">
-      Plan
-      <select class="org__inp" [(ngModel)]="editForm.plan">
-        <option *ngFor="let p of plans" [value]="p">{{ p }}</option>
+      Plan comercial
+      <select class="org__inp" [(ngModel)]="editCommercialPlanSlug">
+        <option *ngFor="let p of commercialPlans()" [ngValue]="p.slug">
+          {{ p.name }} — {{ p.priceLabel }}
+        </option>
       </select>
+      <span class="org__hint" *ngIf="selected.plan === 'STARTER'">
+        Esta org tiene plan interno STARTER; se muestra como Free (mismo tier comercial).
+      </span>
     </label>
     <label class="org__lbl">
       Estado

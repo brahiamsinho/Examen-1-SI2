@@ -25,7 +25,7 @@ Prefijo app: `/taller` (`frontend/src/app/taller/taller.routes.ts`).
 | Ruta | Componente | Auth |
 |------|------------|------|
 | `/taller` | `TallerLoginComponent` | No |
-| `/taller/registro` | `TallerRegisterComponent` | No |
+| `/taller/registro` | `TallerRegisterComponent` | No (público) — requiere `tenant_slug` |
 | `/taller/recuperar` | `TallerRecoverComponent` | No |
 | `/taller/restablecer-contrasena` | `TallerResetPasswordComponent` | No |
 | `/taller/panel` | `TallerShellComponent` + hijos | `tallerAuthGuard` |
@@ -42,14 +42,14 @@ Landing y navbar enlazan a `/taller/registro` (CTA) y `/taller` (ingresar).
 ### 3.1 Actor y precondiciones
 
 - **Actor:** futuro responsable de taller (sin sesión).
-- **Precondición:** email/teléfono no duplicados según reglas de `usuarios` (unicidad por `tenant_id`; en registro público `tenant_id` suele ser `NULL`).
+- **Precondición:** email/teléfono no duplicados **dentro del tenant** elegido; organización en estado `ACTIVO`.
 
 ### 3.2 Frontend
 
-1. Usuario abre `/taller/registro`.
-2. Formulario: datos del taller + `responsable_nombre_completo` + contraseña + términos.
-3. `TallerApiService.registro()` → `POST ${apiUrl}/app/taller/registro`.
-4. **No** se envía `Authorization` ni `X-Tenant-Slug` (interceptor marca el POST como público).
+1. Usuario abre `/taller/registro` (opcional `?org=demo-sc`).
+2. Selecciona **organización SaaS** + datos del taller, responsable y contraseña.
+3. `TallerApiService.registro()` → `POST ${apiUrl}/app/taller/registro` con `tenant_slug` en body.
+4. **No** se envía `Authorization` (interceptor marca el POST como público).
 
 Archivos:
 
@@ -64,11 +64,11 @@ Endpoint: `POST /api/app/taller/registro` → `registro_taller_publico()` en
 
 | Paso | Acción | Estado / dato |
 |------|--------|----------------|
-| 1 | Validar teléfono único | 409 si duplicado |
-| 2 | `create_usuario` | `estado = PENDIENTE` |
+| 1 | Resolver `tenant_slug` → org `ACTIVO` | 404/403 si no válida |
+| 2 | `create_usuario` con `tenant_id` | `estado = PENDIENTE` |
 | 3 | Asignar rol `TALLER_RESPONSABLE` | `usuario_roles` |
 | 4 | Bitácora registro | módulo `taller_responsable` |
-| 5 | `create_taller` | `estado = PENDIENTE`, `usuario_responsable_id = user.id` |
+| 5 | `create_taller` con `tenant_id` | `estado = PENDIENTE` |
 | 6 | `crear_y_enviar_verificacion_email` | enlace 72 h |
 | 7 | Respuesta `MiTallerRead` | `pendiente_verificacion_email: true` |
 
@@ -159,7 +159,7 @@ Para URLs bajo `/api/app/taller/*` (excepto POST `/registro`), se adjunta
 | API | `POST /api/app/taller/registro` | `POST /api/talleres/` | **`POST /api/talleres/provision`** |
 | Auth | Ninguna | JWT admin | JWT admin |
 | Crea usuario | Sí (responsable nuevo) | No (elige `usuario_responsable_id`) | **Sí (responsable nuevo, ACTIVO)** |
-| `tenant_id` | No asignado en registro público actual | Obligatorio (superadmin) o `ctx.tenant_id` | Obligatorio |
+| `tenant_id` | **Sí** — `tenant_slug` en body → resuelve org activa | Obligatorio (superadmin) o `ctx.tenant_id` | Obligatorio |
 | Rol | Asigna `TALLER_RESPONSABLE` | Responsable ya debe existir | Asigna `TALLER_RESPONSABLE` |
 | Email verificación | Sí (usuario PENDIENTE) | Depende de cómo se creó el usuario | **No** (login inmediato en `/taller`) |
 
@@ -171,15 +171,14 @@ Documentación SaaS admin: `docs/ai/sessions/2026-05-28-agent-saas-admin-usuario
 
 ## 7. Multi-tenant (SaaS) — implicaciones
 
-| Momento | `X-Tenant-Slug` | `tenant_id` en BD |
-|---------|-----------------|-------------------|
-| Registro público | No enviado | Usuario/taller típicamente `NULL` |
-| Login `/taller` | Sí (campo organización) | Validación si `user.tenant_id IS NOT NULL` |
+| Momento | Organización | `tenant_id` en BD |
+|---------|--------------|-------------------|
+| Registro público | `tenant_slug` en body + selector UI | Asignado a usuario y taller |
+| Login `/taller` | `X-Tenant-Slug` (campo organización) | Validación si `user.tenant_id IS NOT NULL` |
 | Seeds demo | `demo-sc` | Usuarios/talleres con `tenant_id` del demo |
 | Admin alta taller | N/A (JWT + contexto) | `tenant_id` explícito en body |
 
-**Hueco conocido:** auto-registro no asocia organización; usuarios `tenant_id = NULL` pueden iniciar sesión con cualquier slug válido (el backend solo rechaza cuando `tenant_id` está definido y no coincide).  
-**Mejora futura:** campo slug en `/taller/registro` + pasar `tenant_id` en `create_usuario` / `create_taller`.
+**Resuelto (2026-06-05):** auto-registro asocia `tenant_id` vía `tenant_slug`; login debe usar la misma organización.
 
 ---
 

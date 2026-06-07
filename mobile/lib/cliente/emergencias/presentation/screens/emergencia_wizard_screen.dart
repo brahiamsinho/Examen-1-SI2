@@ -14,6 +14,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/vehiculos_providers.dart';
+import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../application/emergencias_providers.dart';
 import '../../application/offline_draft_helpers.dart';
 import '../../application/offline_sync_providers.dart';
@@ -600,21 +601,17 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
       orElse: () => 'Vehículo #${widget.vehiculoId}',
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Emergencia · $placa'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/cliente/app/emergencias'),
-        ),
-      ),
+    return ClienteSubpageScaffold(
+      title: 'Emergencia · $placa',
+      useCloseIcon: true,
+      onBack: () => context.canPop() ? context.pop() : context.go('/cliente/app/emergencias'),
       body: Builder(
         builder: (bodyContext) {
           _scaffoldBodyContext = bodyContext;
           return Stack(
             children: [
               ListView(
-                padding: const EdgeInsets.all(20),
+                padding: ClientePanelUi.pagePadding,
                 children: [
                   _StepIndicator(step: _step, total: _totalSteps),
                   const SizedBox(height: 20),

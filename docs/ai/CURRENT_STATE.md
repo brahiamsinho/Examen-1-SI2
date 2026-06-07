@@ -41,8 +41,72 @@
 - [x] Taller recibe avisos in-app del **cliente**: elegir taller, mensajes de chat, pago confirmado (sin push FCM por ahora).
 - [x] Mobile técnico: `/tecnico/app/notificaciones`.
 - Sesión: `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`, `2026-06-05-agent-taller-notificaciones-cliente.md`.
+# Última actualización: 2026-06-06 — Notificaciones taller ampliadas ✅
+# =========================================================
+
+## Notificaciones taller ampliadas (2026-06-06) ✅
+- [x] Helper `notificar_responsable_taller_por_solicitud` (taller + `bandeja_id` en FCM).
+- [x] Push/in-app al responsable en: estado técnico (en camino, atención, finalizada), chat cliente/técnico, pago confirmado.
+- [x] CU37 incluye `bandeja_id` en payload push.
+- [x] API `GET .../solicitudes/{id}/bandeja-id` + campana taller navega al detalle.
+- [x] Sesión: `docs/ai/sessions/2026-06-06-agent-notificaciones-taller-ampliadas.md`.
+
+## Notificaciones web + push FCM (2026-06-04) ✅
+- [x] Credenciales Firebase copiadas: `backend/firebase-credentials.json`, `mobile/android/app/google-services.json`.
+- [x] Migración `0027_taller_fcm_notificaciones.sql` — permiso `dispositivos:fcm` → `TALLER_RESPONSABLE`.
+- [x] API: `/api/app/taller|admin/dispositivos/fcm` + `/notificaciones` (listar, marcar leída).
+- [x] Push al responsable cuando CU37 elige taller (`notificar_responsable_taller`).
+- [x] Angular: `FcmService`, `NotificacionesApiService`, campana en shells taller/admin; SW en scope `/firebase-cloud-messaging-push-scope/` (sin conflicto con `ngsw`).
+- [x] Config vía `.env` raíz → `firebase-config.generated.ts` (`FIREBASE_WEB_*`, `npm run env:sync`).
+- [x] Activar en local: `FCM_ENABLED=true` + credenciales Firebase (`transporte-si2`) — **2026-06-06**.
+- [x] Fix mobile push: credenciales backend (archivo JSON, no directorio), canal Android manifest, race `onMessage`, `onTokenRefresh`.
+
+## VRT + ETA routing (2026-06-06) ✅
+- [x] OSRM en Docker (perfil `routing`) + `scripts/osrm-setup.ps1` (extracto Bolivia).
+- [x] Backend `core/routing/osrm_client.py` — polyline + ETA en `GET .../ubicacion-tecnico`.
+- [x] Mobile: mapa con ruta por calles + tarjeta `RutaVrtEtaCard` (VRT).
+- [ ] Opcional: levantar OSRM en tu máquina (`docker compose --profile routing up -d osrm`).
+
+## Red talleres + horarios (2026-06-04) ✅
+- [x] Tabla `taller_horarios` + servicio `horarios_service` (zona `America/La_Paz`).
+- [x] Portal taller: `/taller/panel/horarios` + API `/app/taller/horarios`.
+- [x] CU37/CU26/IA6 respetan horario (`abierto_ahora`).
+- [x] Seeds: **6 talleres** ACTIVO en `demo-sc` + **5 talleres/org** multi-org (principal + 4 sucursales).
+- [x] **1 técnico por sucursal** (+ 2 en taller principal multi-org); demo-sc matriz completa en `docs/CREDENCIALES_DEMO.md`.
+- [x] Mobile cliente: badge «Cerrado» en selección taller.
 
 ## Estado: CICLO 1 base + dominio emergencias (Ciclo 2) + módulo IA + SaaS multi-tenant + Ciclo 4 (examen) ✅
+
+### Reportes personalizados — QBE + voz + Excel/PDF/CSV (2026-06-05) ✅
+- [x] Módulo `backend/app/modules/acceso_y_administracion/reportes/` (adaptado de Oftalmología `apps/reportes`).
+- [x] Motor QBE seguro SQLAlchemy: `SolicitudEmergencia`, `ComisionTaller`, `Cliente`, `Tecnico` + scope `tenant_id`/`taller_id`.
+- [x] Exportación en memoria: **Excel** (`openpyxl`), **PDF** (`reportlab`), **CSV** (UTF-8 BOM).
+- [x] NL/voz: `POST .../nl-query` (traductor reglas ES); micrófono Web Speech en frontend; `POST .../voice` (Whisper vía `/api/ai` si IA habilitada).
+- [x] API taller: `/api/app/taller/reportes/*` — plantillas CRUD, execute, export, run predefinidas.
+- [x] Migración `0025_reportes_modulo.sql` + permisos `reportes:*` → `TALLER_RESPONSABLE` y `ADMIN`.
+- [x] UI: `/taller/panel/reportes` (sidebar Emergencias → Reportes).
+- [ ] Tests pytest QBE/export/NL; panel admin reportes (opcional).
+
+### Fix restore backup taller — FK técnicos (2026-06-05) ✅
+- [x] Export taller incluye `usuarios` + `usuario_rol` de técnicos del taller.
+- [x] Restore recrea cuentas de técnicos antes de `COPY tecnicos`.
+- [x] Backups antiguos (sin `usuarios.csv`): restore omiten técnicos huérfanos en lugar de fallar con FK.
+
+### Portal taller — CRUD técnicos y clientes (2026-06-05) ✅
+- [x] Técnicos: desactivar cuenta (`POST .../desactivar`) y eliminar físico (`DELETE`) si sin historial.
+- [x] Clientes: crear, editar, desactivar, eliminar vía `/api/clientes/` + permisos `clientes:*`.
+- [x] Migración `0023_taller_clientes_crud_permisos.sql`.
+- [x] UI: `/taller/panel/tecnicos` y `/taller/panel/accesos/clientes`.
+
+### Módulo backups plataforma (2026-06-05) ✅
+- [x] Adaptado desde proyecto Oftalmología (Django/schema-per-tenant) a **shared schema + `tenant_id`**.
+- [x] Migración `0021_backup_modulo.sql`: tablas `backups`, `backup_config`, permiso `backup:gestionar` → rol `ADMIN`.
+- [x] **Tipos:** `PLATAFORMA` (`pg_dump` → `.sql.gz`), `TENANT` (CSV por tablas filtradas por `tenant_id` → `.tar.gz`), `EVIDENCIAS` (`uploads/evidencias` → `.tar.gz`).
+- [x] API superadmin: `GET/POST/DELETE /api/admin/backups`, download, restore solo `PLATAFORMA` (requiere confirmación).
+- [x] Docker: `postgresql-client` en imagen backend; volumen `backup_data:/app/backups`; servicio **`backup-scheduler`** (loop `backup.runner` cada `BACKUP_SCHEDULER_INTERVAL_SECONDS`).
+- [x] Frontend admin: `/admin/panel/backups` (solo superadmin plataforma).
+- [x] **Portal taller (2026-06-05):** `/taller/panel/backups` — crear, descargar, restaurar, config automática (default **03:00** TZ servidor); permiso `backup_taller:gestionar`; tipo `TALLER` + tabla `taller_backup_config`; migración `0022_taller_backup.sql`.
+- [ ] Tests pytest del módulo backup.
 
 ### Ciclo 4 — CU36–CU40 (examen SI2; código 2026-06-02) ✅
 - [x] **CU37 Seleccionar taller (cliente):** `GET .../talleres-candidatos`, `POST .../seleccionar-taller`; servicio `incidentes/emergencias/service/seleccion_taller.py`; mobile `emergencia_seleccion_taller_screen.dart`, ruta `.../seleccionar-taller`; `crear_solicitud` ya no reparte bandeja a todos los talleres.
@@ -61,9 +125,11 @@
 - [x] **Admin SaaS — usuarios/talleres (2026-05-28):** listado admin excluye rol `CLIENTE`; no se asigna `CLIENTE` desde panel; alta usuario/taller con `tenant_id` según organización seleccionada; clientes finales vía app móvil + `X-Tenant-Slug`.
 - [x] **Admin SaaS — provision taller (2026-06-04):** `POST /api/talleres/provision` (usuario ACTIVO + rol + taller atómico); formulario único en admin Talleres; menú Usuarios retirado del sidebar; login inmediato en `/taller` con slug de la org.
 - [x] **Admin SaaS — crear organización (2026-06-04):** fix 422 al crear tenant: `normalize_tenant_slug()` en schema (`field_validator` antes del pattern Pydantic) + mensajes UI distintos para 422 vs 409; probado `POST /api/admin/tenants` con slug `Nueva-Org-Test` → 201 `nueva-org-test`.
+- [x] **Admin SaaS — planes comerciales en organizaciones (2026-06-05):** dropdown **Free / Pro / Max** alineado con `pricing_plans` y portal taller; util `saas-plan-tiers.ts`; badge `legacy` para tenants `STARTER`; default backend `FREE` (demo-sc sigue `STARTER`).
 - [x] **Admin SaaS — login panel (2026-06-04):** fix seeds CLIENTE en arranque (`asignar_roles_usuario_seed`); startup rápido sin 502; login demo admin `patricio.mendez@sc-demo.test` / `scdemo1`.
 - [x] Angular: selector organización (superadmin), `/admin/panel/organizaciones`, APIs tenants en `AdminApiService`.
 - [x] **Admin SaaS — planes y precios (2026-06-04):** sidebar Comercial → `/admin/panel/planes-precios`; tabla `pricing_plans` (migración 0019); landing consume API pública; checkout Stripe desde landing con `stripe_price_id` configurado en admin.
+- [x] **Stripe SaaS bootstrap (2026-06-05):** con `STRIPE_SECRET_KEY`/`pk_test_` en `.env`, el backend crea o sincroniza `price_...` en arranque (`stripe_saas_bootstrap`); upgrade taller `/taller/panel/suscripcion` sin pegar IDs a mano.
 - [x] Fase 3 (2026-05-24): API pública tenants, billing Stripe SaaS (checkout/webhook), subdominio Host, tests unitarios, mobile/taller login por org, bloqueo escritura por suscripción vencida.
 
 ### SaaS multi-tenant — fase 1 (2026-05-24) ✅
@@ -210,6 +276,13 @@
 - [x] **Fix:** componentes hijos migrados a OnPush + `loading` signal + `markForCheck` + `finalize`/`takeUntilDestroyed` (bandeja, historial, dashboard, mi-taller, técnicos, roles, clientes, disponibilidad, comisiones, detalle incidente).
 - [x] **Sesión:** `docs/ai/sessions/2026-06-05-agent-fix-taller-panel-loading.md`.
 
+### Taller web — bitácora de auditoría (2026-06-05) ✅
+- [x] **API:** `GET /api/app/taller/bitacora` — permiso `bitacora_taller:leer` (migración `0020`).
+- [x] **Aislamiento:** mismo `tenant_id` + solo usuarios responsable/técnicos del taller + módulos operativos (sin `emergencias` cliente, `pagos`, etc.).
+- [x] **UI:** `/taller/panel/bitacora` en nav «Equipo y taller»; filtros por miembro, módulo, acción y fechas.
+- [x] **Logging:** checkout/confirm suscripción SaaS (`taller_portal`).
+- [x] **Sesión:** `docs/ai/sessions/2026-06-05-agent-taller-bitacora.md`.
+
 ## Lo que existe
 
 ### Backend FastAPI ✅
@@ -219,7 +292,7 @@
 - [x] `modules/clientes_y_vehiculos/vehiculos/` — catálogos + CRUD vehículos `/api/vehiculos`
 - [x] `modules/incidentes/emergencias/` — solicitudes, seguimiento, ubicaciones, evidencias (cliente); `/api/app/cliente/emergencias`; **CU37** `talleres-candidatos` + `seleccionar-taller`; **CU36** `ubicacion-tecnico`
 - [x] `modules/talleres_y_tecnicos/talleres/` — CRUD talleres, especialidades, técnicos (`/api/talleres`, `/api/especialidades`, `/api/tecnicos`)
-- [x] `modules/talleres_y_tecnicos/taller_responsable/` — registro taller, mi-taller, técnicos (responsable); `/api/app/taller`
+- [x] `modules/talleres_y_tecnicos/taller_responsable/` — registro taller, mi-taller, técnicos, bitácora acotada, suscripción; `/api/app/taller`
 - [x] `modules/talleres_y_tecnicos/tecnico/` — app técnico emergencias; `/api/app/tecnico/emergencias`
 - [x] `modules/atencion/taller_emergencias/` — bandeja PENDIENTE, detalle, aceptar/rechazar, disponibilidad, asignar técnico, historial y comisiones; prefijo `/api/app/taller/emergencias`
 - [x] `modules/comunicacion_y_notificaciones/` — `comunicaciones`, `notificaciones`, `dispositivos_push`, `mensajes_solicitud`; notificaciones in-app, FCM, chat por solicitud (CU19/CU21/CU35)
@@ -234,12 +307,16 @@
 
 ### Frontend Angular ✅
 - [x] Docker + nginx + proxy; environments; rutas lazy; landing; estilos globales oscuros
+- [x] **PWA (2026-06-05):** `@angular/service-worker`, `manifest.webmanifest`, iconos, `ngsw-config.json`, banner actualización; nginx sin cache en SW/manifest; `start_url` `/taller/panel`
 - [x] Portal **taller** — emergencias: bandeja, detalle incidente, aceptar/rechazar; **CU28** en UI: `TallerEmergenciasApiService` (`asignarTecnico`, `listarAsignacionesTecnico`) + bloque asignación en `taller-emergencias-incidente-detalle` (tras aceptar permanece en detalle y lista historial de asignaciones). Ver `frontend/src/app/core/services/taller-emergencias-api.service.ts`
 
 ### Mobile Flutter ✅
+- [x] **Panel cliente UI Paleta A (2026-06-05):** design system `cliente_panel_ui.dart`; shell con bottom nav pill; home/perfil/vehículos/notificaciones/emergencias alineados con auth mobile; chip selector org en home y perfil (`ClienteOrgChip` + `showOrgSlugPicker`).
 - [x] `mobile/.env` + **flutter_dotenv** (asset); `lib/core/config/app_env.dart` — `API_BASE_URL`, `APP_NAME`, timeouts opcionales
-- [x] `lib/cliente/` — auth portal (login/registro/recuperar), shell, home, vehículos, perfil; Riverpod + go_router (`cliente/presentation/router/cliente_go_router.dart` registra también rutas globales)
-- [x] `lib/tecnico/` — emergencias (servicios asignados, detalle, chat, etc.); splash, login, recuperar, shell; **tokens JWT en secure storage separados** (`tecnico_access_token` vía `core/network/tecnico_api_client.dart`)
+- [x] `lib/cliente/` — auth portal (login/registro/recuperar), shell, home, vehículos, perfil; Riverpod + go_router
+- [x] `lib/tecnico/` — emergencias (servicios asignados, detalle, chat, etc.); splash, login, recuperar, shell; **tokens JWT en secure storage separados** (`tecnico_access_token`)
+- [x] **`lib/taller/` (2026-06-05):** panel **responsable de taller** en mobile — login propio (`taller_access_token`), splash, shell (Inicio · Bandeja · Técnicos · Perfil), dashboard `/app/taller/dashboard`, bandeja aceptar/rechazar/asignar técnico, listado técnicos, pantalla «Más» (comisiones/reportes/backups → portal web). Selector `/modo` con tercera tarjeta. Flujo técnico ya **no** acepta rol `TALLER_RESPONSABLE`.
+- [ ] Admin plataforma SaaS en mobile (sigue solo en Angular `/admin`).
 - [x] Badge de estado cliente: colores distintos **Taller asignado** vs **Técnico asignado** (`estado_solicitud_badge.dart`)
 - [x] `core/network/api_error.dart` compartido; `api_constants` con `portal/taller/mi-taller`, `tecnicos`, etc.
 

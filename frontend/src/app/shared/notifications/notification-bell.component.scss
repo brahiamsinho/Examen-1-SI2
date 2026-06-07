@@ -115,3 +115,19 @@
   font-size: 0.75rem;
   opacity: 0.6;
 }
+
+.notif-bell__foot {
+  padding: 0.65rem 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  text-align: center;
+}
+
+.notif-bell__all {
+  font-size: 0.8125rem;
+  color: #86efac;
+  text-decoration: none;
+}
+
+.notif-bell__all:hover {
+  text-decoration: underline;
+}

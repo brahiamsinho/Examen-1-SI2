@@ -110,6 +110,90 @@
       </div>
     </section>
 
+    <section class="dash__section" *ngIf="k.analitica_operacional as op">
+      <h3 class="dash__section-title">Analítica operacional</h3>
+      <p class="dash__hint dash__hint--section">
+        KPIs del enunciado §3: tiempos, tipos de incidente, eficiencia, zonas, cancelaciones y SLA
+        (umbral {{ op.sla.umbral_minutos }} min).
+      </p>
+      <div class="dash__grid dash__grid--fin">
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Tiempo prom. asignación</h3>
+          <p class="dash__metric dash__metric--sm">{{ tiempoAtencion(op.tiempo_promedio_asignacion_min) }}</p>
+          <span class="dash__hint">Reporte → taller asignado</span>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Tiempo prom. llegada</h3>
+          <p class="dash__metric dash__metric--sm">{{ tiempoAtencion(op.tiempo_promedio_llegada_min) }}</p>
+          <span class="dash__hint">Técnico asignado → en camino/atención</span>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Casos cancelados</h3>
+          <p class="dash__metric">{{ op.casos_cancelados }}</p>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Casos no atendidos</h3>
+          <p class="dash__metric">{{ op.casos_no_atendidos }}</p>
+          <span class="dash__hint">Permanecen en REGISTRADA</span>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Cumplimiento SLA</h3>
+          <p class="dash__metric">{{ pctSla(op.sla.porcentaje_cumplimiento) }}</p>
+          <span class="dash__hint">
+            {{ op.sla.servicios_dentro_sla }}/{{ op.sla.servicios_evaluados }} finalizadas a tiempo
+          </span>
+        </article>
+      </div>
+
+      <div class="dash__subgrid dash__subgrid--ops">
+        <div class="dash__subcard">
+          <h4 class="dash__subcard-title">Incidentes por tipo</h4>
+          <p class="dash__empty" *ngIf="op.incidentes_por_tipo.length === 0">Sin clasificación en el periodo.</p>
+          <ul class="dash__barlist" *ngIf="op.incidentes_por_tipo.length > 0">
+            <li *ngFor="let it of op.incidentes_por_tipo" class="dash__baritem">
+              <span class="dash__barlabel">{{ it.label }}</span>
+              <span class="dash__barval">{{ it.total }}</span>
+            </li>
+          </ul>
+        </div>
+        <div class="dash__subcard">
+          <h4 class="dash__subcard-title">Zonas con más incidentes</h4>
+          <p class="dash__empty" *ngIf="op.zonas_mas_incidentes.length === 0">Sin ubicaciones en el periodo.</p>
+          <ul class="dash__barlist" *ngIf="op.zonas_mas_incidentes.length > 0">
+            <li *ngFor="let z of op.zonas_mas_incidentes" class="dash__baritem">
+              <span class="dash__barlabel">{{ z.zona }}</span>
+              <span class="dash__barval">{{ z.total }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 class="dash__subcard-title dash__subcard-title--spaced">Talleres más eficientes</h4>
+      <div class="dash__tablewrap" *ngIf="op.talleres_mas_eficientes.length; else emptyEficientes">
+        <table class="dash__table">
+          <thead>
+            <tr>
+              <th>Taller</th>
+              <th>Finalizadas</th>
+              <th>Respuesta prom.</th>
+              <th>Finalización prom.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of op.talleres_mas_eficientes">
+              <td>{{ t.nombre_comercial }}</td>
+              <td>{{ t.solicitudes_finalizadas }}</td>
+              <td>{{ tiempoAtencion(t.tiempo_respuesta_prom_min) }}</td>
+              <td>{{ tiempoAtencion(t.tiempo_finalizacion_prom_min) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyEficientes>
+        <p class="dash__empty">Sin talleres con servicios finalizados en el rango.</p>
+      </ng-template>
+    </section>
+
     <section class="dash__section">
       <h3 class="dash__section-title">Top talleres por comisión</h3>
       <div class="dash__tablewrap" *ngIf="topTalleres.length; else emptyTop">

@@ -1,3 +1,5 @@
+import type { OperationalKpisDto } from './operational-kpis.models';
+
 export type EstadoUsuario = 'ACTIVO' | 'INACTIVO' | 'BLOQUEADO' | 'PENDIENTE';
 export type EstadoTaller = 'PENDIENTE' | 'ACTIVO' | 'SUSPENDIDO' | 'INACTIVO';
 export type AccionBitacora =
@@ -235,6 +237,7 @@ export interface AdminKpisDto {
   resumen_financiero: AdminFinanzasResumen;
   top_talleres: TallerComisionFila[];
   serie_diaria: AdminComisionSerieFila[];
+  analitica_operacional: OperationalKpisDto;
 }
 
 export interface PricingPlanDto {

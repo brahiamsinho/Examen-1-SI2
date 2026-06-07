@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.acceso_y_administracion.admin_finanzas.service import get_finanzas_reportes, get_finanzas_resumen
+from app.modules.analytics.operational_kpis import compute_operational_kpis
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, SolicitudEmergencia
 from app.modules.pagos_y_comisiones.pagos.models import EstadoPagoEnum, Pago
 
@@ -110,6 +111,9 @@ async def get_panel_kpis(
 
     fin_resumen = await get_finanzas_resumen(db, desde=desde, hasta=hasta, tenant_id=tenant_id)
     fin_reportes = await get_finanzas_reportes(db, desde=desde, hasta=hasta, tenant_id=tenant_id)
+    analitica = await compute_operational_kpis(
+        db, desde=desde, hasta=hasta, tenant_id=tenant_id
+    )
 
     sin_datos = total_solicitudes == 0 and int(pagos_row["n"] or 0) == 0
 
@@ -129,4 +133,5 @@ async def get_panel_kpis(
         "resumen_financiero": fin_resumen,
         "top_talleres": fin_reportes.get("top_talleres", []),
         "serie_diaria": fin_reportes.get("serie_diaria", []),
+        "analitica_operacional": analitica.model_dump(),
     }

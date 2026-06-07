@@ -1,7 +1,33 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-06 (EA secuencia CU41–CU46 patrón Tenant)
+# Fecha: 2026-06-04 (Fix notificaciones taller colgadas + cancelación + analítica §3)
+
+## Cambios recientes (2026-06-04) — Fix página Notificaciones taller colgada ✅
+
+- **Problema:** `/taller/panel/comunicacion/notificaciones` se quedaba en «Cargando…» mientras la campana del header sí mostraba datos.
+- **Causa:** componente sin patrón OnPush/`markForCheck` del resto del portal; polling `setInterval` duplicado y posible race entre peticiones.
+- **Fix:** `NotificacionesApiService` + `switchMap` + signals + refresh vía FCM foreground (mismo patrón que `NotificationBellComponent`).
+- **Archivos:** `taller-notificaciones.component.ts/html`, `notificacion.models.ts`.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-fix-notificaciones-taller-colgado.md`.
+
+## Cambios recientes (2026-06-04) — Cancelación solicitud + gaps cerrados ✅
+
+- **Backend:** `POST /api/app/cliente/emergencias/{id}/cancelar` — estados hasta EN_CAMINO; cierra bandeja, libera cupo taller, notifica taller/técnico, eventos WS.
+- **Mobile cliente:** botón «Cancelar solicitud» en seguimiento con motivo opcional.
+- **Mobile taller reportes:** bloque «Analítica operacional §3» en dashboard (paridad web).
+- **Tests:** `backend/tests/test_cancelacion_solicitud.py` (5 tests).
+- **PUDS:** `docs/ai/TRACEABILITY_MATRIX.md` — matriz RF/CU → módulo → endpoint.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-cancelacion-analitica-mobile-trazabilidad.md`.
+
+## Cambios recientes (2026-06-04) — Analítica operacional KPIs §3 ✅
+
+- **Backend:** módulo `app/modules/analytics/` — `compute_operational_kpis()` con 7 métricas del enunciado; `SLA_ATENCION_MINUTOS` configurable.
+- **API:** campo `analitica_operacional` en `GET /api/admin/panel/kpis` y `GET /api/app/taller/emergencias/reportes/kpis`.
+- **Frontend:** sección «Analítica operacional» en admin/taller KPI dashboards + export CSV ampliado.
+- **Test:** `backend/tests/test_operational_kpis.py`.
+- **Pendiente:** E2E Docker con datos seed; mobile reportes dashboard opcional.
+- **Sesión:** `docs/ai/sessions/2026-06-04-agent-analitica-operacional-kpis.md`.
 
 ## Cambios recientes (2026-06-06) — EA diagramas secuencia CU41–CU46 (patrón CU_Gestionar_Tenant) ✅
 
@@ -49,6 +75,14 @@
 - **Frontend:** `/taller/panel/comunicacion/notificaciones`.
 - **Mobile técnico:** `/tecnico/app/notificaciones`.
 - **Sesión:** `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`.
+
+## Cambios (2026-06-04) — Fix post-merge main + feature/mobile ✅
+
+- **Migraciones:** renumeradas CU42–CU46 a `0028`–`0031` (evita colisión con `0020`–`0027` del portal taller). `99_register_sql_migrations.sql` corregido (coma faltante + lista completa).
+- **Backend:** paréntesis faltante en `seleccion_taller.py`; duplicados merge en `comunicaciones/router.py`.
+- **Frontend:** merge roto en `taller-shell.component.ts` (nav duplicada) y `taller.routes.ts` (ruta horarios).
+- **Mobile:** merge roto en `cliente_app_shell.dart`, `emergencia_seguimiento_screen.dart`, `emergencias_mis_solicitudes_screen.dart`, imports `tecnico_notificaciones_screen.dart`.
+- **Reportes mobile export:** `File.writeAsBytes` con nombre explícito (fix `FileSystemException errno=21`).
 
 ## Cambios (2026-06-04) — Mobile reportes personalizados QBE ✅
 

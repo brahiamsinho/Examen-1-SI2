@@ -106,6 +106,19 @@ export class TallerKpisComponent implements OnInit {
     }).format(n);
   }
 
+  tiempoAtencion(min: number | null | undefined): string {
+    if (min == null) return '—';
+    if (min < 60) return `${min.toFixed(0)} min`;
+    const h = Math.floor(min / 60);
+    const m = Math.round(min % 60);
+    return m > 0 ? `${h} h ${m} min` : `${h} h`;
+  }
+
+  pctSla(value: number | null | undefined): string {
+    if (value == null) return '—';
+    return `${value.toFixed(1)}%`;
+  }
+
   sinDatosEnPeriodo(): boolean {
     const r = this.reporte;
     if (!r) return false;
@@ -131,6 +144,29 @@ export class TallerKpisComponent implements OnInit {
     ];
     for (const [estado, n] of Object.entries(r.solicitudes_por_estado ?? {})) {
       rows.push([`Estado ${estado}`, String(n)]);
+    }
+    const op = r.analitica_operacional;
+    if (op) {
+      rows.push([]);
+      rows.push(['Analítica operacional §3']);
+      rows.push(['Tiempo prom. asignación (min)', op.tiempo_promedio_asignacion_min != null ? String(op.tiempo_promedio_asignacion_min) : '']);
+      rows.push(['Tiempo prom. llegada (min)', op.tiempo_promedio_llegada_min != null ? String(op.tiempo_promedio_llegada_min) : '']);
+      rows.push(['Casos cancelados', String(op.casos_cancelados)]);
+      rows.push(['Casos no atendidos', String(op.casos_no_atendidos)]);
+      rows.push([
+        'SLA cumplimiento (%)',
+        op.sla?.porcentaje_cumplimiento != null ? String(op.sla.porcentaje_cumplimiento) : '',
+      ]);
+      rows.push([]);
+      rows.push(['Incidentes por tipo', 'Total']);
+      for (const it of op.incidentes_por_tipo ?? []) {
+        rows.push([it.label, String(it.total)]);
+      }
+      rows.push([]);
+      rows.push(['Zonas con más incidentes', 'Total']);
+      for (const z of op.zonas_mas_incidentes ?? []) {
+        rows.push([z.zona, String(z.total)]);
+      }
     }
     rows.push([]);
     rows.push(['Ganancias por técnico']);

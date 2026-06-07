@@ -5,6 +5,7 @@ from datetime import date, datetime, time
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.analytics.operational_kpis import compute_operational_kpis
 from app.modules.atencion.taller_emergencias import repository
 from app.modules.atencion.taller_emergencias.schemas import (
     ComisionTallerRead,
@@ -83,6 +84,13 @@ async def obtener_reporte_dashboard_taller(
 
     bandeja_pend = await repository.contar_bandeja_pendientes_taller(db, taller_id=taller_id)
 
+    analitica = await compute_operational_kpis(
+        db,
+        desde=desde_dt,
+        hasta=hasta_dt,
+        taller_id=taller_id,
+    )
+
     return ReporteTallerDashboardRead(
         taller_id=taller_id,
         periodo_desde=desde,
@@ -91,4 +99,5 @@ async def obtener_reporte_dashboard_taller(
         bandeja_pendientes=bandeja_pend,
         solicitudes_por_estado=solicitudes_por_estado,
         ganancias_por_tecnico=por_tecnico,
+        analitica_operacional=analitica,
     )

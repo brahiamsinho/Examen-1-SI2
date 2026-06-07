@@ -11,6 +11,7 @@ from app.modules.acceso_y_administracion.admin_finanzas.schemas import (
     AdminFinanzasResumen,
     TallerComisionFila,
 )
+from app.modules.analytics.schemas import OperationalKpisRead
 
 
 class AdminPanelOverview(BaseModel):
@@ -38,3 +39,4 @@ class AdminKpisRead(BaseModel):
     resumen_financiero: AdminFinanzasResumen
     top_talleres: list[TallerComisionFila] = Field(default_factory=list)
     serie_diaria: list[AdminComisionSerieFila] = Field(default_factory=list)
+    analitica_operacional: OperationalKpisRead

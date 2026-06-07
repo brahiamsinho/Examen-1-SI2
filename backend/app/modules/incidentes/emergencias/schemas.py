@@ -289,3 +289,17 @@ class SeleccionarTallerOut(BaseModel):
     taller_id: int
     bandeja_id: int
     estado: EstadoSolicitudSeguimientoEnum
+
+
+class CancelarSolicitudIn(BaseModel):
+    """Cancelación iniciada por el cliente antes de EN_ATENCION."""
+
+    motivo: str | None = Field(None, max_length=500)
+
+    @field_validator("motivo")
+    @classmethod
+    def strip_motivo(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        st = v.strip()
+        return st if st else None

@@ -5,7 +5,8 @@ export type TipoNotificacion =
   | 'ESTADO_ACTUALIZADO'
   | 'TALLER_ASIGNADO'
   | 'TECNICO_ASIGNADO'
-  | 'MENSAJE_NUEVO';
+  | 'MENSAJE_NUEVO'
+  | 'SOLICITUD_PENDIENTE_TALLER';
 
 export interface NotificacionDto {
   id: number;

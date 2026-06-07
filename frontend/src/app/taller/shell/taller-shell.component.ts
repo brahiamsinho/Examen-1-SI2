@@ -5,7 +5,6 @@ import {
   DestroyRef,
   inject,
   OnInit,
-  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -17,9 +16,8 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { catchError, interval, of, startWith, switchMap, take } from 'rxjs';
+import { take } from 'rxjs';
 import { TallerAuthService } from '../../core/services/taller-auth.service';
-import { TallerComunicacionApiService } from '../../core/services/taller-comunicacion-api.service';
 import { TallerApiService } from '../../core/services/taller-api.service';
 import { FcmService } from '../../core/services/fcm.service';
 import { NotificationBellComponent } from '../../shared/notifications/notification-bell.component';
@@ -35,7 +33,7 @@ export type TallerNavIcon =
   | 'shield'
   | 'key'
   | 'inbox'
-  | 'bell';
+  | 'bell'
   | 'layers';
 
 export interface TallerNavItem {
@@ -61,7 +59,6 @@ export interface TallerNavGroup {
 })
 export class TallerShellComponent implements OnInit {
   readonly auth = inject(TallerAuthService);
-  private readonly comunicacion = inject(TallerComunicacionApiService);
   private readonly fcm = inject(FcmService);
   private readonly tallerApi = inject(TallerApiService);
   private readonly router = inject(Router);
@@ -75,9 +72,7 @@ export class TallerShellComponent implements OnInit {
   sidebarCollapsed = false;
   mobileNavOpen = false;
   navGroups: TallerNavGroup[] = [];
-  readonly unreadNotificaciones = signal(0);
   showNotificaciones = true;
-  private notifPollStarted = false;
 
   private readonly navGroupsBase: TallerNavGroup[] = [
     {
@@ -125,6 +120,11 @@ export class TallerShellComponent implements OnInit {
         {
           path: '/taller/panel/reportes-kpis',
           label: 'Reportes KPIs',
+          exact: true,
+          icon: 'chart',
+          permiso: 'reportes:leer',
+        },
+        {
           path: '/taller/panel/reportes',
           label: 'Reportes',
           exact: true,
@@ -144,6 +144,8 @@ export class TallerShellComponent implements OnInit {
           exact: true,
           icon: 'bell',
           permiso: 'notificaciones:leer',
+        },
+        {
           path: '/taller/panel/horarios',
           label: 'Horarios',
           exact: true,
@@ -211,7 +213,6 @@ export class TallerShellComponent implements OnInit {
     this.me = this.auth.getMe();
     this.actualizarAccesoNotificaciones();
     this.rebuildNavGroups();
-    this.iniciarPollingNotificaciones();
     this.loadSubscription();
     this.loadMiTaller();
 
@@ -222,7 +223,6 @@ export class TallerShellComponent implements OnInit {
         this.me = this.auth.getMe();
         this.actualizarAccesoNotificaciones();
         this.rebuildNavGroups();
-        this.iniciarPollingNotificaciones();
         this.cdr.markForCheck();
       });
 
@@ -298,6 +298,7 @@ export class TallerShellComponent implements OnInit {
       '/taller/panel/emergencias/servicios-asignados': 'Servicios asignados',
       '/taller/panel/emergencias/comisiones': 'Comisiones',
       '/taller/panel/reportes-kpis': 'Reportes KPIs',
+      '/taller/panel/reportes': 'Reportes',
       '/taller/panel/emergencias/disponibilidad': 'Disponibilidad',
       '/taller/panel/comunicacion/notificaciones': 'Notificaciones',
       '/taller/panel/horarios': 'Horarios',
@@ -323,23 +324,6 @@ export class TallerShellComponent implements OnInit {
   private actualizarAccesoNotificaciones(): void {
     this.showNotificaciones =
       !this.auth.getMe()?.permisos?.length || this.auth.tienePermiso('notificaciones:leer');
-  }
-
-  private iniciarPollingNotificaciones(): void {
-    if (this.notifPollStarted || !this.showNotificaciones) return;
-    this.notifPollStarted = true;
-    interval(30_000)
-      .pipe(
-        startWith(0),
-        switchMap(() =>
-          this.comunicacion.listNotificaciones({ soloNoLeidas: true, limit: 99 }).pipe(catchError(() => of([]))),
-        ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((list) => {
-        this.unreadNotificaciones.set(list.length);
-        this.cdr.markForCheck();
-      });
   }
 
   private loadSubscription(): void {

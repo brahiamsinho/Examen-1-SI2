@@ -1,8 +1,20 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { TallerComunicacionApiService } from '../../../../core/services/taller-comunicacion-api.service';
-import type { NotificacionDto, TipoNotificacion } from '../../../../core/models/comunicacion.models';
+import { Subject, catchError, interval, map, of, startWith, switchMap } from 'rxjs';
+import { NotificacionesApiService } from '../../../../core/services/notificaciones-api.service';
+import { FcmService } from '../../../../core/services/fcm.service';
+import { TallerEmergenciasApiService } from '../../../../core/services/taller-emergencias-api.service';
+import type { NotificacionDto, TipoNotificacion } from '../../../../core/models/notificacion.models';
 
 @Component({
   selector: 'app-taller-notificaciones',
@@ -10,66 +22,100 @@ import type { NotificacionDto, TipoNotificacion } from '../../../../core/models/
   imports: [CommonModule],
   templateUrl: './taller-notificaciones.component.html',
   styleUrl: './taller-notificaciones.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TallerNotificacionesComponent implements OnInit, OnDestroy {
-  private readonly api = inject(TallerComunicacionApiService);
+export class TallerNotificacionesComponent implements OnInit {
+  private readonly api = inject(NotificacionesApiService);
+  private readonly fcm = inject(FcmService);
+  private readonly emergenciasApi = inject(TallerEmergenciasApiService);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly reloadTrigger = new Subject<{ silent: boolean }>();
 
   items: NotificacionDto[] = [];
   soloNoLeidas = false;
-  loading = true;
+  readonly loading = signal(true);
   error: string | null = null;
-  private pollTimer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
-    this.reload();
-    this.pollTimer = setInterval(() => this.reload(true), 30_000);
-  }
+    this.reloadTrigger
+      .pipe(
+        switchMap(({ silent }) => {
+          if (!silent) {
+            this.loading.set(true);
+            this.error = null;
+            this.cdr.markForCheck();
+          }
+          return this.api.listar('taller', this.soloNoLeidas, 100).pipe(
+            catchError((err) => {
+              this.error = err?.error?.detail ?? 'No se pudieron cargar las notificaciones.';
+              return of([] as NotificacionDto[]);
+            }),
+            map((list) => ({ list, silent })),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ list }) => {
+        this.items = list;
+        this.loading.set(false);
+        this.cdr.markForCheck();
+      });
 
-  ngOnDestroy(): void {
-    if (this.pollTimer) clearInterval(this.pollTimer);
+    interval(60_000)
+      .pipe(startWith(0), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.reloadTrigger.next({ silent: true }));
+
+    this.fcm.foregroundMessage$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.reloadTrigger.next({ silent: true }));
+
+    this.reloadTrigger.next({ silent: false });
   }
 
   toggleFiltro(soloNoLeidas: boolean): void {
     this.soloNoLeidas = soloNoLeidas;
-    this.reload();
+    this.reloadTrigger.next({ silent: false });
   }
 
-  reload(silent = false): void {
-    if (!silent) {
-      this.loading = true;
-      this.error = null;
-    }
-    this.api.listNotificaciones({ soloNoLeidas: this.soloNoLeidas, limit: 100 }).subscribe({
-      next: (list) => {
-        this.items = list;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err?.error?.detail ?? 'No se pudieron cargar las notificaciones.';
-      },
-    });
+  reload(): void {
+    this.reloadTrigger.next({ silent: false });
   }
 
   abrir(notif: NotificacionDto): void {
     if (!notif.leida) {
-      this.api.marcarLeida(notif.id).subscribe({
+      this.api.marcarLeida('taller', notif.id).subscribe({
         next: (updated) => {
-          notif.leida = updated.leida;
-          notif.leida_at = updated.leida_at;
+          this.items = this.items.map((n) => (n.id === updated.id ? updated : n));
+          this.cdr.markForCheck();
         },
       });
     }
-    if (notif.solicitud_id != null) {
-      const route =
-        notif.tipo === 'SOLICITUD_PENDIENTE_TALLER'
-          ? '/taller/panel/emergencias/solicitudes'
-          : '/taller/panel/emergencias/mis-solicitudes';
-      void this.router.navigate([route], {
-        queryParams: { q: String(notif.solicitud_id) },
-      });
+    this.navigate(notif);
+  }
+
+  private navigate(notif: NotificacionDto): void {
+    if (notif.solicitud_id == null) {
+      void this.router.navigate(['/taller/panel/emergencias/solicitudes']);
+      return;
     }
+    this.emergenciasApi.resolveBandejaId(notif.solicitud_id).subscribe({
+      next: ({ bandeja_id: bandejaId }) => {
+        if (bandejaId != null) {
+          void this.router.navigate(['/taller/panel/emergencias/solicitudes', bandejaId]);
+          return;
+        }
+        void this.router.navigate(['/taller/panel/emergencias/solicitudes'], {
+          queryParams: { q: String(notif.solicitud_id) },
+        });
+      },
+      error: () => {
+        void this.router.navigate(['/taller/panel/emergencias/solicitudes'], {
+          queryParams: { q: String(notif.solicitud_id) },
+        });
+      },
+    });
   }
 
   tipoLabel(tipo: TipoNotificacion): string {
@@ -82,5 +128,9 @@ export class TallerNotificacionesComponent implements OnInit, OnDestroy {
       SOLICITUD_PENDIENTE_TALLER: 'Nueva solicitud',
     };
     return labels[tipo] ?? tipo;
+  }
+
+  trackById(_index: number, item: NotificacionDto): number {
+    return item.id;
   }
 }

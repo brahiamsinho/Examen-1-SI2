@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../cliente/comunicacion/presentation/widgets/notificacion_list_item.dart';
-import '../application/tecnico_comunicacion_providers.dart';
+import '../../../../cliente/comunicacion/presentation/widgets/notificacion_list_item.dart';
+import '../../application/tecnico_comunicacion_providers.dart';
 
 class TecnicoNotificacionesScreen extends ConsumerStatefulWidget {
   const TecnicoNotificacionesScreen({super.key});

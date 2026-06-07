@@ -1,5 +1,7 @@
 /** Contratos alineados al módulo `taller_emergencias` (FastAPI). */
 
+import type { OperationalKpisDto } from './operational-kpis.models';
+
 export type EstadoSolicitudSeguimiento =
   | 'REGISTRADA'
   | 'EN_REVISION'
@@ -151,6 +153,7 @@ export interface ReporteTallerDashboardDto {
   bandeja_pendientes: number;
   solicitudes_por_estado: Record<string, number>;
   ganancias_por_tecnico: ReporteTecnicoGananciasDto[];
+  analitica_operacional: OperationalKpisDto;
 }
 
 /** GET `/app/taller/emergencias/historial-atenciones` */

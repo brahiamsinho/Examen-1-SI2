@@ -198,6 +198,9 @@ class Settings(BaseSettings):
     OSRM_TIMEOUT_SECONDS: float = 8.0
     OSRM_FALLBACK_SPEED_KMH: float = 35.0
 
+    # ── SLA operacional (KPI §3 — minutos desde reporte hasta finalización) ──
+    SLA_ATENCION_MINUTOS: int = 60
+
     @property
     def firebase_credentials_file(self) -> Path | None:
         if not self.FIREBASE_CREDENTIALS_PATH:

@@ -26,6 +26,7 @@ async def _emit(
     titulo: str,
     mensaje: str,
     evento_suffix: str,
+    extra_data: dict[str, str] | None = None,
 ) -> None:
     if not await tenant_guard.validar_destinatario_solicitud(
         db, solicitud=solicitud, usuario_destino_id=usuario_destino_id
@@ -42,6 +43,7 @@ async def _emit(
         titulo=titulo,
         mensaje=mensaje,
         evento_id=eid,
+        extra_data=extra_data,
     )
 
 
@@ -83,6 +85,7 @@ async def on_solicitud_pendiente_taller(
         titulo="Cliente eligió tu taller",
         mensaje=f"{nombre} seleccionó tu taller para la emergencia #{solicitud.id}. Revisá la bandeja.",
         evento_suffix=f"taller{taller_id}:pendiente",
+        extra_data={"portal": "taller"},
     )
 
 
@@ -283,3 +286,39 @@ async def on_presupuesto_registrado(
         mensaje=mensaje,
         evento_suffix="cliente:presupuesto_registrado",
     )
+
+
+async def on_cliente_cancelo(
+    db: AsyncSession,
+    *,
+    solicitud: SolicitudEmergencia,
+    motivo: str,
+) -> None:
+    """Cliente canceló la solicitud: avisa taller y técnico asignado."""
+    preview = motivo[:120] + ("…" if len(motivo) > 120 else "")
+    if solicitud.taller_id is not None:
+        uid = await _usuario_responsable_taller(db, solicitud.taller_id)
+        if uid is not None:
+            nombre = await _nombre_cliente(db, solicitud)
+            await _emit(
+                db,
+                solicitud=solicitud,
+                usuario_destino_id=uid,
+                tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+                titulo="Solicitud cancelada por cliente",
+                mensaje=f"{nombre} canceló la emergencia #{solicitud.id}. Motivo: {preview}",
+                evento_suffix=f"taller{solicitud.taller_id}:cliente_cancelo",
+                extra_data={"portal": "taller"},
+            )
+
+    tec = await tenant_guard.validar_tecnico_solicitud(db, solicitud=solicitud)
+    if tec is not None:
+        await _emit(
+            db,
+            solicitud=solicitud,
+            usuario_destino_id=tec.usuario_id,
+            tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
+            titulo="Servicio cancelado",
+            mensaje=f"El cliente canceló la emergencia #{solicitud.id}.",
+            evento_suffix=f"tecnico{tec.id}:cliente_cancelo",
+        )

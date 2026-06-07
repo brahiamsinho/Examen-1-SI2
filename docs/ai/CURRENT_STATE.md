@@ -1,8 +1,32 @@
-# CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
-# Última actualización: 2026-06-04 — Mobile taller módulos avanzados ✅
-# Última actualización: 2026-06-06 — EA secuencia CU41–CU46 (patrón Tenant) ✅
+# Última actualización: 2026-06-04 — Fix página Notificaciones taller colgada ✅
+# Última actualización: 2026-06-04 — Cancelación solicitud + mobile analítica §3 ✅
+
+### Fix página Notificaciones taller (2026-06-04) ✅
+- [x] `taller-notificaciones.component.ts`: OnPush + `markForCheck` + `switchMap` (evita race/polling duplicado).
+- [x] Reutiliza `NotificacionesApiService` (mismo endpoint que campana del header).
+- [x] Navegación con `resolveBandejaId`; tipo `SOLICITUD_PENDIENTE_TALLER` en `notificacion.models.ts`.
+- [ ] Verificar E2E: `/taller/panel/comunicacion/notificaciones` deja de quedar en «Cargando…».
+- Sesión: `docs/ai/sessions/2026-06-04-agent-fix-notificaciones-taller-colgado.md`.
+
+### Cancelación solicitud cliente + trazabilidad (2026-06-04) ✅
+- [x] Backend: `POST .../cancelar` + WS `estado_incidente` / `bandeja_actualizada` + notificaciones taller/técnico.
+- [x] Mobile cliente: botón cancelar en seguimiento (motivo opcional).
+- [x] Mobile taller reportes: bloque analítica operacional §3 en dashboard.
+- [x] `docs/ai/TRACEABILITY_MATRIX.md`.
+- [x] Test: `backend/tests/test_cancelacion_solicitud.py`.
+- Sesión: `docs/ai/sessions/2026-06-04-agent-cancelacion-analitica-mobile-trazabilidad.md`.
+
+### Analítica operacional KPIs §3 (2026-06-04) ✅
+- [x] Backend: módulo `analytics/` — tiempos asignación/llegada, incidentes por tipo, talleres eficientes, zonas, cancelados/no atendidos, SLA.
+- [x] Config: `SLA_ATENCION_MINUTOS` (env, default 60).
+- [x] API admin/taller: campo `analitica_operacional` en endpoints KPIs existentes.
+- [x] Frontend admin/taller: sección dedicada + CSV ampliado en `/admin/panel/reportes-kpis` y `/taller/panel/reportes-kpis`.
+- [x] Test: `backend/tests/test_operational_kpis.py`.
+- [ ] E2E Docker con datos seed.
+- [x] Mobile reportes dashboard con analítica §3.
+- Sesión: `docs/ai/sessions/2026-06-04-agent-analitica-operacional-kpis.md`.
 
 ### EA — Diagramas secuencia CU41–CU46 (2026-06-06) ✅
 - [x] Patrón `CU_Gestionar_Tenant` (diagramID 12): Actor → V.Index/Crear/Modificar → Controller → M.* en paquete `/Model/Secuencia`.
@@ -67,7 +91,7 @@
 - [x] Nginx + `proxy.conf.js`: headers WebSocket.
 - [x] Test unitario: `backend/tests/test_tiempo_real.py`.
 - [ ] Producción multi-réplica: Redis Pub/Sub.
-- [ ] Cancelación solicitud con WS (no hay endpoint cancel en API aún).
+- [x] Cancelación solicitud con WS — `POST .../cancelar` (cliente, estados hasta EN_CAMINO).
 - [x] Sesión: `docs/ai/sessions/2026-06-04-agent-websocket-tiempo-real.md`.
 
 ## Notificaciones taller ampliadas (2026-06-06) ✅

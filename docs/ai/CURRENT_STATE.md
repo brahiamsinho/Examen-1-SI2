@@ -1,6 +1,46 @@
 # CURRENT_STATE.md
 # =========================================================
 # Estado actual del proyecto
+# Última actualización: 2026-06-06 — EA secuencia CU41–CU46 (patrón Tenant) ✅
+
+### EA — Diagramas secuencia CU41–CU46 (2026-06-06) ✅
+- [x] Patrón `CU_Gestionar_Tenant` (diagramID 12): Actor → V.Index/Crear/Modificar → Controller → M.* en paquete `/Model/Secuencia`.
+- [x] Diagramas EA: **67** CU41, **68** CU42, **69** CU43, **70** CU44, **71** CU45, **72** CU46 — lifelines BCE + mensajes numerados.
+- [ ] Opcional EA: CombinedFragment `alt` visuales; enlazar a casos de uso; limpiar diagramas 55–66 obsoletos.
+- Sesión: `docs/ai/sessions/2026-06-06-agent-ea-secuencia-cu41-cu46.md`.
+# =========================================================
+
+### CU46 — Visualizar dashboard de KPIs (2026-06-05) ✅
+- [x] Backend: migración `0023_reportes_kpis_cu46.sql` (`reportes:leer`); `GET /api/admin/panel/kpis`; `GET .../reportes/kpis` taller.
+- [x] Frontend admin: `/admin/panel/reportes-kpis` — filtros, tarjetas, estados, finanzas, top talleres, serie, CSV.
+- [x] Frontend taller: `/taller/panel/reportes-kpis` — KPIs aislados al taller, guard `reportes:leer`, CSV.
+- [ ] Verificar E2E admin/taller con migración 0023 en Docker; tests pytest CU46 opcional.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu46-dashboard-kpis.md`.
+
+### CU44 — Consultar tiempo estimado de reparación (2026-06-05) ✅
+- [x] Backend: `GET .../seguimiento/eta`, `SeguimientoETAService`, mensajes contextuales y 403.
+- [x] Mobile: `consultarEtaProvider`, caché offline, `EtaReparacionCu44Card` en Seguimiento.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu44-consultar-eta-reparacion.md`.
+
+### CU43/CU45 — Emergencia offline + sync al reconectar (2026-06-05) ✅
+- [x] Backend: migración `0022_client_request_id_cu43.sql`; idempotencia en `crear_solicitud` por `client_request_id`.
+- [x] Mobile: `SolicitudDraft` (Hive), wizard con rama offline, `SyncOrquestador` + `connectivity_plus`.
+- [x] UI: Mis solicitudes con borradores pendientes + «Sincronizar ahora».
+- [ ] Verificar E2E modo avión en dispositivo; migración en Docker local.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu43-cu45-sync-offline.md`.
+
+### CU42 — Registrar cotización taller (2026-06-05) ✅
+- [x] Backend: `presupuesto_detalle`, permiso `presupuestos:registrar`, endpoints taller presupuesto.
+- [x] Frontend taller: formulario cotización en detalle incidente.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu42-registrar-cotizacion.md`.
+
+### Notificaciones inmediatas (2026-06-05) ✅
+- [x] Backend: `eventos_servicio.py`, `tenant_guard.py`, migración `0020`, hooks en selección/ bandeja/ asignación/ estado.
+- [x] API taller: `GET/PATCH /api/app/taller/notificaciones`.
+- [x] Frontend taller: `/taller/panel/comunicacion/notificaciones` (polling 30s) + **campana con badge** en topbar del shell.
+- [x] Taller recibe avisos in-app del **cliente**: elegir taller, mensajes de chat, pago confirmado (sin push FCM por ahora).
+- [x] Mobile técnico: `/tecnico/app/notificaciones`.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`, `2026-06-05-agent-taller-notificaciones-cliente.md`.
 # Última actualización: 2026-06-06 — Notificaciones taller ampliadas ✅
 # =========================================================
 
@@ -126,6 +166,11 @@
 - [x] **`.cursor/agents/qa-testing.md`** — pytest, Flutter test, `TESTING_STRATEGY.md`, checklist manual de `NEXT_STEPS.md`.
 - [x] **`.cursor/agents/security.md`** — JWT, RBAC, secretos, CORS, Stripe, FCM, uploads, hardening pre-prod.
 - [x] **`orchestrator.md`** actualizado con tabla de delegación y distinción `ai-inference` vs `ai-researcher`.
+
+### Enterprise Architect — arquitectura de sistema (2026-05-29) ✅
+- [x] Paquete `Model/Arquitectura` (ID **28**) y diagrama de componentes **ID 31** replicando la vista “Sistema” (clientes, módulos backend, capas, PostgreSQL, Stripe/FCM/medios, worker IA).
+- [x] Diagrama **ID 32** `component Acceso capas por dominio`: 4 columnas Web/API/Service/Repository + PostgreSQL compartido (acceso, usuarios, roles/permisos, bitácora).
+- [x] Guía de trazabilidad EA ↔ código: `docs/ai/EA_ARCHITECTURE_SYSTEM_GUIDE.md`.
 
 ### Documentación de pruebas API (2026-04-26) ✅
 - [x] Se agregó `docs/ai/TESTING_STRATEGY.md` con 10 casos de prueba para `GET /servicios/{id}` y `GET /servicios`, incluyendo entradas, resultados esperados y criterios de aceptación.

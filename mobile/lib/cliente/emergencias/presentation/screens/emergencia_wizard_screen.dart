@@ -1,4 +1,7 @@
-// Asistente CU11–CU15: crear solicitud, ubicación, foto, audio, texto y confirmación.
+// Asistente CU11–CU15 + CU45 offline + CU43 sync al reconectar.
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,11 +11,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../application/vehiculos_providers.dart';
 import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../application/emergencias_providers.dart';
+import '../../application/offline_draft_helpers.dart';
+import '../../application/offline_sync_providers.dart';
 import '../../data/emergencias_repository.dart';
+import '../../domain/solicitud_draft.dart';
 import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/emergencia_ubicacion_osm_map.dart';
 
@@ -42,9 +49,15 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
 
   int _step = 0;
   int? _solicitudId;
+  String? _clientRequestId;
+  bool _offlineMode = false;
   SolicitudEmergenciaDetail? _detail;
   bool _busy = false;
   String? _error;
+
+  /// Vista previa offline de ubicación guardada en borrador.
+  double? _offlineLat;
+  double? _offlineLng;
 
   /// Context bajo el `body` del [Scaffold] (tiene [ScaffoldMessenger] correcto con shell + go_router).
   BuildContext? _scaffoldBodyContext;
@@ -79,6 +92,44 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
   }
 
   EmergenciasRepository get _repo => ref.read(emergenciasRepositoryProvider);
+
+  bool get _hasActiveFlow => _solicitudId != null || _clientRequestId != null;
+
+  bool _isConnectionFailure(Object e) {
+    if (e is DioException) {
+      return e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+    }
+    final s = e.toString().toLowerCase();
+    return s.contains('sin conexión') || s.contains('connection');
+  }
+
+  Future<void> _persistDraft(SolicitudDraft draft) async {
+    await ref.read(solicitudDraftRepoProvider).save(draft);
+    ref.read(offlineSyncTickProvider.notifier).bump();
+  }
+
+  Future<void> _startOfflineDraft({required String descripcion}) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now().toUtc();
+    final draft = SolicitudDraft(
+      clientRequestId: id,
+      vehiculoId: widget.vehiculoId,
+      descripcionInicial: descripcion.isEmpty ? null : descripcion,
+      createdAt: now,
+      updatedAt: now,
+      status: SolicitudDraftStatus.building,
+    );
+    await _persistDraft(draft);
+    setState(() {
+      _clientRequestId = id;
+      _offlineMode = true;
+      _step = 1;
+    });
+    _toast('Sin conexión — la solicitud se guardó en el dispositivo.');
+  }
 
   Future<bool> _ensureLocationReady() async {
     final svc = await Geolocator.isLocationServiceEnabled();
@@ -122,44 +173,113 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
 
   Future<void> _crearSolicitud() async {
     final t = _descInicial.text.trim();
+    final clientId = const Uuid().v4();
     await _guard(() async {
-      final d = await _repo.create(
-        vehiculoId: widget.vehiculoId,
-        descripcionTexto: t.isEmpty ? null : t,
-      );
-      setState(() {
-        _solicitudId = d.id;
-        _detail = d;
-        _step = 1;
-      });
+      try {
+        final d = await _repo.create(
+          vehiculoId: widget.vehiculoId,
+          descripcionTexto: t.isEmpty ? null : t,
+          clientRequestId: clientId,
+        );
+        setState(() {
+          _solicitudId = d.id;
+          _clientRequestId = clientId;
+          _offlineMode = false;
+          _detail = d;
+          _step = 1;
+        });
+      } catch (e) {
+        if (_isConnectionFailure(e)) {
+          await _startOfflineDraft(descripcion: t);
+          return;
+        }
+        rethrow;
+      }
     });
   }
 
   Future<void> _enviarUbicacion() async {
-    final sid = _solicitudId;
-    if (sid == null) return;
+    if (!_hasActiveFlow) return;
     if (!await _ensureLocationReady()) return;
 
     await _guard(() async {
       final p = await Geolocator.getCurrentPosition();
-      final d = await _repo.postUbicacion(
-        sid,
-        latitud: p.latitude,
-        longitud: p.longitude,
-        precisionMetros: p.accuracy.isFinite ? p.accuracy : null,
-        esActual: true,
-      );
-      if (!mounted) return;
-      setState(() {
-        _detail = d;
-        _step = 2;
-        _mapPreviewLat = null;
-        _mapPreviewLng = null;
-      });
-      _toast(
-        'Ubicación enviada (${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)}). '
-        'En el servidor hay ${d.ubicaciones.length} registro(s) de ubicación.',
-      );
+      if (_offlineMode || _solicitudId == null) {
+        final cid = _clientRequestId;
+        if (cid == null) return;
+        final existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+        if (existing == null) return;
+        await _persistDraft(
+          existing.copyWith(
+            latitud: p.latitude,
+            longitud: p.longitude,
+            precisionMetros: p.accuracy.isFinite ? p.accuracy : null,
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+        if (!mounted) return;
+        setState(() {
+          _offlineLat = p.latitude;
+          _offlineLng = p.longitude;
+          _step = 2;
+          _mapPreviewLat = null;
+          _mapPreviewLng = null;
+        });
+        _toast('Ubicación guardada localmente (se enviará al reconectar).');
+        return;
+      }
+      final sid = _solicitudId!;
+      try {
+        final d = await _repo.postUbicacion(
+          sid,
+          latitud: p.latitude,
+          longitud: p.longitude,
+          precisionMetros: p.accuracy.isFinite ? p.accuracy : null,
+          esActual: true,
+        );
+        if (!mounted) return;
+        setState(() {
+          _detail = d;
+          _step = 2;
+          _mapPreviewLat = null;
+          _mapPreviewLng = null;
+        });
+        _toast(
+          'Ubicación enviada (${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)}). '
+          'En el servidor hay ${d.ubicaciones.length} registro(s) de ubicación.',
+        );
+      } catch (e) {
+        if (_isConnectionFailure(e)) {
+          setState(() => _offlineMode = true);
+          final cid = _clientRequestId ?? const Uuid().v4();
+          _clientRequestId ??= cid;
+          var existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+          existing ??= SolicitudDraft(
+            clientRequestId: cid,
+            vehiculoId: widget.vehiculoId,
+            descripcionInicial: _descInicial.text.trim().isEmpty ? null : _descInicial.text.trim(),
+            createdAt: DateTime.now().toUtc(),
+            updatedAt: DateTime.now().toUtc(),
+          );
+          await _persistDraft(
+            existing.copyWith(
+              latitud: p.latitude,
+              longitud: p.longitude,
+              precisionMetros: p.accuracy.isFinite ? p.accuracy : null,
+              updatedAt: DateTime.now().toUtc(),
+            ),
+          );
+          if (!mounted) return;
+          setState(() {
+            _offlineLat = p.latitude;
+            _offlineLng = p.longitude;
+            _step = 2;
+          });
+          _toast('Sin conexión — ubicación guardada localmente.');
+          return;
+        }
+        rethrow;
+      }
     });
   }
 
@@ -184,8 +304,7 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
   }
 
   Future<void> _adjuntarFotoDesdeGaleria() async {
-    final sid = _solicitudId;
-    if (sid == null) return;
+    if (!_hasActiveFlow) return;
     final perm = await Permission.photos.request();
     if (!perm.isGranted) {
       await Permission.storage.request();
@@ -193,7 +312,6 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
     final x = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (x == null) return;
     await _procesarArchivoEvidencia(
-      sid: sid,
       tipoApi: 'FOTO',
       path: x.path,
       mime: _mimeFromPath(x.path),
@@ -202,8 +320,7 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
   }
 
   Future<void> _tomarFotoCamara() async {
-    final sid = _solicitudId;
-    if (sid == null) return;
+    if (!_hasActiveFlow) return;
     final cam = await Permission.camera.request();
     if (!cam.isGranted && mounted) {
       _toast('Se necesita permiso de cámara.');
@@ -212,7 +329,6 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
     final x = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
     if (x == null) return;
     await _procesarArchivoEvidencia(
-      sid: sid,
       tipoApi: 'FOTO',
       path: x.path,
       mime: _mimeFromPath(x.path),
@@ -221,32 +337,75 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
   }
 
   Future<void> _procesarArchivoEvidencia({
-    required int sid,
     required String tipoApi,
     required String path,
     required String mime,
     required String nombre,
   }) async {
     await _guard(() async {
-      final d = await _repo.postEvidenciaArchivo(
-        sid,
-        tipoApi: tipoApi,
-        filePath: path,
-        filename: nombre.isNotEmpty ? nombre : 'foto.jpg',
-        mimeType: mime == 'application/octet-stream' ? null : mime,
-      );
-      if (!mounted) return;
-      setState(() {
-        _detail = d;
-        _step = 3;
-      });
-      _toast('Foto registrada.');
+      if (_offlineMode || _solicitudId == null) {
+        if (tipoApi != 'FOTO') return;
+        final cid = _clientRequestId;
+        if (cid == null) return;
+        final persisted = await persistOfflineEvidenceFile(path, prefix: 'foto');
+        final existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+        if (existing == null) return;
+        await _persistDraft(
+          existing.copyWith(
+            fotoPath: persisted,
+            fotoMime: mime == 'application/octet-stream' ? null : mime,
+            fotoNombre: nombre.isNotEmpty ? nombre : 'foto.jpg',
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+        if (!mounted) return;
+        setState(() => _step = 3);
+        _toast('Foto guardada localmente.');
+        return;
+      }
+      final sid = _solicitudId!;
+      try {
+        final d = await _repo.postEvidenciaArchivo(
+          sid,
+          tipoApi: tipoApi,
+          filePath: path,
+          filename: nombre.isNotEmpty ? nombre : 'foto.jpg',
+          mimeType: mime == 'application/octet-stream' ? null : mime,
+        );
+        if (!mounted) return;
+        setState(() {
+          _detail = d;
+          _step = 3;
+        });
+        _toast('Foto registrada.');
+      } catch (e) {
+        if (_isConnectionFailure(e) && tipoApi == 'FOTO') {
+          setState(() => _offlineMode = true);
+          final persisted = await persistOfflineEvidenceFile(path, prefix: 'foto');
+          final cid = _clientRequestId!;
+          final existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+          if (existing != null) {
+            await _persistDraft(
+              existing.copyWith(
+                fotoPath: persisted,
+                fotoMime: mime == 'application/octet-stream' ? null : mime,
+                fotoNombre: nombre.isNotEmpty ? nombre : 'foto.jpg',
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+          }
+          if (!mounted) return;
+          setState(() => _step = 3);
+          _toast('Sin conexión — foto guardada localmente.');
+          return;
+        }
+        rethrow;
+      }
     });
   }
 
   Future<void> _grabarAudio() async {
-    final sid = _solicitudId;
-    if (sid == null) return;
+    if (!_hasActiveFlow) return;
     final mic = await Permission.microphone.request();
     if (!mic.isGranted && mounted) {
       _toast('Se necesita permiso de micrófono.');
@@ -269,19 +428,59 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
     setState(() => _recording = false);
     if (path == null || path.isEmpty) return;
     await _guard(() async {
-      final d = await _repo.postEvidenciaArchivo(
-        sid,
-        tipoApi: 'AUDIO',
-        filePath: path,
-        filename: 'grabacion.m4a',
-        mimeType: 'audio/mp4',
-      );
-      if (!mounted) return;
-      setState(() {
-        _detail = d;
-        _step = 4;
-      });
-      _toast('Audio registrado.');
+      if (_offlineMode || _solicitudId == null) {
+        final cid = _clientRequestId;
+        if (cid == null) return;
+        final persisted = await persistOfflineEvidenceFile(path, prefix: 'audio');
+        final existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+        if (existing == null) return;
+        await _persistDraft(
+          existing.copyWith(
+            audioPath: persisted,
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+        if (!mounted) return;
+        setState(() => _step = 4);
+        _toast('Audio guardado localmente.');
+        return;
+      }
+      final sid = _solicitudId!;
+      try {
+        final d = await _repo.postEvidenciaArchivo(
+          sid,
+          tipoApi: 'AUDIO',
+          filePath: path,
+          filename: 'grabacion.m4a',
+          mimeType: 'audio/mp4',
+        );
+        if (!mounted) return;
+        setState(() {
+          _detail = d;
+          _step = 4;
+        });
+        _toast('Audio registrado.');
+      } catch (e) {
+        if (_isConnectionFailure(e)) {
+          setState(() => _offlineMode = true);
+          final persisted = await persistOfflineEvidenceFile(path, prefix: 'audio');
+          final cid = _clientRequestId!;
+          final existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+          if (existing != null) {
+            await _persistDraft(
+              existing.copyWith(
+                audioPath: persisted,
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+          }
+          if (!mounted) return;
+          setState(() => _step = 4);
+          _toast('Sin conexión — audio guardado localmente.');
+          return;
+        }
+        rethrow;
+      }
     });
   }
 
@@ -332,15 +531,56 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
   }
 
   Future<void> _guardarTextoAdicional() async {
-    final sid = _solicitudId;
-    if (sid == null) return;
+    if (!_hasActiveFlow) return;
     final t = _textoAdicional.text.trim();
     await _guard(() async {
-      final d = await _repo.patchTexto(sid, descripcionTexto: t.isEmpty ? null : t);
-      setState(() {
-        _detail = d;
-        _step = 5;
-      });
+      if (_offlineMode || _solicitudId == null) {
+        final cid = _clientRequestId;
+        if (cid == null) return;
+        final existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+        if (existing == null) return;
+        await _persistDraft(
+          existing.copyWith(
+            textoAdicional: t.isEmpty ? null : t,
+            status: SolicitudDraftStatus.readyToSync,
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+        if (!mounted) return;
+        setState(() => _step = 5);
+        _toast('Borrador listo — se sincronizará al reconectar.');
+        unawaited(ref.read(offlineSyncManualProvider)());
+        return;
+      }
+      final sid = _solicitudId!;
+      try {
+        final d = await _repo.patchTexto(sid, descripcionTexto: t.isEmpty ? null : t);
+        setState(() {
+          _detail = d;
+          _step = 5;
+        });
+      } catch (e) {
+        if (_isConnectionFailure(e)) {
+          final cid = _clientRequestId!;
+          final existing = await ref.read(solicitudDraftRepoProvider).getById(cid);
+          if (existing != null) {
+            await _persistDraft(
+              existing.copyWith(
+                textoAdicional: t.isEmpty ? null : t,
+                status: SolicitudDraftStatus.readyToSync,
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+          }
+          setState(() {
+            _offlineMode = true;
+            _step = 5;
+          });
+          _toast('Sin conexión — borrador marcado para sincronizar.');
+          return;
+        }
+        rethrow;
+      }
     });
   }
 
@@ -375,6 +615,32 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
                 children: [
                   _StepIndicator(step: _step, total: _totalSteps),
                   const SizedBox(height: 20),
+                  if (_offlineMode)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Material(
+                        color: Theme.of(bodyContext).colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Icon(Icons.cloud_off, color: Theme.of(bodyContext).colorScheme.tertiary),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Modo sin conexión — los datos se guardan en el teléfono y se envían al reconectar.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(bodyContext).colorScheme.onTertiaryContainer,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   if (_error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -542,12 +808,30 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
       default:
         final d = _detail;
         final uFin = d?.ubicaciones.isNotEmpty == true ? d!.ubicaciones.last : null;
+        final offlineDone = _offlineMode && _solicitudId == null;
         return [
-          Icon(Icons.check_circle_outline, size: 56, color: Theme.of(context).colorScheme.primary),
+          Icon(
+            offlineDone ? Icons.cloud_upload_outlined : Icons.check_circle_outline,
+            size: 56,
+            color: Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(height: 12),
-          Text('Solicitud registrada', style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            offlineDone ? 'Borrador guardado' : 'Solicitud registrada',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: 8),
-          if (d != null) ...[
+          if (offlineDone) ...[
+            Text(
+              'Cuando vuelva la conexión, la app enviará automáticamente tu reporte. '
+              'También podés sincronizar manualmente desde «Mis solicitudes».',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4),
+            ),
+            if (_offlineLat != null && _offlineLng != null) ...[
+              const SizedBox(height: 12),
+              EmergenciaUbicacionOsmMap(latitude: _offlineLat!, longitude: _offlineLng!, height: 200),
+            ],
+          ] else if (d != null) ...[
             Text('ID solicitud: ${d.id}', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Text('Estado: ${d.estado.apiValue}'),
@@ -562,7 +846,17 @@ class _EmergenciaWizardScreenState extends ConsumerState<EmergenciaWizardScreen>
             ],
           ],
           const SizedBox(height: 24),
-          if (d != null) ...[
+          if (offlineDone) ...[
+            ShadButton(
+              onPressed: () => context.push('/cliente/app/emergencias/solicitudes'),
+              child: const Text('Ver mis solicitudes'),
+            ),
+            const SizedBox(height: 12),
+            ShadButton.outline(
+              onPressed: () => context.go('/cliente/app/home'),
+              child: const Text('Volver al inicio'),
+            ),
+          ] else if (d != null) ...[
             ShadButton(
               onPressed: () => context.push('/cliente/app/emergencias/solicitudes/${d.id}/seleccionar-taller'),
               child: const Text('Elegir taller'),

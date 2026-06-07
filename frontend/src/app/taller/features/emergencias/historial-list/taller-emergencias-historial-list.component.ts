@@ -59,6 +59,13 @@ export class TallerEmergenciasHistorialListComponent implements OnInit {
   ngOnInit(): void {
     const m = this.route.snapshot.data['historialModo'];
     this.modo = m === 'mis' || m === 'servicios' ? m : 'historial';
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
+      const busqueda = q.get('q');
+      if (busqueda) {
+        this.search = busqueda;
+        this.cdr.markForCheck();
+      }
+    });
     this.tallerApi
       .listTecnicos()
       .pipe(takeUntilDestroyed(this.destroyRef))

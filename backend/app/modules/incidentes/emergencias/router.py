@@ -24,6 +24,7 @@ from .schemas import (
     SolicitudEmergenciaDetailRead,
     SolicitudEmergenciaRead,
     SolicitudEmergenciaUpdateTextoIn,
+    SolicitudEtaRead,
     SolicitudSeguimientoRead,
     UbicacionCreateIn,
     UbicacionTecnicoCompartidaRead,
@@ -123,6 +124,21 @@ async def ubicacion_tecnico_compartida(
     """Última posición compartida por el técnico asignado (polling desde el móvil del cliente)."""
     cid = await _cliente_id(current_user, db)
     return await service.obtener_ubicacion_tecnico_compartida_cliente(cid, solicitud_id, db)
+
+
+@router.get(
+    "/{solicitud_id}/seguimiento/eta",
+    response_model=SolicitudEtaRead,
+    dependencies=[Depends(require_permission("incidentes:leer"))],
+)
+async def consultar_eta_reparacion(
+    solicitud_id: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU44 — tiempo estimado de reparación/atención (ETA dedicado)."""
+    cid = await _cliente_id(current_user, db)
+    return await service.obtener_eta_cliente(cid, solicitud_id, db)
 
 
 @router.get(

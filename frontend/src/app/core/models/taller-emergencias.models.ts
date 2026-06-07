@@ -52,8 +52,27 @@ export interface SolicitudBandejaDetalleDto extends BandejaIncidenteBaseDto {
   motivo_rechazo: string | null;
   creado_at: string;
   respondido_at: string | null;
+  presupuesto_bob?: string | number | null;
+  presupuesto_detalle?: string | null;
+  presupuesto_registrado_at?: string | null;
   /** Fotos y audios adjuntos por el cliente. */
   evidencias?: SolicitudEvidenciaTallerDto[];
+}
+
+/** PATCH `/app/taller/emergencias/solicitudes/{id}/presupuesto` — CU42 */
+export interface RegistrarPresupuestoPayload {
+  presupuesto_bob: number;
+  detalle: string;
+  observaciones?: string | null;
+}
+
+export interface PresupuestoSolicitudDto {
+  solicitud_id: number;
+  estado_solicitud: EstadoSolicitudSeguimiento;
+  presupuesto_bob: string | number;
+  presupuesto_detalle: string;
+  presupuesto_registrado_at: string;
+  observaciones_registro?: string | null;
 }
 
 export interface TallerDisponibilidadDto {

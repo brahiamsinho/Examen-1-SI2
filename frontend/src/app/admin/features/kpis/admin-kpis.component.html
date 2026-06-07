@@ -1,0 +1,161 @@
+<div class="dash">
+  <header class="dash__header">
+    <div class="dash__header-text">
+      <h2 class="dash__h">Reportes KPIs</h2>
+      <p class="dash__lead">
+        Indicadores operativos y financieros agregados: solicitudes, tiempos, pagos y comisiones.
+        Solo lectura según filtros y tenant.
+      </p>
+    </div>
+    <span class="dash__status" *ngIf="!loading && !error">
+      <span class="dash__status-dot" aria-hidden="true"></span>
+      Datos en línea
+    </span>
+  </header>
+
+  <div class="dash__filters dash__filters--top">
+    <label class="dash__label">
+      Desde
+      <input class="dash__input" type="date" [(ngModel)]="desde" />
+    </label>
+    <label class="dash__label">
+      Hasta
+      <input class="dash__input" type="date" [(ngModel)]="hasta" />
+    </label>
+    <button class="dash__btn" type="button" (click)="recargar()" [disabled]="loading">Actualizar</button>
+    <button
+      class="dash__btn dash__btn--ghost"
+      type="button"
+      (click)="exportarCsv()"
+      [disabled]="loading || !kpis || permisoDenegado"
+    >
+      Exportar CSV
+    </button>
+  </div>
+
+  <p class="dash__muted" *ngIf="loading">Cargando KPIs…</p>
+
+  <div class="dash__alert" *ngIf="error" role="alert">
+    {{ error }}
+    <button class="dash__btn dash__btn--inline" type="button" (click)="recargar()" *ngIf="!permisoDenegado">
+      Reintentar
+    </button>
+  </div>
+
+  <ng-container *ngIf="!loading && kpis as k">
+    <div class="dash__empty-state" *ngIf="k.sin_datos_en_periodo" role="status">
+      <p>No hay solicitudes ni pagos confirmados en el periodo seleccionado.</p>
+      <p class="dash__hint">Probá ampliar el rango de fechas o cambiar el filtro de organización.</p>
+    </div>
+
+    <div class="dash__grid">
+      <article class="dash__stat">
+        <h3 class="dash__card-title">Total solicitudes</h3>
+        <p class="dash__metric">{{ k.total_solicitudes }}</p>
+      </article>
+      <article class="dash__stat">
+        <h3 class="dash__card-title">Activas</h3>
+        <p class="dash__metric">{{ k.solicitudes_activas }}</p>
+      </article>
+      <article class="dash__stat">
+        <h3 class="dash__card-title">Finalizadas</h3>
+        <p class="dash__metric">{{ k.solicitudes_finalizadas }}</p>
+      </article>
+      <article class="dash__stat">
+        <h3 class="dash__card-title">Canceladas</h3>
+        <p class="dash__metric">{{ k.solicitudes_canceladas }}</p>
+      </article>
+      <article class="dash__stat">
+        <h3 class="dash__card-title">Pagos confirmados</h3>
+        <p class="dash__metric">{{ k.pagos_confirmados }}</p>
+        <span class="dash__hint">{{ money(k.monto_pagos_bob) }}</span>
+      </article>
+      <article class="dash__stat">
+        <h3 class="dash__card-title">Tiempo prom. atención</h3>
+        <p class="dash__metric dash__metric--sm">{{ tiempoAtencion(k.tiempo_promedio_atencion_min) }}</p>
+        <span class="dash__hint">Desde creación hasta finalización</span>
+      </article>
+    </div>
+
+    <section class="dash__section">
+      <h3 class="dash__section-title">Solicitudes por estado</h3>
+      <p class="dash__empty" *ngIf="estadosOperativos.length === 0">Sin movimiento en el periodo.</p>
+      <ul class="dash__barlist" *ngIf="estadosOperativos.length > 0">
+        <li *ngFor="let it of estadosOperativos" class="dash__baritem">
+          <span class="dash__barlabel">{{ it.label }}</span>
+          <span class="dash__barval">{{ it.n }}</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="dash__section" *ngIf="k.resumen_financiero as fin">
+      <h3 class="dash__section-title">Resumen financiero</h3>
+      <div class="dash__grid dash__grid--fin">
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Ganancia plataforma</h3>
+          <p class="dash__metric dash__metric--money">{{ money(fin.total_comision_plataforma) }}</p>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Ticket promedio</h3>
+          <p class="dash__metric dash__metric--money">{{ money(fin.ticket_promedio_pagado) }}</p>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Conversión a pago</h3>
+          <p class="dash__metric">{{ pct(fin.tasa_conversion_pago_pct) }}</p>
+        </article>
+        <article class="dash__stat dash__stat--compact">
+          <h3 class="dash__card-title">Talleres con comisión</h3>
+          <p class="dash__metric">{{ fin.n_talleres_con_comision }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="dash__section">
+      <h3 class="dash__section-title">Top talleres por comisión</h3>
+      <div class="dash__tablewrap" *ngIf="topTalleres.length; else emptyTop">
+        <table class="dash__table">
+          <thead>
+            <tr>
+              <th>Taller</th>
+              <th>Servicios</th>
+              <th class="dash__th-muted">Monto servicio</th>
+              <th>Comisión plataforma</th>
+              <th>Neto taller</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of topTalleres">
+              <td>{{ row.nombre_comercial }}</td>
+              <td>{{ row.n_comisiones }}</td>
+              <td class="dash__td-muted">{{ money(row.total_monto_servicio) }}</td>
+              <td>{{ money(row.total_comision_plataforma) }}</td>
+              <td>{{ money(row.total_neto_taller) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyTop>
+        <p class="dash__empty">Sin talleres con comisiones en el rango elegido.</p>
+      </ng-template>
+    </section>
+
+    <section class="dash__section">
+      <h3 class="dash__section-title">Serie diaria de comisión plataforma</h3>
+      <div class="dash__chart" *ngIf="serieComisiones.length; else emptySerie">
+        <div class="dash__barrow" *ngFor="let row of serieComisiones">
+          <div class="dash__barmeta">
+            <span>{{ row.fecha | date : 'dd/MM' }}</span>
+            <span>{{ money(row.total_comision_plataforma) }}</span>
+          </div>
+          <div class="dash__bartrack">
+            <div class="dash__bar" [style.width.%]="row.barWidthPct"></div>
+          </div>
+        </div>
+        <p class="dash__hint">Total rango: {{ money(serieComisionTotal) }}</p>
+      </div>
+      <ng-template #emptySerie>
+        <p class="dash__empty">Sin datos diarios de comisiones para el rango actual.</p>
+      </ng-template>
+    </section>
+  </ng-container>
+</div>

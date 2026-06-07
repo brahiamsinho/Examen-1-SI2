@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../emergencias/presentation/widgets/offline_sync_bootstrap.dart';
 import '../../../core/widgets/mobile/mobile_shell_widgets.dart';
 import '../widgets/cliente_panel_ui.dart';
 
@@ -30,6 +31,14 @@ class ClienteAppShell extends StatelessWidget {
     final showNav = _showBottomNav(loc);
     final index = _indexForPath(loc);
 
+    return Scaffold(
+      body: SafeArea(
+        child: OfflineSyncBootstrap(child: child),
+      ),
+      bottomNavigationBar: showNav
+          ? NavigationBar(
+              selectedIndex: index,
+              onDestinationSelected: (i) {
     return MobileAppShell(
       bottomNav: showNav
           ? ClientePanelBottomNav(

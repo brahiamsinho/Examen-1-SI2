@@ -40,6 +40,12 @@ dependencies:
   url_launcher: ^6.3.1
   intl: ^0.20.2
 
+  # CU43/CU45 — borradores offline y sincronización al reconectar
+  connectivity_plus: ^6.1.4
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  uuid: ^4.5.1
+
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.5
   flutter_local_notifications: ^21.0.0

@@ -145,6 +145,14 @@ export const TALLER_ROUTES: Routes = [
           ),
       },
       {
+        path: 'reportes-kpis',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'reportes:leer' },
+        loadComponent: () =>
+          import('./features/kpis/taller-kpis.component').then((m) => m.TallerKpisComponent),
+      },
+      {
+        path: 'emergencias/disponibilidad',
         path: 'horarios',
         canActivate: [tallerPermisoGuard],
         data: { permiso: 'disponibilidad:gestionar' },
@@ -165,6 +173,15 @@ export const TALLER_ROUTES: Routes = [
         path: 'backups',
         loadComponent: () =>
           import('./features/backups/taller-backups.component').then((m) => m.TallerBackupsComponent),
+      },
+      {
+        path: 'comunicacion/notificaciones',
+        canActivate: [tallerPermisoGuard],
+        data: { permiso: 'notificaciones:leer' },
+        loadComponent: () =>
+          import('./features/comunicacion/notificaciones/taller-notificaciones.component').then(
+            (m) => m.TallerNotificacionesComponent,
+          ),
       },
     ],
   },

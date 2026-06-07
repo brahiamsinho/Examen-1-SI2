@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from app.modules.atencion.taller_emergencias.schemas import (
     AsignarTecnicoIn,
+    RegistrarPresupuestoIn,
     RechazarBandejaIn,
     TallerDisponibilidadUpdateIn,
 )
@@ -28,6 +29,22 @@ class TestTallerEmergenciasSchemas(unittest.TestCase):
     def test_asignar_tecnico_id_positivo(self) -> None:
         with self.assertRaises(ValidationError):
             AsignarTecnicoIn(tecnico_id=0)
+
+    def test_registrar_presupuesto_ok(self) -> None:
+        from decimal import Decimal
+
+        p = RegistrarPresupuestoIn(
+            presupuesto_bob=Decimal("450.50"),
+            detalle="Cambio de batería y revisión eléctrica",
+            observaciones="Incluye mano de obra",
+        )
+        self.assertEqual(p.presupuesto_bob, Decimal("450.50"))
+
+    def test_registrar_presupuesto_detalle_corto(self) -> None:
+        from decimal import Decimal
+
+        with self.assertRaises(ValidationError):
+            RegistrarPresupuestoIn(presupuesto_bob=Decimal("10"), detalle="ab")
 
 
 if __name__ == "__main__":

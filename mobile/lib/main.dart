@@ -4,14 +4,20 @@ import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
+import 'cliente/emergencias/data/solicitud_draft_repo.dart';
 import 'core/push/firebase_bootstrap.dart';
 import 'core/push/fcm_registration.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
+  if (!kIsWeb) {
+    await Hive.initFlutter();
+    await SolicitudDraftRepo().init();
+  }
   if (!kIsWeb) {
     try {
       await Firebase.initializeApp();

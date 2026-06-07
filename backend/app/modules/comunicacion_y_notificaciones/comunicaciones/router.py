@@ -54,6 +54,7 @@ tecnico_router = APIRouter(prefix="/app/tecnico", tags=["Comunicaciones (técnic
 
 taller_router = APIRouter(prefix="/app/taller", tags=["Comunicaciones (taller)"])
 
+
 admin_router = APIRouter(prefix="/admin", tags=["Comunicaciones (admin)"])
 
 
@@ -195,6 +196,7 @@ async def tecnico_marcar_leida(
     return await notif_service.marcar_notificacion_leida(current_user, notificacion_id, db)
 
 
+
 @taller_router.post(
     "/dispositivos/fcm",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -221,19 +223,30 @@ async def taller_eliminar_fcm(
     await fcm_service.eliminar_fcm_token(current_user, body, db)
 
 
+
 @taller_router.get(
     "/notificaciones",
     response_model=list[NotificacionRead],
     dependencies=[Depends(require_permission("notificaciones:leer"))],
 )
 async def taller_listar_notificaciones(
+
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+
     current_user: Usuario = Depends(_ensure_taller_responsable_user),
+
     db: AsyncSession = Depends(get_db),
     no_leidas: bool = Query(False),
     limit: int = Query(100, ge=1, le=200),
 ):
+
+    user, _taller = ctx
+    return await notif_service.listar_notificaciones(
+        user, db, solo_no_leidas=no_leidas, limit=limit
+
     return await notif_service.listar_notificaciones(
         current_user, db, solo_no_leidas=no_leidas, limit=limit
+
     )
 
 
@@ -244,6 +257,13 @@ async def taller_listar_notificaciones(
 )
 async def taller_marcar_leida(
     notificacion_id: int,
+
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    user, _taller = ctx
+    return await notif_service.marcar_notificacion_leida(user, notificacion_id, db)
+
     current_user: Usuario = Depends(_ensure_taller_responsable_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -303,3 +323,4 @@ async def admin_marcar_leida(
     db: AsyncSession = Depends(get_db),
 ):
     return await notif_service.marcar_notificacion_leida(current_user, notificacion_id, db)
+

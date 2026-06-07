@@ -11,6 +11,8 @@ from app.modules.incidentes.emergencias.models import SolicitudEmergencia
 from app.modules.comunicacion_y_notificaciones.mensajes_solicitud import repository as msg_repository
 from app.modules.comunicacion_y_notificaciones.mensajes_solicitud.schemas import MensajeSolicitudCreateIn, MensajeSolicitudRead
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
+from app.modules.comunicacion_y_notificaciones.notificaciones.service import crear_notificacion_y_push
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.comunicacion_y_notificaciones.notificaciones.service import (
     crear_notificacion_y_push,
     notificar_responsable_taller_por_solicitud,
@@ -134,6 +136,13 @@ async def enviar_mensaje(
         titulo=f"Mensaje del {actor_label.lower()}",
         mensaje=f"Emergencia #{solicitud_id} — {actor_label}: {preview}",
     )
+    if actor == "cliente" and sol.taller_id is not None:
+        await eventos_servicio.on_mensaje_cliente(
+            db,
+            solicitud=sol,
+            mensaje_id=msg.id,
+            texto_preview=texto,
+        )
     await db.commit()
     await db.refresh(msg)
     return MensajeSolicitudRead.model_validate(msg)

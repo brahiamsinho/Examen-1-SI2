@@ -15,6 +15,7 @@ from app.modules.acceso_y_administracion.bitacora.models import AccionBitacoraEn
 from app.modules.acceso_y_administracion.bitacora.service import registrar_accion
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.notificaciones import service as notificaciones_service
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.pagos_y_comisiones.pagos import repository
 from app.modules.pagos_y_comisiones.pagos.gateway import PasarelaSimulada
@@ -98,6 +99,12 @@ async def _aplicar_resultado_pasarela(
             tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
             titulo="Pago confirmado",
             mensaje="Tu pago fue confirmado correctamente. Gracias por usar la plataforma.",
+        )
+        await eventos_servicio.on_pago_cliente(
+            db,
+            solicitud=solicitud,
+            pago_id=pago.id,
+            monto_label=f"{pago.monto} {pago.moneda}",
         )
         await _notificar_pago_confirmado_taller(db, solicitud=solicitud, pago=pago)
         await repository.registrar_comision_taller_tras_pago(db, solicitud=solicitud, pago=pago)
@@ -423,6 +430,12 @@ async def confirmar_pago_stripe(
         tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
         titulo="Pago confirmado",
         mensaje="Tu pago en Stripe fue confirmado correctamente.",
+    )
+    await eventos_servicio.on_pago_cliente(
+        db,
+        solicitud=sol,
+        pago_id=pago.id,
+        monto_label=f"{pago.monto} {pago.moneda}",
     )
     await _notificar_pago_confirmado_taller(db, solicitud=sol, pago=pago)
     await repository.registrar_comision_taller_tras_pago(db, solicitud=sol, pago=pago)

@@ -12,10 +12,18 @@ if [[ ! -f .env ]]; then
 fi
 
 # shellcheck disable=SC1091
-set -a && source .env && set +a
+# shellcheck source=deploy/scripts/load-env.sh
+source "$(dirname "$0")/load-env.sh"
+load_dotenv .env
 
-: "${PUBLIC_DOMAIN:?Definí PUBLIC_DOMAIN en .env (ej. oftalmologia-si2.westus3.cloudapp.azure.com)}"
-: "${CERTBOT_EMAIL:?Definí CERTBOT_EMAIL en .env (email para Let's Encrypt)}"
+if [[ -z "${PUBLIC_DOMAIN:-}" ]]; then
+  echo "ERROR: Definí PUBLIC_DOMAIN en .env (ej. oftalmologia-si2.westus3.cloudapp.azure.com)." >&2
+  exit 1
+fi
+if [[ -z "${CERTBOT_EMAIL:-}" ]]; then
+  echo "ERROR: Definí CERTBOT_EMAIL en .env (email para certificados Lets Encrypt)." >&2
+  exit 1
+fi
 
 chmod +x deploy/scripts/certbot-deploy-hook.sh deploy/scripts/certbot-renew.sh
 

@@ -54,10 +54,20 @@ mobile/ios/Pods/
 # .vscode/: preferencias locales; si el equipo comparte launch/tasks, usa !.vscode/launch.json
 .vscode/
 .idea/
-#agents/
-#skills-lock.json
+.cursor/agents/
+.cursor/mcp.json
 *.swp
 *.swo
+
+# OpenCode / Gentle AI / migración local de subagentes (no versionar)
+.agents/
+.opencode/
+.atl/
+opencode.jsonc
+
+# ── Frontend: generados desde `.env` raíz (`npm run env:sync`) ─
+frontend/src/environments/*.generated.ts
+frontend/public/firebase-cloud-messaging-push-scope/firebase-messaging-sw.js
 
 # ── Sistema operativo ─────────────────────────────────────
 .DS_Store
@@ -90,16 +100,41 @@ firebase-credentials.json
 mobile/lib/firebase_options.dart
 stripe-credentials.json
 
-# ── Cursor / MCP local ───────────────────────────────────
-.cursor/mcp.json
-
 # ── Temporales examen / extracciones ─────────────────────
 .tmp-docx-extract/
 .tmp-exam.zip
 
+# ── Enterprise Architect / MCP — artefactos locales de sesión ─
+arg_*.json
+elements.json
+extracted_fks.json
+mcp_*.json
+placements.json
+schema_extracted.json
+batch*.txt
+call_connectors.txt
+tool_calls.txt
+convert_agents.py
+extract_fks.js
+extract_schema.js
+test_ea.ps1
+test_ea.vbs
+update_ea.ps1
+update_ea2.ps1
+
+# ── Diagramas WIP / borradores locales (no entregables finales) ─
+docs/diagrams/plantuml/
+docs/diagrams/uml/ciclo4/
+docs/diagrams/uml/ciclo5/
+docs/diagrams/uml/modelo_conceptual.mermaid
+docs/diagrams/uml/modelo_conceptual.puml
+docs/diagrams/drawio/cu36-analisis-bce.drawio
+docs/diagrams/agent-memory/LEARNINGS_UPDATE.txt
+docs/diagrams/agent-memory/CU36_ANALISIS_VS_IMPLEMENTACION.md
+docs/ai/sessions/2026-06-07-agent-opencode-migracion-subagentes.md
+
 # ── Locks / configs locales opcionales ───────────────────
 skills-lock.json
-#opencode.jsonc
 
 tmp-login.json
 tmp-tenant.json

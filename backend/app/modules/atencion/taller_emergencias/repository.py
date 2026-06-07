@@ -108,6 +108,25 @@ async def expirar_todas_bandeja_pendientes(
     await db.execute(stmt)
 
 
+async def cerrar_bandejas_por_cancelacion_cliente(
+    db: AsyncSession,
+    *,
+    solicitud_id: int,
+    respondido_at: datetime,
+) -> None:
+    """Marca PENDIENTE/ACEPTADA como EXPIRADA cuando el cliente cancela la solicitud."""
+    await db.execute(
+        update(SolicitudTallerBandeja)
+        .where(
+            SolicitudTallerBandeja.solicitud_id == solicitud_id,
+            SolicitudTallerBandeja.estado.in_(
+                (EstadoBandejaTallerEnum.PENDIENTE, EstadoBandejaTallerEnum.ACEPTADA)
+            ),
+        )
+        .values(estado=EstadoBandejaTallerEnum.EXPIRADA, respondido_at=respondido_at)
+    )
+
+
 async def ensure_bandeja_pendiente_para_taller(
     db: AsyncSession,
     *,

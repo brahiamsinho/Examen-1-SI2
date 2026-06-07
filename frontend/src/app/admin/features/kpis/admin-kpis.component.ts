@@ -88,6 +88,11 @@ export class AdminKpisComponent implements OnInit {
     return m > 0 ? `${h} h ${m} min` : `${h} h`;
   }
 
+  pctSla(value: number | null | undefined): string {
+    if (value == null) return '—';
+    return `${value.toFixed(1)}%`;
+  }
+
   exportarCsv(): void {
     if (!this.kpis) return;
     const rows: string[][] = [
@@ -107,6 +112,44 @@ export class AdminKpisComponent implements OnInit {
     ];
     for (const [estado, n] of Object.entries(this.kpis.solicitudes_por_estado ?? {})) {
       rows.push([`Estado ${estado}`, String(n)]);
+    }
+    const op = this.kpis.analitica_operacional;
+    if (op) {
+      rows.push([]);
+      rows.push(['Analítica operacional §3']);
+      rows.push(['Tiempo prom. asignación (min)', op.tiempo_promedio_asignacion_min != null ? String(op.tiempo_promedio_asignacion_min) : '']);
+      rows.push(['Tiempo prom. llegada (min)', op.tiempo_promedio_llegada_min != null ? String(op.tiempo_promedio_llegada_min) : '']);
+      rows.push(['Casos cancelados', String(op.casos_cancelados)]);
+      rows.push(['Casos no atendidos', String(op.casos_no_atendidos)]);
+      rows.push([
+        'SLA cumplimiento (%)',
+        op.sla?.porcentaje_cumplimiento != null ? String(op.sla.porcentaje_cumplimiento) : '',
+      ]);
+      rows.push([]);
+      rows.push(['Incidentes por tipo', 'Total']);
+      for (const it of op.incidentes_por_tipo ?? []) {
+        rows.push([it.label, String(it.total)]);
+      }
+      rows.push([]);
+      rows.push(['Top talleres eficientes', 'Finalizadas', 'Respuesta (min)', 'Finalización (min)']);
+      for (const t of op.talleres_mas_eficientes ?? []) {
+        rows.push([
+          t.nombre_comercial,
+          String(t.solicitudes_finalizadas),
+          t.tiempo_respuesta_prom_min != null ? String(t.tiempo_respuesta_prom_min) : '',
+          t.tiempo_finalizacion_prom_min != null ? String(t.tiempo_finalizacion_prom_min) : '',
+        ]);
+      }
+      rows.push([]);
+      rows.push(['Zonas con más incidentes', 'Total', 'Lat', 'Lng']);
+      for (const z of op.zonas_mas_incidentes ?? []) {
+        rows.push([
+          z.zona,
+          String(z.total),
+          z.latitud_prom != null ? String(z.latitud_prom) : '',
+          z.longitud_prom != null ? String(z.longitud_prom) : '',
+        ]);
+      }
     }
     rows.push([]);
     rows.push(['Top talleres']);

@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.modules.analytics.schemas import OperationalKpisRead
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum, TipoEvidenciaSolicitudEnum
 from app.modules.pagos_y_comisiones.pagos.models import EstadoPagoEnum
 from app.modules.atencion.taller_emergencias.models import (
@@ -258,6 +259,7 @@ class ReporteTallerDashboardRead(BaseModel):
         description="Conteo de solicitudes creadas en el periodo (por `created_at`) agrupado por estado.",
     )
     ganancias_por_tecnico: list[ReporteTecnicoGananciasRead] = Field(default_factory=list)
+    analitica_operacional: OperationalKpisRead
 
 
 class BandejaIdPorSolicitudRead(BaseModel):

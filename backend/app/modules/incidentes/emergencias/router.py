@@ -17,6 +17,7 @@ from app.modules.ai.schemas import AssignmentRankOut
 from . import service
 from .models import TipoEvidenciaSolicitudEnum
 from .schemas import (
+    CancelarSolicitudIn,
     EvidenciaCreateIn,
     SeleccionarTallerIn,
     SeleccionarTallerOut,
@@ -184,6 +185,25 @@ async def actualizar_texto_solicitud(
     """CU15 — solo en estado REGISTRADA."""
     cid = await _cliente_id(current_user, db)
     return await service.actualizar_texto(current_user, cid, solicitud_id, body, db)
+
+
+@router.post(
+    "/{solicitud_id}/cancelar",
+    response_model=SolicitudSeguimientoRead,
+    dependencies=[
+        Depends(require_permission("incidentes:actualizar")),
+        Depends(require_writable_tenant_subscription),
+    ],
+)
+async def cancelar_solicitud_emergencia(
+    solicitud_id: int,
+    body: CancelarSolicitudIn,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cancelación por el cliente antes de EN_ATENCION (WS + notificaciones taller/técnico)."""
+    cid = await _cliente_id(current_user, db)
+    return await service.cancelar_solicitud(current_user, cid, solicitud_id, body, db)
 
 
 @router.post(

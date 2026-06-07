@@ -44,6 +44,49 @@ def require_registrada(s: SolicitudEmergencia) -> None:
         )
 
 
+_ESTADOS_CANCELABLES_CLIENTE = frozenset(
+    (
+        EstadoSolicitudSeguimientoEnum.REGISTRADA,
+        EstadoSolicitudSeguimientoEnum.EN_REVISION,
+        EstadoSolicitudSeguimientoEnum.TALLER_ASIGNADO,
+        EstadoSolicitudSeguimientoEnum.TECNICO_ASIGNADO,
+        EstadoSolicitudSeguimientoEnum.EN_CAMINO,
+    )
+)
+
+_ESTADOS_LIBERAN_CUPO_TALLER = frozenset(
+    (
+        EstadoSolicitudSeguimientoEnum.TALLER_ASIGNADO,
+        EstadoSolicitudSeguimientoEnum.TECNICO_ASIGNADO,
+        EstadoSolicitudSeguimientoEnum.EN_CAMINO,
+    )
+)
+ESTADOS_LIBERAN_CUPO_TALLER = _ESTADOS_LIBERAN_CUPO_TALLER
+
+
+def require_cancelable_cliente(s: SolicitudEmergencia) -> None:
+    if s.estado in (
+        EstadoSolicitudSeguimientoEnum.FINALIZADA,
+        EstadoSolicitudSeguimientoEnum.CANCELADA,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La solicitud ya está cerrada.",
+        )
+    if s.estado not in _ESTADOS_CANCELABLES_CLIENTE:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"No se puede cancelar en estado {s.estado.value}. "
+                "Contacta al taller si la atención ya comenzó."
+            ),
+        )
+
+
+def cliente_puede_cancelar(estado: EstadoSolicitudSeguimientoEnum) -> bool:
+    return estado in _ESTADOS_CANCELABLES_CLIENTE
+
+
 def to_seguimiento(s: SolicitudEmergencia) -> SolicitudSeguimientoRead:
     historial = sorted(s.historial_estados, key=lambda h: h.created_at)
     taller = TallerSeguimientoRead.model_validate(s.taller) if s.taller is not None else None

@@ -179,6 +179,7 @@ async def seleccionar_taller(
 
     await eventos_servicio.on_solicitud_pendiente_taller(
         db, solicitud=s, taller_id=taller_id
+    )
     await notif_service.notificar_responsable_taller(
         db,
         taller=taller,

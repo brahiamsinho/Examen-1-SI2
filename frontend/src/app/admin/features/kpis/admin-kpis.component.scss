@@ -54,3 +54,31 @@
 .dash__metric--sm {
   font-size: 1.35rem;
 }
+
+.dash__hint--section {
+  margin: -0.25rem 0 1rem;
+}
+
+.dash__subgrid--ops {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.dash__subcard {
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid t.$ev-border;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.dash__subcard-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dash__subcard-title--spaced {
+  margin-top: 1.5rem;
+}

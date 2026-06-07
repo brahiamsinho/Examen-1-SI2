@@ -1,8 +1,40 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
-# Actualizado: 2026-06-05 — CU46 KPIs ✅; verificar E2E Docker
+# Actualizado: 2026-06-04 — Fix notificaciones taller colgadas ✅
 # =========================================================
+
+## HECHO — Fix página Notificaciones taller (2026-06-04) ✅
+
+- OnPush + markForCheck + switchMap en `taller-notificaciones.component.ts`.
+- Sesión: `docs/ai/sessions/2026-06-04-agent-fix-notificaciones-taller-colgado.md`.
+
+## ALTA — Verificar fix notificaciones taller
+
+1. `docker compose build frontend && docker compose up -d --no-deps frontend`
+2. Login taller → `/taller/panel/comunicacion/notificaciones` — lista visible (no «Cargando…» permanente).
+3. Filtros Todas / No leídas y clic en fila → detalle bandeja.
+
+## HECHO — Cancelación solicitud + mobile analítica §3 (2026-06-04) ✅
+
+- Endpoint cancelar + WS + notificaciones.
+- Mobile seguimiento + dashboard reportes taller.
+- `TRACEABILITY_MATRIX.md` + tests.
+- Sesión: `docs/ai/sessions/2026-06-04-agent-cancelacion-analitica-mobile-trazabilidad.md`.
+
+## HECHO — Analítica operacional KPIs §3 (2026-06-04) ✅
+
+- Backend `app/modules/analytics/` + `analitica_operacional` en KPIs admin/taller.
+- Frontend: sección analítica + CSV en reportes-kpis admin y taller.
+- Test: `backend/tests/test_operational_kpis.py`.
+- Sesión: `docs/ai/sessions/2026-06-04-agent-analitica-operacional-kpis.md`.
+
+## ALTA — Verificar analítica operacional en Docker
+
+1. `docker compose restart backend` (si aplica migraciones pendientes).
+2. Admin → Reportes KPIs: validar 7 métricas con rango de fechas amplio.
+3. Taller → Reportes KPIs: validar datos filtrados al taller.
+4. Export CSV incluye bloque «Analítica operacional §3».
 
 ## HECHO — CU46 Dashboard KPIs (2026-06-05) ✅
 

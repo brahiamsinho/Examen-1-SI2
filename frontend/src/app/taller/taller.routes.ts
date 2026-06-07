@@ -152,7 +152,6 @@ export const TALLER_ROUTES: Routes = [
           import('./features/kpis/taller-kpis.component').then((m) => m.TallerKpisComponent),
       },
       {
-        path: 'emergencias/disponibilidad',
         path: 'horarios',
         canActivate: [tallerPermisoGuard],
         data: { permiso: 'disponibilidad:gestionar' },

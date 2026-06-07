@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/utils/bolivia_time.dart';
 import '../../../../core/network/solicitud_realtime_listener.dart';
@@ -48,29 +49,22 @@ class _EmergenciasMisSolicitudesScreenState extends ConsumerState<EmergenciasMis
 
     final pendingCount = pendingAsync.maybeWhen(data: (c) => c, orElse: () => 0);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis solicitudes'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/cliente/app/home'),
-        ),
-        actions: [
-          if (pendingCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Center(
-                child: Chip(
-                  avatar: const Icon(Icons.cloud_upload_outlined, size: 18),
-                  label: Text('$pendingCount pendiente${pendingCount == 1 ? '' : 's'}'),
-                ),
-              ),
-            ),
-        ],
-      ),
     return ClienteSubpageScaffold(
       title: 'Mis solicitudes',
       onBack: () => context.canPop() ? context.pop() : context.go('/cliente/app/home'),
+      actions: pendingCount > 0
+          ? [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Center(
+                  child: Chip(
+                    avatar: const Icon(Icons.cloud_upload_outlined, size: 18),
+                    label: Text('$pendingCount pendiente${pendingCount == 1 ? '' : 's'}'),
+                  ),
+                ),
+              ),
+            ]
+          : null,
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(
@@ -79,43 +73,26 @@ class _EmergenciasMisSolicitudesScreenState extends ConsumerState<EmergenciasMis
         ),
         data: (list) {
           final drafts = draftsAsync.maybeWhen(
-            data: (d) => d.where((x) => x.isPendingSync || x.status == SolicitudDraftStatus.building).toList(),
+            data: (d) =>
+                d.where((x) => x.isPendingSync || x.status == SolicitudDraftStatus.building).toList(),
             orElse: () => <SolicitudDraft>[],
           );
           final hasAnything = list.isNotEmpty || drafts.isNotEmpty;
 
           if (!hasAnything) {
-            return _EmptyBody(
-              onNueva: () => context.push('/cliente/app/emergencias'),
-            );
-          if (list.isEmpty) {
             return _EmptyBody(onNueva: () => context.push('/cliente/app/emergencias'));
           }
-          final activas = list.where((s) => !s.estado.esTerminal).map((s) => s.id).toList();
-          return ClienteMultiSolicitudRealtimeListener(
-            solicitudIds: activas,
-            onEvent: (RealtimeWsEvent ev) {
-              if (realtimeEventAffectsSeguimiento(ev.tipo)) {
-                ref.invalidate(misSolicitudesEmergenciasProvider);
-              }
-            },
-            child: RefreshIndicator(
-              onRefresh: () async => ref.invalidate(misSolicitudesEmergenciasProvider),
-              child: ListView.separated(
-                padding: ClientePanelUi.pagePadding,
-                itemCount: list.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => _SolicitudTile(solicitud: list[i]),
-              ),
 
-          return RefreshIndicator(
+          final activas = list.where((s) => !s.estado.esTerminal).map((s) => s.id).toList();
+
+          Widget listContent = RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(misSolicitudesEmergenciasProvider);
               ref.invalidate(solicitudDraftsProvider);
               ref.read(offlineSyncTickProvider.notifier).bump();
             },
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: ClientePanelUi.pagePadding,
               children: [
                 if (drafts.isNotEmpty) ...[
                   _SyncPanel(
@@ -148,14 +125,22 @@ class _EmergenciasMisSolicitudesScreenState extends ConsumerState<EmergenciasMis
                   if (i < list.length - 1) const SizedBox(height: 10),
                 ],
               ],
-            onRefresh: () async => ref.invalidate(misSolicitudesEmergenciasProvider),
-            child: ListView.separated(
-              padding: ClientePanelUi.pagePadding,
-              itemCount: list.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, i) => _SolicitudTile(solicitud: list[i]),
             ),
           );
+
+          if (activas.isNotEmpty) {
+            listContent = ClienteMultiSolicitudRealtimeListener(
+              solicitudIds: activas,
+              onEvent: (RealtimeWsEvent ev) {
+                if (realtimeEventAffectsSeguimiento(ev.tipo)) {
+                  ref.invalidate(misSolicitudesEmergenciasProvider);
+                }
+              },
+              child: listContent,
+            );
+          }
+
+          return listContent;
         },
       ),
     );

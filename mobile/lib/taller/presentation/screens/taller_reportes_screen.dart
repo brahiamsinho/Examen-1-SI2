@@ -617,6 +617,35 @@ class _DashboardTab extends StatelessWidget {
                 ],
               ),
             ),
+            if (d.analiticaOperacional case final op?) ...[
+              const SizedBox(height: 16),
+              TallerModuleCard(
+                title: 'Analítica operacional §3',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Asignación prom.: ${formatOperationalMinutos(op.tiempoPromedioAsignacionMin)}'),
+                    Text('Llegada prom.: ${formatOperationalMinutos(op.tiempoPromedioLlegadaMin)}'),
+                    Text('Cancelados: ${op.casosCancelados} · No atendidos: ${op.casosNoAtendidos}'),
+                    Text(
+                      'SLA (${op.sla.umbralMinutos} min): '
+                      '${op.sla.porcentajeCumplimiento?.toStringAsFixed(1) ?? '—'}% '
+                      '(${op.sla.serviciosDentroSla}/${op.sla.serviciosEvaluados})',
+                    ),
+                    if (op.incidentesPorTipo.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text('Por tipo', style: Theme.of(context).textTheme.titleSmall),
+                      ...op.incidentesPorTipo.map((it) => Text('${it.label}: ${it.total}')),
+                    ],
+                    if (op.zonasMasIncidentes.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text('Zonas', style: Theme.of(context).textTheme.titleSmall),
+                      ...op.zonasMasIncidentes.map((z) => Text('${z.zona}: ${z.total}')),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

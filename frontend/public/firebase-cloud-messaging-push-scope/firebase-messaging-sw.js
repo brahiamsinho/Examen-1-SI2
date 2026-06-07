@@ -3,12 +3,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-  "apiKey": "",
-  "authDomain": "",
-  "projectId": "",
-  "storageBucket": "",
-  "messagingSenderId": "",
-  "appId": ""
+  "apiKey": "AIzaSyBh8dMiDzV7E1-mIX-trNolyso9Wq0A5T4",
+  "authDomain": "transporte-si2.firebaseapp.com",
+  "projectId": "transporte-si2",
+  "storageBucket": "transporte-si2.firebasestorage.app",
+  "messagingSenderId": "543278137943",
+  "appId": "1:543278137943:web:XXXXXXXXXXXXXXXX"
 };
 
 if (firebaseConfig.apiKey && firebaseConfig.appId) {

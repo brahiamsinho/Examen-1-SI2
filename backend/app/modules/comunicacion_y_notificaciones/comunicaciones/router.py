@@ -230,23 +230,14 @@ async def taller_eliminar_fcm(
     dependencies=[Depends(require_permission("notificaciones:leer"))],
 )
 async def taller_listar_notificaciones(
-
     ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
-
-    current_user: Usuario = Depends(_ensure_taller_responsable_user),
-
     db: AsyncSession = Depends(get_db),
     no_leidas: bool = Query(False),
     limit: int = Query(100, ge=1, le=200),
 ):
-
     user, _taller = ctx
     return await notif_service.listar_notificaciones(
         user, db, solo_no_leidas=no_leidas, limit=limit
-
-    return await notif_service.listar_notificaciones(
-        current_user, db, solo_no_leidas=no_leidas, limit=limit
-
     )
 
 
@@ -257,17 +248,11 @@ async def taller_listar_notificaciones(
 )
 async def taller_marcar_leida(
     notificacion_id: int,
-
     ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
     db: AsyncSession = Depends(get_db),
 ):
     user, _taller = ctx
     return await notif_service.marcar_notificacion_leida(user, notificacion_id, db)
-
-    current_user: Usuario = Depends(_ensure_taller_responsable_user),
-    db: AsyncSession = Depends(get_db),
-):
-    return await notif_service.marcar_notificacion_leida(current_user, notificacion_id, db)
 
 
 @admin_router.post(

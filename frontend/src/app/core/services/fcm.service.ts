@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, type MessagePayload, type Messaging } from 'firebase/messaging';
 import { Subject, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { NotificacionPortal } from '../models/notificacion.models';
@@ -79,9 +79,65 @@ export class FcmService {
       measurementId: cfg.measurementId || undefined,
     });
     this.messaging = getMessaging(this.app);
-    onMessage(this.messaging, () => {
+    onMessage(this.messaging, (payload) => {
+      void this.showForegroundNotification(payload);
       this.foregroundMessage$.next();
     });
+  }
+
+  private resolveNotificationUrl(data: Record<string, string>, portal: NotificacionPortal | null): string {
+    const p = data['portal'] ?? portal ?? '';
+    if (p === 'taller') {
+      return '/taller/panel/emergencias/solicitudes';
+    }
+    if (p === 'admin') {
+      return '/admin/panel';
+    }
+    return portal === 'taller' ? '/taller/panel/emergencias/solicitudes' : '/admin/panel';
+  }
+
+  private async showForegroundNotification(payload: MessagePayload): Promise<void> {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return;
+    }
+    if (Notification.permission !== 'granted') {
+      return;
+    }
+
+    const title = payload.notification?.title ?? 'EmergenciasViales';
+    const body = payload.notification?.body ?? '';
+    const data = Object.fromEntries(
+      Object.entries(payload.data ?? {}).map(([k, v]) => [k, String(v)]),
+    ) as Record<string, string>;
+    const targetPath = this.resolveNotificationUrl(data, this.activePortal);
+    const icon = '/assets/icons/icon-192x192.png';
+    const tag = data['tipo'] ?? 'emergencias';
+
+    const onClickNavigate = () => {
+      window.focus();
+      window.location.assign(targetPath);
+    };
+
+    try {
+      const registration = await navigator.serviceWorker.getRegistration(SW_SCOPE);
+      if (registration) {
+        await registration.showNotification(title, {
+          body,
+          icon,
+          tag,
+          data: { ...data, targetPath },
+        });
+        return;
+      }
+    } catch {
+      // fallback abajo
+    }
+
+    const notification = new Notification(title, { body, icon, tag, data });
+    notification.onclick = () => {
+      notification.close();
+      onClickNavigate();
+    };
   }
 
   private async registerCurrentToken(): Promise<void> {

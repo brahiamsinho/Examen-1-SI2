@@ -31,14 +31,6 @@ class ClienteAppShell extends StatelessWidget {
     final showNav = _showBottomNav(loc);
     final index = _indexForPath(loc);
 
-    return Scaffold(
-      body: SafeArea(
-        child: OfflineSyncBootstrap(child: child),
-      ),
-      bottomNavigationBar: showNav
-          ? NavigationBar(
-              selectedIndex: index,
-              onDestinationSelected: (i) {
     return MobileAppShell(
       bottomNav: showNav
           ? ClientePanelBottomNav(
@@ -55,7 +47,7 @@ class ClienteAppShell extends StatelessWidget {
               },
             )
           : null,
-      child: child,
+      child: OfflineSyncBootstrap(child: child),
     );
   }
 }

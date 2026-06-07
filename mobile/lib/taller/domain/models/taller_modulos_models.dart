@@ -117,11 +117,13 @@ final class ReporteTallerDashboard {
     required this.bandejaPendientes,
     required this.resumenComisiones,
     required this.solicitudesPorEstado,
+    this.analiticaOperacional,
   });
 
   final int bandejaPendientes;
   final ResumenComisiones resumenComisiones;
   final Map<String, int> solicitudesPorEstado;
+  final OperationalKpis? analiticaOperacional;
 
   factory ReporteTallerDashboard.fromJson(Map<String, dynamic> j) {
     final raw = j['solicitudes_por_estado'];
@@ -129,15 +131,112 @@ final class ReporteTallerDashboard {
     if (raw is Map) {
       raw.forEach((k, v) => map[k.toString()] = (v as num?)?.toInt() ?? 0);
     }
+    final opRaw = j['analitica_operacional'];
     return ReporteTallerDashboard(
       bandejaPendientes: j['bandeja_pendientes'] as int? ?? 0,
       resumenComisiones: ResumenComisiones.fromJson(
         (j['resumen_comisiones'] as Map<String, dynamic>?) ?? const {},
       ),
       solicitudesPorEstado: map,
+      analiticaOperacional: opRaw is Map<String, dynamic>
+          ? OperationalKpis.fromJson(opRaw)
+          : null,
     );
   }
 }
+
+final class OperationalKpis {
+  const OperationalKpis({
+    this.tiempoPromedioAsignacionMin,
+    this.tiempoPromedioLlegadaMin,
+    required this.incidentesPorTipo,
+    required this.zonasMasIncidentes,
+    required this.casosCancelados,
+    required this.casosNoAtendidos,
+    required this.sla,
+  });
+
+  final double? tiempoPromedioAsignacionMin;
+  final double? tiempoPromedioLlegadaMin;
+  final List<IncidentePorTipo> incidentesPorTipo;
+  final List<ZonaIncidentes> zonasMasIncidentes;
+  final int casosCancelados;
+  final int casosNoAtendidos;
+  final SlaCumplimiento sla;
+
+  factory OperationalKpis.fromJson(Map<String, dynamic> j) {
+    return OperationalKpis(
+      tiempoPromedioAsignacionMin: (j['tiempo_promedio_asignacion_min'] as num?)?.toDouble(),
+      tiempoPromedioLlegadaMin: (j['tiempo_promedio_llegada_min'] as num?)?.toDouble(),
+      incidentesPorTipo: [
+        for (final e in j['incidentes_por_tipo'] as List<dynamic>? ?? [])
+          if (e is Map<String, dynamic>) IncidentePorTipo.fromJson(e),
+      ],
+      zonasMasIncidentes: [
+        for (final e in j['zonas_mas_incidentes'] as List<dynamic>? ?? [])
+          if (e is Map<String, dynamic>) ZonaIncidentes.fromJson(e),
+      ],
+      casosCancelados: j['casos_cancelados'] as int? ?? 0,
+      casosNoAtendidos: j['casos_no_atendidos'] as int? ?? 0,
+      sla: SlaCumplimiento.fromJson((j['sla'] as Map<String, dynamic>?) ?? const {}),
+    );
+  }
+}
+
+final class IncidentePorTipo {
+  const IncidentePorTipo({required this.label, required this.total});
+
+  final String label;
+  final int total;
+
+  factory IncidentePorTipo.fromJson(Map<String, dynamic> j) => IncidentePorTipo(
+        label: (j['label'] ?? j['categoria'] ?? '—').toString(),
+        total: j['total'] as int? ?? 0,
+      );
+}
+
+final class ZonaIncidentes {
+  const ZonaIncidentes({required this.zona, required this.total});
+
+  final String zona;
+  final int total;
+
+  factory ZonaIncidentes.fromJson(Map<String, dynamic> j) => ZonaIncidentes(
+        zona: (j['zona'] ?? '—').toString(),
+        total: j['total'] as int? ?? 0,
+      );
+}
+
+final class SlaCumplimiento {
+  const SlaCumplimiento({
+    required this.umbralMinutos,
+    required this.serviciosEvaluados,
+    required this.serviciosDentroSla,
+    this.porcentajeCumplimiento,
+  });
+
+  final int umbralMinutos;
+  final int serviciosEvaluados;
+  final int serviciosDentroSla;
+  final double? porcentajeCumplimiento;
+
+  factory SlaCumplimiento.fromJson(Map<String, dynamic> j) => SlaCumplimiento(
+        umbralMinutos: j['umbral_minutos'] as int? ?? 60,
+        serviciosEvaluados: j['servicios_evaluados'] as int? ?? 0,
+        serviciosDentroSla: j['servicios_dentro_sla'] as int? ?? 0,
+        porcentajeCumplimiento: (j['porcentaje_cumplimiento'] as num?)?.toDouble(),
+      );
+}
+
+String _formatMinutos(double? min) {
+  if (min == null) return '—';
+  if (min < 60) return '${min.round()} min';
+  final h = min ~/ 60;
+  final m = (min % 60).round();
+  return m > 0 ? '$h h $m min' : '$h h';
+}
+
+String formatOperationalMinutos(double? min) => _formatMinutos(min);
 
 final class ReportPlantilla {
   const ReportPlantilla({

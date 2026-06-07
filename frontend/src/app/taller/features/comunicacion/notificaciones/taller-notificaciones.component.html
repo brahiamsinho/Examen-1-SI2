@@ -11,14 +11,18 @@
     <button type="button" class="chip" [class.chip--active]="soloNoLeidas" (click)="toggleFiltro(true)">
       No leídas
     </button>
-    <button type="button" class="chip chip--ghost" (click)="reload()" [disabled]="loading">Actualizar</button>
+    <button type="button" class="chip chip--ghost" (click)="reload()" [disabled]="loading()">Actualizar</button>
   </div>
 
   <p *ngIf="error" class="page__error">{{ error }}</p>
-  <p *ngIf="loading" class="page__loading">Cargando…</p>
+  <p *ngIf="loading()" class="page__loading">Cargando…</p>
 
-  <ul *ngIf="!loading && items.length" class="list">
-    <li *ngFor="let n of items" class="list__item" [class.list__item--unread]="!n.leida">
+  <ul *ngIf="!loading() && items.length" class="list">
+    <li
+      *ngFor="let n of items; trackBy: trackById"
+      class="list__item"
+      [class.list__item--unread]="!n.leida"
+    >
       <button type="button" class="list__btn" (click)="abrir(n)">
         <span class="list__row">
           <span class="list__title">{{ n.titulo }}</span>
@@ -30,7 +34,7 @@
     </li>
   </ul>
 
-  <div *ngIf="!loading && !items.length" class="empty">
+  <div *ngIf="!loading() && !items.length" class="empty">
     <p>{{ soloNoLeidas ? 'No hay notificaciones sin leer.' : 'Todavía no hay notificaciones.' }}</p>
   </div>
 </div>

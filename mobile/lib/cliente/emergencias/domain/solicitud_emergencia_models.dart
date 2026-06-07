@@ -61,6 +61,11 @@ enum EstadoSolicitudEmergencia {
 
   bool get esTerminal =>
       this == EstadoSolicitudEmergencia.finalizada || this == EstadoSolicitudEmergencia.cancelada;
+
+  /// Cancelación permitida por el cliente (antes de EN_ATENCION).
+  bool get puedeCancelar =>
+      !esTerminal &&
+      this != EstadoSolicitudEmergencia.enAtencion;
 }
 
 enum TipoEvidenciaSolicitud {

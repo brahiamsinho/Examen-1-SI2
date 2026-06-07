@@ -132,6 +132,20 @@ final class EmergenciasRepository {
     }
   }
 
+  Future<SolicitudSeguimiento> cancelar(int solicitudId, {String? motivo}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.appClienteEmergenciaCancelar(solicitudId),
+        data: {if (motivo != null && motivo.isNotEmpty) 'motivo': motivo},
+      );
+      final m = res.data;
+      if (m == null) throw Exception('Respuesta vacía');
+      return SolicitudSeguimiento.fromJson(m);
+    } on DioException catch (e) {
+      throw Exception(messageFromDio(e));
+    }
+  }
+
   Future<SolicitudEmergenciaDetail> patchTexto(int solicitudId, {String? descripcionTexto}) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(

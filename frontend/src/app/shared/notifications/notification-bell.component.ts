@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { interval, switchMap, catchError, of, startWith } from 'rxjs';
 import { NotificacionesApiService } from '../../core/services/notificaciones-api.service';
 import { FcmService } from '../../core/services/fcm.service';
@@ -20,7 +20,7 @@ import type { NotificacionDto, NotificacionPortal } from '../../core/models/noti
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './notification-bell.component.html',
   styleUrl: './notification-bell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -19,15 +19,21 @@ import '../widgets/seguimiento/taller_asignado_card.dart';
 import '../widgets/seguimiento/tecnico_asignado_card.dart';
 import '../widgets/seguimiento/elegir_taller_prompt_card.dart';
 
-/// Seguimiento de solicitud: estado, taller, técnico, ETA, historial (WS + pull).
+/// Seguimiento de solicitud — CU44 ETA + estado, taller, técnico, historial (WS + pull).
 class EmergenciaSeguimientoScreen extends ConsumerStatefulWidget {
-/// Seguimiento de solicitud — CU44 ETA + estado, taller, técnico, historial.
-class EmergenciaSeguimientoScreen extends ConsumerWidget {
   const EmergenciaSeguimientoScreen({super.key, required this.solicitudId});
 
   final int solicitudId;
 
-  Future<void> _refresh(WidgetRef ref) async {
+  @override
+  ConsumerState<EmergenciaSeguimientoScreen> createState() => _EmergenciaSeguimientoScreenState();
+}
+
+class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimientoScreen> {
+  bool _cancelando = false;
+
+  Future<void> _refresh() async {
+    final solicitudId = widget.solicitudId;
     ref.invalidate(emergenciaSeguimientoProvider(solicitudId));
     ref.invalidate(consultarEtaProvider(solicitudId));
     await Future.wait([
@@ -36,11 +42,67 @@ class EmergenciaSeguimientoScreen extends ConsumerWidget {
     ]);
   }
 
-  @override
-  ConsumerState<EmergenciaSeguimientoScreen> createState() => _EmergenciaSeguimientoScreenState();
-}
+  Future<void> _confirmarCancelacion() async {
+    final motivoCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancelar solicitud'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '¿Seguro que querés cancelar esta emergencia? El taller y el técnico serán notificados.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: motivoCtrl,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                labelText: 'Motivo (opcional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Volver')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            child: const Text('Cancelar solicitud'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
 
-class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimientoScreen> {
+    setState(() => _cancelando = true);
+    try {
+      await ref.read(emergenciasRepositoryProvider).cancelar(
+            widget.solicitudId,
+            motivo: motivoCtrl.text.trim().isEmpty ? null : motivoCtrl.text.trim(),
+          );
+      ref.invalidate(emergenciaSeguimientoProvider(widget.solicitudId));
+      ref.invalidate(consultarEtaProvider(widget.solicitudId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Solicitud cancelada.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      motivoCtrl.dispose();
+      if (mounted) setState(() => _cancelando = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final solicitudId = widget.solicitudId;
@@ -87,10 +149,10 @@ class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimie
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(
           message: e.toString(),
-          onRetry: () => _refresh(ref),
+          onRetry: () => _refresh(),
         ),
         data: (s) => RefreshIndicator(
-          onRefresh: () => _refresh(ref),
+          onRefresh: () => _refresh(),
           child: ListView(
             padding: ClientePanelUi.pagePadding,
             children: [
@@ -234,6 +296,23 @@ class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimie
               Text('Pago del servicio', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
               SolicitudPagoCtaBlock(solicitudId: solicitudId, estado: s.estado),
+              if (s.estado.puedeCancelar) ...[
+                const SizedBox(height: 16),
+                ShadButton.outline(
+                  onPressed: _cancelando ? null : _confirmarCancelacion,
+                  leading: _cancelando
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(Icons.cancel_outlined, size: 20, color: Theme.of(context).colorScheme.error),
+                  child: Text(
+                    'Cancelar solicitud',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               ShadButton.outline(
                 onPressed: () => context.push('/cliente/app/emergencias/solicitudes/$solicitudId'),

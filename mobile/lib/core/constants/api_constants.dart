@@ -110,6 +110,9 @@ class ApiConstants {
   static String appClienteEmergencia(int id) =>
       '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id';
 
+  static String appClienteEmergenciaCancelar(int id) =>
+      '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/cancelar';
+
   /// Seguimiento, taller, técnico y ETA.
   static String appClienteEmergenciaSeguimiento(int id) =>
       '${AppEnv.apiBaseUrl}/app/cliente/emergencias/$id/seguimiento';

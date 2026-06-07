@@ -1,0 +1,71 @@
+# Overlay Azure VM — HTTPS con Certbot + reverse proxy nginx.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.azure.yml up -d
+#
+# Primera vez (certificado): ver deploy/scripts/certbot-init.sh
+#
+# Variables obligatorias en .env raíz:
+#   PUBLIC_DOMAIN=oftalmologia-si2.westus3.cloudapp.azure.com
+#   CERTBOT_EMAIL=tu-email@ejemplo.com
+#   APP_PUBLIC_URL=https://oftalmologia-si2.westus3.cloudapp.azure.com
+#   CORS_ORIGINS=https://oftalmologia-si2.westus3.cloudapp.azure.com
+#   ENVIRONMENT=production
+
+services:
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: emergencias_reverse_proxy
+    restart: unless-stopped
+    ports:
+      - "${AZURE_HTTP_PORT:-80}:80"
+      - "${AZURE_HTTPS_PORT:-443}:443"
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN}
+      FRONTEND_UPSTREAM: ${FRONTEND_UPSTREAM:-frontend:80}
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/conf.d
+    volumes:
+      - ${NGINX_AZURE_CONF_TEMPLATE:-./deploy/nginx/azure-http-bootstrap.conf.template}:/etc/nginx/templates/default.conf.template:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+    depends_on:
+      frontend:
+        condition: service_started
+    networks:
+      - emergencias_net
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: emergencias_certbot
+    restart: unless-stopped
+    volumes:
+      - ./deploy/certbot/conf:/etc/letsencrypt
+      - ./deploy/certbot/www:/var/www/certbot
+      - ./deploy/scripts/certbot-deploy-hook.sh:/etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        trap exit TERM;
+        while :; do
+          certbot renew --webroot -w /var/www/certbot --quiet;
+          sleep 12h & wait $${!};
+        done
+    networks:
+      - emergencias_net
+
+  # En producción el tráfico público entra por reverse-proxy (443/80).
+  # !reset elimina puertos del compose base (evita choque 80:80 frontend vs reverse-proxy).
+  frontend:
+    ports: !reset []
+
+  backend:
+    ports: !reset []
+
+  db:
+    ports: !reset []
+
+  mailpit:
+    ports: !reset []

@@ -1,7 +1,25 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
-# Fecha: 2026-06-04 (Fix notificaciones taller colgadas + cancelación + analítica §3)
+# Fecha: 2026-06-07 (Azure HTTPS Certbot + opencode subagentes)
+
+## Cambios recientes (2026-06-07) — Azure VM + HTTPS Certbot ✅
+
+- Overlay `deploy/docker-compose.azure.yml` + reverse-proxy nginx + Certbot Let's Encrypt.
+- Scripts `deploy/scripts/certbot-init.sh`, `certbot-renew.sh`.
+- Guía: `docs/ai/DEPLOYMENT_AZURE.md` — DNS en Azure Portal + NSG 80/443 + `.env` HTTPS.
+- Dominio ejemplo: `oftalmologia-si2.westus3.cloudapp.azure.com`.
+- **Pendiente:** correr init en la VM (Certbot requiere DNS apuntando a la IP pública).
+- **Sesión:** `docs/ai/sessions/2026-06-07-agent-azure-certbot-https.md`.
+
+## Cambios recientes (2026-06-07) — Migración de subagentes a opencode ✅
+
+- **Config:** `opencode.jsonc` carga `agents.md` + memoria `docs/ai/*` núcleo, define `default_agent: orchestrator`, registra `skills.paths` y MCP draw.io remoto.
+- **Agentes:** movidos a `.opencode/agents/` (`orchestrator`, `backend`, `frontend`, `mobile`, `infra`, `ai-*`, `qa-testing`, `reviewer`, `security`, `puds`, `docs-memory`, `diagrams-modeling`, `architect-planner`).
+- **Skill central:** `uml-c4-puds-diagrams` ahora vive en `.opencode/skills/`.
+- **Limpieza:** se eliminaron los archivos viejos de `.cursor/agents/` y la skill de diagramas duplicada.
+- **Pendiente operativo:** reiniciar opencode para que tome la nueva configuración.
+- **Sesión:** `docs/ai/sessions/2026-06-07-agent-opencode-migracion-subagentes.md`.
 
 ## Cambios recientes (2026-06-04) — Fix página Notificaciones taller colgada ✅
 

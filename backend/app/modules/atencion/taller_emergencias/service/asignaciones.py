@@ -14,6 +14,7 @@ from app.modules.comunicacion_y_notificaciones.notificaciones import service as 
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
 from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.atencion.taller_emergencias import repository
 from app.modules.atencion.taller_emergencias.models import EstadoAsignacionTecnicoEnum
 from app.modules.atencion.taller_emergencias.schemas import AsignacionTecnicoRead, AsignarTecnicoIn, AsignarTecnicoOut
@@ -161,20 +162,7 @@ async def asignar_tecnico_a_solicitud(
         entidad_id=asignacion.id,
     )
 
-    await notificaciones_service.notificar_cliente_solicitud_emergencia(
-        db,
-        solicitud=se,
-        tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
-        titulo="Técnico asignado",
-        mensaje="Se asignó un técnico a tu emergencia. Sigue el avance en la app.",
-    )
-    await notificaciones_service.notificar_tecnico_solicitud_emergencia(
-        db,
-        solicitud=se,
-        tipo=TipoNotificacionEnum.TECNICO_ASIGNADO,
-        titulo="Nueva asignación",
-        mensaje=f"Te asignaron la emergencia #{solicitud_id}. Abre la app para ver detalles.",
-    )
+    await eventos_servicio.on_tecnico_asignado(db, solicitud=se)
 
     payload_estado: dict = {
         "tecnico_id": body.tecnico_id,

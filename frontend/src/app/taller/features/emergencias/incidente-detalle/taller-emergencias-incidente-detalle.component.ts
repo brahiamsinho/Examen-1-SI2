@@ -65,6 +65,10 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit, OnDes
   private wsConn: { close(): void } | null = null;
   private wsSolicitudId: number | null = null;
 
+  presupuestoBob: number | null = null;
+  presupuestoDetalle = '';
+  presupuestoObservaciones = '';
+
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((p) => {
       const id = Number(p.get('bandejaId'));
@@ -145,6 +149,9 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit, OnDes
     this.selectedTecnicoId = null;
     this.observacionAsignacion = '';
     this.tiempoEstimadoMin = null;
+    this.presupuestoBob = null;
+    this.presupuestoDetalle = '';
+    this.presupuestoObservaciones = '';
     this.api
       .getBandejaDetalle(this.bandejaId)
       .pipe(
@@ -450,6 +457,82 @@ export class TallerEmergenciasIncidenteDetalleComponent implements OnInit, OnDes
     const p = this.auth.getMe()?.permisos;
     if (!p?.length) return true;
     return p.includes('solicitudes_taller:rechazar');
+  }
+
+  private readonly estadosCotizacion = new Set([
+    'TALLER_ASIGNADO',
+    'TECNICO_ASIGNADO',
+    'EN_CAMINO',
+    'EN_ATENCION',
+  ]);
+
+  debeMostrarBloqueCotizacion(d: SolicitudBandejaDetalleDto | null): boolean {
+    if (!d || d.estado_bandeja !== 'ACEPTADA') return false;
+    return this.estadosCotizacion.has(d.estado_solicitud);
+  }
+
+  tieneCotizacion(d: SolicitudBandejaDetalleDto | null): boolean {
+    if (!d?.presupuesto_bob || !d.presupuesto_registrado_at) return false;
+    const m = Number(d.presupuesto_bob);
+    return Number.isFinite(m) && m > 0;
+  }
+
+  puedeRegistrarCotizacion(): boolean {
+    if (!this.puedeRegistrarCotizacionPermiso()) return false;
+    const d = this.detalle;
+    return !!d && this.debeMostrarBloqueCotizacion(d) && !this.tieneCotizacion(d);
+  }
+
+  private puedeRegistrarCotizacionPermiso(): boolean {
+    const p = this.auth.getMe()?.permisos;
+    if (!p?.length) return true;
+    return p.includes('presupuestos:registrar');
+  }
+
+  montoCotizacionLabel(d: SolicitudBandejaDetalleDto | null): string {
+    if (!d?.presupuesto_bob) return '—';
+    const n = Number(d.presupuesto_bob);
+    return Number.isFinite(n) ? `Bs. ${n.toFixed(2)}` : String(d.presupuesto_bob);
+  }
+
+  confirmarRegistrarCotizacion(): void {
+    const d = this.detalle;
+    if (!d) return;
+    const monto = this.presupuestoBob;
+    const detalle = this.presupuestoDetalle.trim();
+    if (monto == null || monto <= 0) {
+      this.error = 'Ingresá un monto válido en BOB (mayor que cero).';
+      this.cdr.markForCheck();
+      return;
+    }
+    if (detalle.length < 3) {
+      this.error = 'El detalle de la cotización debe tener al menos 3 caracteres.';
+      this.cdr.markForCheck();
+      return;
+    }
+    const obs = this.presupuestoObservaciones.trim();
+    this.busy = true;
+    this.error = null;
+    this.api
+      .registrarPresupuesto(d.solicitud_id, {
+        presupuesto_bob: monto,
+        detalle,
+        observaciones: obs.length ? obs : null,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy = false;
+          this.successMsg = 'Cotización registrada. El cliente podrá revisarla en la app.';
+          this.cdr.markForCheck();
+          this.load();
+        },
+        error: (err) => {
+          this.busy = false;
+          this.error = this.msg(err, 'No se pudo registrar la cotización.');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private msg(err: { error?: { detail?: unknown } }, fallback: string): string {

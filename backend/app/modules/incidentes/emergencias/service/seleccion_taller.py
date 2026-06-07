@@ -26,6 +26,7 @@ from app.modules.incidentes.emergencias import repository
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.incidentes.emergencias.schemas import SeleccionarTallerOut
 from app.modules.talleres_y_tecnicos.talleres.models import EstadoTallerEnum, Taller
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.talleres_y_tecnicos.talleres import horarios_service
 
 
@@ -171,11 +172,13 @@ async def seleccionar_taller(
         "emergencias",
         "solicitudes_emergencia",
         AccionBitacoraEnum.ACTUALIZAR,
-        descripcion=f"CU37 cliente seleccionó taller_id={taller_id} solicitud_id={solicitud_id}",
+        descripcion=f"Cliente seleccionó taller_id={taller_id} solicitud_id={solicitud_id}",
         usuario_id=user.id,
         entidad_id=solicitud_id,
     )
 
+    await eventos_servicio.on_solicitud_pendiente_taller(
+        db, solicitud=s, taller_id=taller_id
     await notif_service.notificar_responsable_taller(
         db,
         taller=taller,

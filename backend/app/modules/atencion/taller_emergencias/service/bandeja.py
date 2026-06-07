@@ -13,6 +13,7 @@ from app.modules.comunicacion_y_notificaciones.notificaciones import service as 
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
 from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.atencion.taller_emergencias import repository
 from app.modules.atencion.taller_emergencias.models import EstadoBandejaTallerEnum
 from app.modules.atencion.taller_emergencias.schemas import (
@@ -126,12 +127,8 @@ async def rechazar_solicitud(
             select(SolicitudEmergencia).where(SolicitudEmergencia.id == b_row.solicitud_id)
         )
         if (se_n := se_r.scalar_one_or_none()) is not None:
-            await notificaciones_service.notificar_cliente_solicitud_emergencia(
-                db,
-                solicitud=se_n,
-                tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
-                titulo="Actualización de emergencia",
-                mensaje="Un taller no pudo aceptar tu solicitud. Revisa el estado de tu caso en la app.",
+            await eventos_servicio.on_taller_rechazo(
+                db, solicitud=se_n, taller_id=taller_id
             )
             queue_solicitud_event(
                 db,
@@ -260,13 +257,7 @@ async def aceptar_solicitud(
         entidad_id=bandeja_id,
     )
 
-    await notificaciones_service.notificar_cliente_solicitud_emergencia(
-        db,
-        solicitud=se,
-        tipo=TipoNotificacionEnum.TALLER_ASIGNADO,
-        titulo="Taller asignado",
-        mensaje="Un taller aceptó atender tu emergencia. Puedes ver el detalle en la app.",
-    )
+    await eventos_servicio.on_taller_acepto(db, solicitud=se)
 
     queue_solicitud_event(
         db,

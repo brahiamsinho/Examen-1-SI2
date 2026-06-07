@@ -1,6 +1,8 @@
 # Acceso a datos — emergencias (sin reglas de negocio)
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -28,6 +30,21 @@ async def get_vehiculo_if_cliente(
     return r.scalar_one_or_none()
 
 
+async def get_solicitud_by_client_request_id(
+    db: AsyncSession,
+    *,
+    cliente_id: int,
+    client_request_id: UUID,
+) -> SolicitudEmergencia | None:
+    r = await db.execute(
+        select(SolicitudEmergencia).where(
+            SolicitudEmergencia.cliente_id == cliente_id,
+            SolicitudEmergencia.client_request_id == client_request_id,
+        )
+    )
+    return r.scalar_one_or_none()
+
+
 async def insert_solicitud(
     db: AsyncSession,
     *,
@@ -38,6 +55,7 @@ async def insert_solicitud(
     estado: EstadoSolicitudSeguimientoEnum,
     created_at,
     updated_at,
+    client_request_id: UUID | None = None,
 ) -> SolicitudEmergencia:
     row = SolicitudEmergencia(
         tenant_id=tenant_id,
@@ -47,6 +65,7 @@ async def insert_solicitud(
         estado=estado,
         created_at=created_at,
         updated_at=updated_at,
+        client_request_id=client_request_id,
     )
     db.add(row)
     await db.flush()
@@ -90,6 +109,14 @@ async def get_solicitud_for_cliente(
             joinedload(SolicitudEmergencia.taller),
         )
     r = await db.execute(stmt)
+    return r.scalar_one_or_none()
+
+
+async def get_solicitud_cliente_id(db: AsyncSession, *, solicitud_id: int) -> int | None:
+    """CU44 — dueño de la solicitud (sin filtrar por cliente autenticado)."""
+    r = await db.execute(
+        select(SolicitudEmergencia.cliente_id).where(SolicitudEmergencia.id == solicitud_id)
+    )
     return r.scalar_one_or_none()
 
 

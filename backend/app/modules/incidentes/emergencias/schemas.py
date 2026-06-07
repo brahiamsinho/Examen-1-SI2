@@ -1,8 +1,10 @@
 # Schemas Pydantic — emergencias fase 1
 from __future__ import annotations
 
+import enum
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -23,11 +25,15 @@ class UbicacionCreateIn(BaseModel):
 
 
 class SolicitudEmergenciaCreateIn(BaseModel):
-    """CU11 + opcional CU12 inicial + CU15."""
+    """CU11 + opcional CU12 inicial + CU15 + CU43/CU45 idempotencia."""
 
     vehiculo_id: int = Field(..., gt=0)
     descripcion_texto: str | None = Field(None, max_length=8000)
     ubicacion_inicial: UbicacionCreateIn | None = None
+    client_request_id: UUID | None = Field(
+        None,
+        description="UUID del dispositivo; replay seguro al sincronizar borrador offline.",
+    )
 
 
 class SolicitudEmergenciaUpdateTextoIn(BaseModel):
@@ -113,11 +119,15 @@ class SolicitudEmergenciaRead(BaseModel):
     tecnico_ult_ubicacion_at: datetime | None = None
     presupuesto_bob: Decimal | None = Field(
         default=None,
-        description="Monto en bolivianos (BOB) informado por el técnico al iniciar atención en sitio.",
+        description="Monto en bolivianos (BOB) de la cotización del servicio.",
+    )
+    presupuesto_detalle: str | None = Field(
+        default=None,
+        description="Detalle de trabajo/repuestos de la cotización.",
     )
     presupuesto_registrado_at: datetime | None = Field(
         default=None,
-        description="Momento en que el técnico registró el presupuesto.",
+        description="Momento en que se registró la cotización.",
     )
 
 
@@ -227,12 +237,45 @@ class SolicitudSeguimientoRead(BaseModel):
     )
     presupuesto_bob: Decimal | None = Field(
         default=None,
-        description="Monto en bolivianos (BOB) informado por el técnico al iniciar atención en sitio.",
+        description="Monto en bolivianos (BOB) de la cotización del servicio.",
+    )
+    presupuesto_detalle: str | None = Field(
+        default=None,
+        description="Detalle de trabajo/repuestos de la cotización.",
     )
     presupuesto_registrado_at: datetime | None = Field(
         default=None,
-        description="Momento en que el técnico registró el presupuesto.",
+        description="Momento en que se registró la cotización.",
     )
+
+
+class EtaDisponibilidadEnum(str, enum.Enum):
+    """CU44 — estado semántico del ETA para la UI del cliente."""
+
+    PENDIENTE = "PENDIENTE"
+    DISPONIBLE = "DISPONIBLE"
+    NO_APLICABLE = "NO_APLICABLE"
+    HISTORICO = "HISTORICO"
+
+
+class SolicitudEtaRead(BaseModel):
+    """CU44 — consulta dedicada de tiempo estimado de reparación/atención."""
+
+    solicitud_id: int
+    estado: EstadoSolicitudSeguimientoEnum
+    tiempo_estimado_min: int | None = Field(
+        None,
+        ge=0,
+        description="Minutos estimados informados por taller/técnico.",
+    )
+    disponibilidad: EtaDisponibilidadEnum
+    eta_aplicable: bool = Field(
+        description="False si el servicio cerró o aún no aplica mostrar ETA activa.",
+    )
+    mensaje: str = Field(..., min_length=1, max_length=500)
+    actualizado_at: datetime
+    taller_id: int | None = None
+    tecnico_id: int | None = None
 
 
 class SeleccionarTallerIn(BaseModel):

@@ -17,6 +17,7 @@ from app.modules.comunicacion_y_notificaciones.notificaciones.models import Tipo
 from app.modules.comunicacion_y_notificaciones.notificaciones import service as notificaciones_service
 from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
 from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.incidentes.emergencias.models import EstadoSolicitudSeguimientoEnum
 from app.modules.pagos_y_comisiones.pagos import repository
 from app.modules.pagos_y_comisiones.pagos.gateway import PasarelaSimulada
@@ -121,6 +122,12 @@ async def _aplicar_resultado_pasarela(
             tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
             titulo="Pago confirmado",
             mensaje="Tu pago fue confirmado correctamente. Gracias por usar la plataforma.",
+        )
+        await eventos_servicio.on_pago_cliente(
+            db,
+            solicitud=solicitud,
+            pago_id=pago.id,
+            monto_label=f"{pago.monto} {pago.moneda}",
         )
         await _notificar_pago_confirmado_taller(db, solicitud=solicitud, pago=pago)
         _queue_pago_confirmado_ws(db, solicitud=solicitud, pago=pago)
@@ -447,6 +454,12 @@ async def confirmar_pago_stripe(
         tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
         titulo="Pago confirmado",
         mensaje="Tu pago en Stripe fue confirmado correctamente.",
+    )
+    await eventos_servicio.on_pago_cliente(
+        db,
+        solicitud=sol,
+        pago_id=pago.id,
+        monto_label=f"{pago.monto} {pago.moneda}",
     )
     await _notificar_pago_confirmado_taller(db, solicitud=sol, pago=pago)
     _queue_pago_confirmado_ws(db, solicitud=sol, pago=pago)

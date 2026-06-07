@@ -7,6 +7,7 @@ import '../../../presentation/widgets/cliente_panel_ui.dart';
 import '../../../../core/utils/bolivia_time.dart';
 import '../../../pagos/presentation/widgets/solicitud_pago_cta_block.dart';
 import '../../../../core/network/solicitud_realtime_providers.dart';
+import '../../application/consultar_eta_providers.dart';
 import '../../application/emergencias_providers.dart';
 import '../../domain/solicitud_emergencia_models.dart';
 import '../widgets/seguimiento/estado_solicitud_badge.dart';
@@ -20,9 +21,20 @@ import '../widgets/seguimiento/elegir_taller_prompt_card.dart';
 
 /// Seguimiento de solicitud: estado, taller, técnico, ETA, historial (WS + pull).
 class EmergenciaSeguimientoScreen extends ConsumerStatefulWidget {
+/// Seguimiento de solicitud — CU44 ETA + estado, taller, técnico, historial.
+class EmergenciaSeguimientoScreen extends ConsumerWidget {
   const EmergenciaSeguimientoScreen({super.key, required this.solicitudId});
 
   final int solicitudId;
+
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(emergenciaSeguimientoProvider(solicitudId));
+    ref.invalidate(consultarEtaProvider(solicitudId));
+    await Future.wait([
+      ref.read(emergenciaSeguimientoProvider(solicitudId).future),
+      ref.read(consultarEtaProvider(solicitudId).future),
+    ]);
+  }
 
   @override
   ConsumerState<EmergenciaSeguimientoScreen> createState() => _EmergenciaSeguimientoScreenState();
@@ -43,6 +55,7 @@ class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimie
 
     final async = ref.watch(emergenciaSeguimientoProvider(solicitudId));
     final wsLive = ref.watch(solicitudRealtimeEventsProvider(solicitudId)).hasValue;
+    final etaAsync = ref.watch(consultarEtaProvider(solicitudId));
 
     return ClienteSubpageScaffold(
       title: 'Seguimiento',
@@ -74,10 +87,10 @@ class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimie
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorBody(
           message: e.toString(),
-          onRetry: () => ref.invalidate(emergenciaSeguimientoProvider(solicitudId)),
+          onRetry: () => _refresh(ref),
         ),
         data: (s) => RefreshIndicator(
-          onRefresh: () => ref.refresh(emergenciaSeguimientoProvider(solicitudId).future),
+          onRefresh: () => _refresh(ref),
           child: ListView(
             padding: ClientePanelUi.pagePadding,
             children: [
@@ -94,7 +107,36 @@ class _EmergenciaSeguimientoScreenState extends ConsumerState<EmergenciaSeguimie
               const SizedBox(height: 20),
               Text('Tiempo estimado', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),
-              EtaLlegadaCard(minutos: s.tiempoEstimadoMin, actualizadoEn: s.updatedAt),
+              etaAsync.when(
+                loading: () => const ShadCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+                error: (e, _) => ShadCard(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'No se pudo consultar el ETA.',
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(e.toString(), style: Theme.of(context).textTheme.bodySmall),
+                        const SizedBox(height: 12),
+                        ShadButton.outline(
+                          onPressed: () => ref.invalidate(consultarEtaProvider(solicitudId)),
+                          child: const Text('Reintentar ETA'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                data: (r) => EtaReparacionCu44Card(eta: r.eta, fromCache: r.fromCache),
+              ),
               const SizedBox(height: 20),
               Text('Análisis asistido (IA)', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 10),

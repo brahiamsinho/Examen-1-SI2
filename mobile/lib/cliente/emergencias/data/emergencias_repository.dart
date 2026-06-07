@@ -5,6 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_error.dart';
 import '../domain/solicitud_emergencia_models.dart';
+import '../domain/solicitud_eta_models.dart';
 import '../domain/solicitud_seguimiento_models.dart';
 import '../domain/taller_candidato_models.dart';
 import '../domain/ubicacion_tecnico_compartida.dart';
@@ -38,7 +39,20 @@ final class EmergenciasRepository {
     }
   }
 
-  /// Estado, historial, taller, técnico y ETA.
+  /// CU44 — ETA dedicado de reparación/atención.
+  Future<SolicitudEtaConsulta> fetchEtaReparacion(int solicitudId) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        ApiConstants.appClienteEmergenciaEta(solicitudId),
+      );
+      final m = res.data;
+      if (m == null) throw Exception('ETA no disponible');
+      return SolicitudEtaConsulta.fromJson(m);
+    } on DioException catch (e) {
+      throw e;
+    }
+  }
+
   Future<SolicitudSeguimiento> fetchSeguimiento(int solicitudId) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
@@ -98,6 +112,7 @@ final class EmergenciasRepository {
     required int vehiculoId,
     String? descripcionTexto,
     Map<String, dynamic>? ubicacionInicial,
+    String? clientRequestId,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -106,6 +121,7 @@ final class EmergenciasRepository {
           'vehiculo_id': vehiculoId,
           if (descripcionTexto != null) 'descripcion_texto': descripcionTexto,
           if (ubicacionInicial != null) 'ubicacion_inicial': ubicacionInicial,
+          if (clientRequestId != null) 'client_request_id': clientRequestId,
         },
       );
       final m = res.data;

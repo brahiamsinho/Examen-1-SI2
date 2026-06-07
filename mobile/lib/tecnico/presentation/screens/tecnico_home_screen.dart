@@ -94,6 +94,13 @@ class TecnicoHomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _QuickTile(
+          icon: Icons.notifications_outlined,
+          title: 'Notificaciones',
+          subtitle: 'Avisos de servicios y asignaciones',
+          onTap: () => context.push('/tecnico/app/notificaciones'),
+        ),
+        const SizedBox(height: 10),
+        _QuickTile(
           icon: Icons.history_rounded,
           title: 'Historial',
           subtitle: 'Servicios finalizados',

@@ -1,6 +1,62 @@
 # NEXT_STEPS.md
 # =========================================================
 # Próximos pasos ordenados por prioridad
+# Actualizado: 2026-06-05 — CU46 KPIs ✅; verificar E2E Docker
+# =========================================================
+
+## HECHO — CU46 Dashboard KPIs (2026-06-05) ✅
+
+- Admin y taller: pantallas dedicadas, export CSV, empty/error states.
+- Migración `0023_reportes_kpis_cu46.sql`.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu46-dashboard-kpis.md`.
+
+## ALTA — Verificar CU46 en Docker
+
+1. `docker compose restart backend` (aplicar migración 0023).
+2. `docker compose build frontend && docker compose up -d --no-deps frontend`.
+3. Admin → Reportes KPIs; Taller → Reportes KPIs; probar filtros y CSV.
+
+## HECHO — CU44 Consultar ETA reparación (2026-06-05) ✅
+
+- Endpoint dedicado + UI Seguimiento mobile con caché offline.
+- Sesión: `docs/ai/sessions/2026-06-05-agent-cu44-consultar-eta-reparacion.md`.
+
+## ALTA — Verificar CU43/CU45 sync offline (E2E)
+
+Sesión: `docs/ai/sessions/2026-06-05-agent-cu43-cu45-sync-offline.md`.
+
+1. Aplicar migración `0022_client_request_id_cu43.sql` (`docker compose restart backend` o bootstrap).
+2. Mobile: `flutter pub get` + probar modo avión → wizard → borrador → reconectar → sync.
+3. Confirmar idempotencia: replay no duplica solicitud (mismo `client_request_id`).
+4. Opcional: pytest integración DB; soporte offline en web (Hive no init en `kIsWeb`).
+
+## HECHO — CU43 + CU45 (2026-06-05) ✅
+
+- CU45: borrador Hive + wizard offline + evidencias persistentes.
+- CU43: `SyncOrquestador` + UI Mis solicitudes + `client_request_id` backend.
+
+## DIFERIDO — CU42 Registrar cotización
+
+Recomendaciones UX: `topic_key: examen-si2/cu42-recomendaciones`. Backend + UI base ✅.
+
+## ALTA — CU42 Registrar cotización del servicio (taller web) — HECHO
+
+1. Leer gap en Engram: `topic_key: examen-si2/cu42-registrar-cotizacion`.
+2. Backend: endpoint taller PATCH/POST presupuesto (`presupuesto_bob` + detalle); validar tenant, taller, estado, monto; regla presupuesto existente.
+3. Frontend: formulario en detalle solicitud taller (`taller-emergencias-incidente-detalle`).
+4. Opcional CU41: notificar cliente al registrar cotización (`eventos_servicio`).
+5. Definir convivencia con CU39 (técnico ya registra presupuesto al EN_ATENCION).
+6. Tras cambios Angular: `docker compose build frontend` + `docker compose up -d --no-deps frontend`.
+
+## DIFERIDO — CU41 Notificaciones (retomar después)
+
+Backlog completo en Engram: `topic_key: examen-si2/cu41-notificaciones-pendiente`.
+
+- Push FCM / Web Push taller web.
+- Tests pytest tenant + idempotencia `evento_id`.
+- `X-Tenant-Slug` interceptor Angular taller (revisar cobertura).
+- Dropdown campana, TRACEABILITY_MATRIX CU41, diagrama comunicación PUDS.
+- In-app taller **ya implementado** (campana, inbox, hooks cliente→taller).
 # Actualizado: 2026-06-05 — Módulo backups
 # =========================================================
 

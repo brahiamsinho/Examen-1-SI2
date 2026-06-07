@@ -6,7 +6,8 @@ enum TipoNotificacion {
   estadoActualizado('ESTADO_ACTUALIZADO'),
   tallerAsignado('TALLER_ASIGNADO'),
   tecnicoAsignado('TECNICO_ASIGNADO'),
-  mensajeNuevo('MENSAJE_NUEVO');
+  mensajeNuevo('MENSAJE_NUEVO'),
+  solicitudPendienteTaller('SOLICITUD_PENDIENTE_TALLER');
 
   const TipoNotificacion(this.apiValue);
   final String apiValue;

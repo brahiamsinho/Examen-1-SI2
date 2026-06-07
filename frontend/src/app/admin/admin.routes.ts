@@ -62,6 +62,11 @@ export const ADMIN_ROUTES: Routes = [
           import('./features/finanzas/admin-finanzas.component').then((m) => m.AdminFinanzasComponent),
       },
       {
+        path: 'reportes-kpis',
+        loadComponent: () =>
+          import('./features/kpis/admin-kpis.component').then((m) => m.AdminKpisComponent),
+      },
+      {
         path: 'organizaciones',
         loadComponent: () =>
           import('./features/organizaciones/admin-organizaciones.component').then(

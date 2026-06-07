@@ -23,6 +23,8 @@ from .schemas import (
     ComisionTallerRead,
     HistorialAtencionRead,
     RechazarBandejaIn,
+    RegistrarPresupuestoIn,
+    PresupuestoSolicitudRead,
     ReporteTallerDashboardRead,
     ResumenComisionesRead,
     SolicitudBandejaDetalleRead,
@@ -170,6 +172,37 @@ async def listar_asignaciones_tecnico(
 
 
 @router.get(
+    "/solicitudes/{solicitud_id}/presupuesto",
+    response_model=PresupuestoSolicitudRead,
+    dependencies=[Depends(require_permission("presupuestos:registrar"))],
+)
+async def obtener_presupuesto(
+    solicitud_id: int,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU42 — consultar cotización registrada en la solicitud del taller."""
+    _, taller = ctx
+    return await service.obtener_presupuesto_solicitud(taller.id, solicitud_id, db)
+
+
+@router.patch(
+    "/solicitudes/{solicitud_id}/presupuesto",
+    response_model=PresupuestoSolicitudRead,
+    dependencies=[Depends(require_permission("presupuestos:registrar"))],
+)
+async def registrar_presupuesto(
+    solicitud_id: int,
+    body: RegistrarPresupuestoIn,
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+):
+    """CU42 — registrar cotización (presupuesto BOB + detalle) para revisión del cliente."""
+    user, taller = ctx
+    return await service.registrar_presupuesto_solicitud(user, taller.id, solicitud_id, body, db)
+
+
+@router.get(
     "/historial-atenciones",
     response_model=list[HistorialAtencionRead],
     dependencies=[Depends(require_permission("historial_atenciones:leer"))],
@@ -215,6 +248,24 @@ async def listar_comisiones(
     """CU31 — listado de comisiones con datos del pago asociado si existe."""
     _, taller = ctx
     return await service.listar_comisiones_taller(taller.id, db)
+
+
+@router.get(
+    "/reportes/kpis",
+    response_model=ReporteTallerDashboardRead,
+    dependencies=[Depends(require_permission("reportes:leer"))],
+)
+async def reporte_kpis_taller_cu46(
+    ctx: tuple[Usuario, Taller] = Depends(require_taller_responsable),
+    db: AsyncSession = Depends(get_db),
+    desde: date | None = Query(None, description="Inicio de periodo (inclusive)."),
+    hasta: date | None = Query(None, description="Fin de periodo (inclusive)."),
+):
+    """CU46 — dashboard KPIs del taller (aislamiento por taller autenticado)."""
+    _, taller = ctx
+    return await service.obtener_reporte_dashboard_taller(
+        taller.id, db, desde=desde, hasta=hasta
+    )
 
 
 @router.get(

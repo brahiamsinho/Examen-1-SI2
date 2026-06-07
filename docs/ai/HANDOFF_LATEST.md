@@ -1,6 +1,54 @@
 # HANDOFF_LATEST.md
 # =========================================================
 # Handoff para el próximo agente/sesión
+# Fecha: 2026-06-06 (EA secuencia CU41–CU46 patrón Tenant)
+
+## Cambios recientes (2026-06-06) — EA diagramas secuencia CU41–CU46 (patrón CU_Gestionar_Tenant) ✅
+
+- **Paquete EA:** `/Model/Secuencia` — subpaquetes CU41–CU46.
+- **Referencia:** `CU_Gestionar_Tenant` diagramID **12** (V.Index/Crear/Modificar + Controller + M.*).
+- **Diagramas finales:** 67 CU41, 68 CU42, 69 CU43, 70 CU44, 71 CU45, 72 CU46 — lifelines boundary/control/entity + mensajes numerados.
+- **Obsoletos:** diagramIDs 55–66 (versiones sd/Class anteriores).
+- **Sesión:** `docs/ai/sessions/2026-06-06-agent-ea-secuencia-cu41-cu46.md`.
+
+## Cambios recientes (2026-06-05) — CU46 Dashboard KPIs ✅
+
+- **Backend:** `0023_reportes_kpis_cu46.sql`, `GET /api/admin/panel/kpis`, `GET /api/app/taller/emergencias/reportes/kpis`.
+- **Frontend:** `/admin/panel/reportes-kpis`, `/taller/panel/reportes-kpis` (nav + lazy routes).
+- **Permiso:** `reportes:leer` (ADMIN, TALLER_RESPONSABLE).
+- **Pendiente:** E2E con Docker + migración 0023; pytest opcional.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu46-dashboard-kpis.md`.
+
+## Cambios recientes (2026-06-05) — CU44 Consultar ETA reparación ✅
+
+- Backend `GET .../seguimiento/eta`; mobile `EtaReparacionCu44Card` + caché offline.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu44-consultar-eta-reparacion.md`.
+
+## Cambios recientes (2026-06-05) — CU43/CU45 sync offline mobile ✅
+
+- **CU45:** wizard guarda borrador en Hive si no hay red; pasos ubicación/foto/audio/texto offline.
+- **CU43:** `SyncOrquestador` escucha `connectivity_plus`, replay con backoff, pausa en 401.
+- **Backend:** `client_request_id` UUID en POST crear solicitud → idempotencia anti-duplicados.
+- **UI:** `EmergenciasMisSolicitudesScreen` — borradores + «Sincronizar ahora».
+- **Archivos clave:** `mobile/lib/cliente/emergencias/application/sync_orquestador.dart`, `solicitud_draft_repo.dart`, `backend/migrations/0022_client_request_id_cu43.sql`.
+- **Pendiente:** E2E modo avión; `docker compose restart backend` para migración 0022.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu43-cu45-sync-offline.md`.
+
+## Cambios recientes (2026-06-05) — CU42 Registrar cotización taller ✅
+
+- Backend `0021_presupuesto_taller_cu42.sql`, endpoints `GET/PATCH .../presupuesto`, notificación cliente.
+- Frontend taller: formulario en detalle incidente.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-cu42-registrar-cotizacion.md`.
+
+## Cambios recientes (2026-06-05) — Notificaciones inmediatas del servicio ✅
+
+- **Paquete:** `comunicacion_y_notificaciones`.
+- **Backend:** `eventos_servicio.py`, `tenant_guard.py`, migración `0020`.
+- **Eventos:** selección taller → taller; aceptar/rechazar bandeja; asignación técnico; cambio estado.
+- **API taller:** `GET/PATCH /api/app/taller/notificaciones`.
+- **Frontend:** `/taller/panel/comunicacion/notificaciones`.
+- **Mobile técnico:** `/tecnico/app/notificaciones`.
+- **Sesión:** `docs/ai/sessions/2026-06-05-agent-notificaciones-reimplementacion.md`.
 
 ## Cambios (2026-06-04) — Mobile reportes personalizados QBE ✅
 
@@ -489,6 +537,33 @@
 - **`orchestrator.md`**: clasificación ampliada (ia, qa, seguridad) + tabla de delegación rápida.
 - Sesión: `docs/ai/sessions/2026-05-24-agent-subagentes-ia-qa-security.md`.
 - Decisión: `DECISIONS_LOG` **DEC-022**.
+
+## Cambios recientes (2026-05-30) — EA CU36 comunicación **lineal MVC** (MCP) ✅
+
+- **`/Model/Comunicacion`** → **`comm CU36 lineal MVC flujo principal`** (diagramID **40**).
+- Topología: `Cliente → V.Seguimiento → SeguimientoController → entidades` (sin estrella, sin V.Error en lienzo).
+- Mensajes 538–545; Association 533–537 ocultas en diagrama 40.
+- Sesión: `docs/ai/sessions/2026-05-30-agent-ea-cu36-lineal-mvc-mcp.md`
+- **Manual:** separar etiquetas Cliente–Vista (1.Abrir, 1.1, 1.6).
+
+## Cambios recientes (2026-05-29) — EA arquitectura del sistema (componentes) ✅
+
+- Paquete **`Model/Arquitectura`** (packageID **28**).
+- Diagrama oficial **`component Arquitectura del sistema`** (diagramID **31**): hub FastAPI, módulos alineados a `ARCHITECTURE.md`, capas, PostgreSQL, medios, externos, `ai-inference`.
+- Guía: `docs/ai/EA_ARCHITECTURE_SYSTEM_GUIDE.md`.
+- Sesión: `docs/ai/sessions/2026-05-29-agent-ea-arquitectura-sistema.md`.
+
+## Cambios recientes (2026-05-29) — EA análisis de clases: patrón simplificado ✅
+
+- **Guía obligatoria** para nuevos CUs: `docs/ai/EA_ANALYSIS_CLASS_GUIDE.md` (1 vista, 1–2 controles, 2–4 entidades; sin V.Error ni pantallas de otros CUs).
+- **Seleccionar taller:** diagrama oficial ID **26** en `Model/Clase`; obsoleto ID 25.
+- **CU36 ubicación:** análisis ID **27**; comunicación ID **22** en `Model/Comunicacion`.
+- **Procesar pago pasarela:** análisis ID **28** en `Model/Clase` (2 vistas: Resumen + Pasarela).
+- **Actualizar estado atención (técnico):** análisis ID **29** en `Model/Clase`.
+- **Gestionar tenant (admin SaaS):** análisis ID **30** — diseño lógico; API tenant aún no en código.
+- Guía BCE: máximo **2** boundaries por CU (`EA_ANALYSIS_CLASS_GUIDE.md`).
+- Draw.io comunicación: `docs/diagrams/*-comunicacion.drawio` (CU36–CU40).
+- Decisión: `DECISIONS_LOG` **DEC-037**, **DEC-038**.
 
 ## Cambios recientes (2026-04-26) — Word `pruebas_api_servicio` + Prueba 2 mapeo ✅
 

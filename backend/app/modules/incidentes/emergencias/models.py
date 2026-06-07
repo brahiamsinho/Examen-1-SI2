@@ -4,6 +4,7 @@ from __future__ import annotations
 import enum
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
@@ -18,7 +19,7 @@ from sqlalchemy import (
     Index,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -82,6 +83,8 @@ class SolicitudEmergencia(Base):
 
     presupuesto_bob: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     presupuesto_registrado_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    presupuesto_detalle: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_request_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
 
     ubicaciones: Mapped[list["SolicitudUbicacion"]] = relationship(
         back_populates="solicitud",

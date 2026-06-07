@@ -193,37 +193,50 @@ es la opción estándar de la comunidad Flutter.
 **Decisión:** Tras insertar `solicitud_evidencias` (URL o archivo), tras insertar `solicitud_ubicaciones` y tras actualizar `descripcion_texto` en `REGISTRADA`, se llama de nuevo a `enrich_solicitud_ai_after_create` para recalcular `ai_payload`. Para enviar la imagen al worker se usa `load_evidencia_bytes` (lectura bajo `uploads/evidencias/` cuando el path de la URL es `/.../media/evidencias/<file>`) antes de `GET` HTTP.  
 **Por qué:** En el flujo real el cliente no siempre sube imagen al crear; si la IA solo corre en el `POST` inicial, queda `clasificacion.fuentes: ["texto"]` aun con foto posterior, y además un `httpx` a una URL pública con IP de LAN del teléfono es frágil dentro de Docker.
 
-## DEC-025 — UML casos de uso: Include/Extend explícitos en EA y PUDS (2026-05-29)
+## DEC-032 — UML casos de uso: Include/Extend explícitos en EA y PUDS (2026-05-29)
 
 **Fecha:** 2026-05-29  
 **Decisión:** Documentar en `docs/diagrams/agent-memory/USE_CASE_INCLUDE_EXTEND_GUIDE.md` la notación UML 2.5: actor→CU con `Association` sólida; entre CUs solo `Include` (base→incluido) o `Extend` (extensión→base) con línea discontinua y estereotipo. En EA MCP usar `type: Include` / `type: Extend`, no `Association`. Diagrama general Ciclo 4 (CU36–CU40) en EA diagramID **26**, conectores **316–320**.  
 **Por qué:** Entrega académica 4.1.5 y plantilla de examen exigen distinguir `«include»` y `«extend»`; asociaciones genéricas entre CUs no son defendibles en PUDS.
 
-## DEC-029 — Portal taller: registro público separado del login (2026-05-28)
+## DEC-033 — Portal taller: registro público separado del login (2026-05-28)
 
 **Fecha:** 2026-05-28  
 **Decisión:** El alta de taller + responsable ocurre solo en `POST /api/app/taller/registro` (ruta Angular `/taller/registro`), sin JWT. El login en `/taller` solo autentica (`POST /api/auth/login` + `GET /auth/me`) y exige rol `TALLER_RESPONSABLE`. Un usuario responsable tiene como máximo un taller (`talleres.usuario_responsable_id` UNIQUE). El panel opera el taller existente (`GET/PUT mi-taller`, técnicos, emergencias); no crea un segundo taller.  
 **Por qué:** Evita confusión producto/SaaS (“¿entro y se crea el taller?”) y alinea responsabilidades con PUDS (CU registrar vs iniciar sesión). Documentado en `docs/ai/FLOWS_PORTAL_TALLER.md` y `docs/diagrams/uml/sequence-taller-registro-login.puml`.  
 **Nota SaaS:** el registro público actual no asigna `tenant_id`; el login sí valida `X-Tenant-Slug` cuando el usuario ya tiene tenant.
 
-## DEC-026 — CU37: bandeja solo tras elección explícita del cliente (2026-06-02)
+## DEC-034 — CU37: bandeja solo tras elección explícita del cliente (2026-06-02)
 
 **Fecha:** 2026-06-02  
 **Decisión:** `crear_solicitud` deja de insertar filas `solicitud_taller_bandeja` PENDIENTE para todos los talleres del tenant. El cliente elige taller vía `GET/POST .../talleres-candidatos` y `.../seleccionar-taller`; el backend crea una sola bandeja PENDIENTE y expira pendientes previas. Seeds demo que necesiten multi-taller siguen llamando `insert_bandeja_pendiente_por_cada_taller` de forma explícita.  
 **Por qué:** Alinea el flujo con CU37 (elección del cliente) y evita que varios talleres vean la misma emergencia antes de la decisión. Documentado en `CICLO4_DETALLE_CASOS_USO.md` y memoria `docs/ai` (2026-05-28).
 
-## DEC-030 — Admin SaaS: provision atómica taller + responsable (2026-06-04)
+## DEC-035 — Admin SaaS: provision atómica taller + responsable (2026-06-04)
 
 **Fecha:** 2026-06-04  
 **Decisión:** Nuevo endpoint `POST /api/talleres/provision` crea en una transacción: usuario `ACTIVO` con `tenant_id`, rol `TALLER_RESPONSABLE` y taller (estado configurable, default `ACTIVO`). Sin email de verificación. UI admin: formulario único en `/admin/panel/talleres`; menú **Usuarios** retirado del sidebar (ruta legacy conservada). Se mantiene `POST /api/talleres/` con `usuario_responsable_id` por compatibilidad API.  
 **Por qué:** Reduce el flujo admin de Organizaciones → Usuarios → Talleres a Organizaciones → Talleres con credenciales listas para login en `/taller` con `X-Tenant-Slug`. Documentado en `FLOWS_PORTAL_TALLER.md` §6 y sesión `2026-06-04-agent-admin-provision-taller.md`.
 
-## DEC-031 — Docker entrypoint: migraciones + seeds antes de uvicorn (2026-06-04)
+## DEC-036 — Docker entrypoint: migraciones + seeds antes de uvicorn (2026-06-04)
 
 **Fecha:** 2026-06-04  
 **Decisión:** El contenedor `backend` usa ENTRYPOINT en `Dockerfile` → `python -m app.db.docker_bootstrap` → uvicorn. Migraciones: Alembic (`stamp head` si initdb ya creó esquema; si no `upgrade head`) + SQL incremental vía tabla `app_sql_migrations`. Seeds compartidos en `app/seeds/runner.py`; en Compose `RUN_SEEDS_IN_LIFESPAN=false` y seeds vía flags `SEED_*` en entrypoint (override dev).  
 **Por qué:** Elimina pasos manuales (`alembic stamp`, `python -m app.seeds`) tras `docker compose up`; aplica SQL 0007–0017 en volúmenes antiguos; evita doble seed con `--reload`. Producción: `RUN_MIGRATIONS_ON_START=true`, seeds off salvo control explícito.
 
+## DEC-037 — Diagramas de análisis EA: plantilla BCE simplificada (2026-05-29)
+
+**Fecha:** 2026-05-29  
+**Decisión:** En `/Model/Clase`, cada CU usa como máximo **1 boundary**, **1–2 controls**, **2–4 entities** del ER; no incluir vistas de otros CUs ni `V.Error`; evitar clase `Cliente` si ya existe el actor `Cliente`. Guía: `docs/ai/EA_ANALYSIS_CLASS_GUIDE.md`.  
+**Por qué:** Diagramas con 4+ boundaries y dependencias duplicadas confunden en defensa; la simplificación del CU “Seleccionar taller” (diagrama EA **26**) demostró un layout legible y trazable.  
+**Ejemplo:** `V.SeleccionTaller` + `TallerSeleccionController` + `AssignmentRankService` + `SolicitudEmergencia` / `Taller` / `SolicitudTallerBandeja`.
+
+## DEC-038 — EA comunicación: topología lineal MVC (2026-05-30)
+
+**Fecha:** 2026-05-30  
+**Decisión:** Los diagramas Communication de CU36 en EA siguen `Actor → Vista → Control → Entidad` (como `CU36-comunicacion-ubicacion-tecnico.drawio`), no topología estrella con controlador en el centro. Guía: `docs/ai/EA_COMMUNICATION_DIAGRAM_GUIDE.md`.  
+**Por qué:** La estrella rompe la lectura MVC/BCE y no coincide con el Draw.io de referencia ni con el flujo real (el cliente no llama al API sin pasar por la vista). Los mensajes apilados en EA se resuelven arrastrando etiquetas, no duplicando Associations.  
+**Nota:** `1.3 getUbicacionTecnico()` va al enlace Controlador → **SolicitudEmergencia** (evidencia Draw.io), no simplificar a Tecnico.
 ## DEC-032 — Bitácora portal taller: endpoint dedicado + permiso acotado (2026-06-05)
 
 **Fecha:** 2026-06-05  

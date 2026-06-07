@@ -69,6 +69,7 @@ from app.modules.comunicacion_y_notificaciones.comunicaciones.router import (
     emergencias_mensajes_cliente_router,
     taller_router as comunicaciones_taller_router,
     tecnico_router as comunicaciones_tecnico_router,
+    taller_router as comunicaciones_taller_router,
 )
 from app.modules.talleres_y_tecnicos.tecnico.router import router as tecnico_router
 from app.modules.comunicacion_y_notificaciones.tiempo_real.router import router as tiempo_real_ws_router
@@ -135,7 +136,9 @@ app.include_router(comunicaciones_cliente_router, prefix=PREFIX)
 app.include_router(emergencias_mensajes_cliente_router, prefix=PREFIX)
 app.include_router(comunicaciones_tecnico_router, prefix=PREFIX)
 app.include_router(comunicaciones_taller_router, prefix=PREFIX)
+
 app.include_router(comunicaciones_admin_router, prefix=PREFIX)
+
 app.include_router(tecnico_router, prefix=PREFIX)
 app.include_router(emergencias_pagos_cliente_router, prefix=PREFIX)
 app.include_router(ai_router, prefix=PREFIX)

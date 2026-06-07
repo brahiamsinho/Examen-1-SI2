@@ -14,6 +14,8 @@ import type {
   SolicitudBandejaDetalleDto,
   TallerDisponibilidadDto,
   TallerDisponibilidadUpdatePayload,
+  PresupuestoSolicitudDto,
+  RegistrarPresupuestoPayload,
   ReporteTallerDashboardDto,
   EstadoSolicitudSeguimiento,
 } from '../models/taller-emergencias.models';
@@ -59,11 +61,30 @@ export class TallerEmergenciasApiService {
     return this.http.get<AsignacionTecnicoDto[]>(`${this.base}/solicitudes/${solicitudId}/asignaciones`);
   }
 
+  getPresupuesto(solicitudId: number): Observable<PresupuestoSolicitudDto> {
+    return this.http.get<PresupuestoSolicitudDto>(`${this.base}/solicitudes/${solicitudId}/presupuesto`);
+  }
+
+  registrarPresupuesto(
+    solicitudId: number,
+    body: RegistrarPresupuestoPayload,
+  ): Observable<PresupuestoSolicitudDto> {
+    return this.http.patch<PresupuestoSolicitudDto>(`${this.base}/solicitudes/${solicitudId}/presupuesto`, body);
+  }
+
   getReporteDashboard(params?: { desde?: string; hasta?: string }): Observable<ReporteTallerDashboardDto> {
     let p = new HttpParams();
     if (params?.desde) p = p.set('desde', params.desde);
     if (params?.hasta) p = p.set('hasta', params.hasta);
     return this.http.get<ReporteTallerDashboardDto>(`${this.base}/reportes/dashboard`, { params: p });
+  }
+
+  /** CU46 — KPIs del taller (permiso reportes:leer). */
+  getReporteKpis(params?: { desde?: string; hasta?: string }): Observable<ReporteTallerDashboardDto> {
+    let p = new HttpParams();
+    if (params?.desde) p = p.set('desde', params.desde);
+    if (params?.hasta) p = p.set('hasta', params.hasta);
+    return this.http.get<ReporteTallerDashboardDto>(`${this.base}/reportes/kpis`, { params: p });
   }
 
   listHistorialAtenciones(params?: {

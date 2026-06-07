@@ -15,6 +15,7 @@ from app.modules.comunicacion_y_notificaciones.notificaciones import service as 
 from app.modules.comunicacion_y_notificaciones.notificaciones.models import TipoNotificacionEnum
 from app.modules.comunicacion_y_notificaciones.tiempo_real.publish import queue_solicitud_event
 from app.modules.comunicacion_y_notificaciones.tiempo_real.schemas import RealtimeEventType
+from app.modules.comunicacion_y_notificaciones.notificaciones import eventos_servicio
 from app.modules.acceso_y_administracion.usuarios.models import Usuario
 
 from .. import repository
@@ -121,12 +122,11 @@ async def actualizar_estado_servicio(
         if monto_txt
         else f"Te informamos: {etiqueta}."
     )
-    await notificaciones_service.notificar_cliente_solicitud_emergencia(
+    await eventos_servicio.on_estado_servicio(
         db,
         solicitud=se,
-        tipo=TipoNotificacionEnum.ESTADO_ACTUALIZADO,
-        titulo="Estado de tu servicio",
-        mensaje=mensaje_cliente,
+        mensaje_cliente=mensaje_cliente,
+        etiqueta_corta=etiqueta,
     )
 
     nombre_tec = f"{user.nombres} {user.apellidos}".strip() or "Técnico"

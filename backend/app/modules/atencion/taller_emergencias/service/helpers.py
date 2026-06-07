@@ -25,6 +25,15 @@ ESTADOS_PERMITE_ASIGNAR_TECNICO = frozenset(
     )
 )
 
+ESTADOS_PERMITE_COTIZACION = frozenset(
+    (
+        EstadoSolicitudSeguimientoEnum.TALLER_ASIGNADO,
+        EstadoSolicitudSeguimientoEnum.TECNICO_ASIGNADO,
+        EstadoSolicitudSeguimientoEnum.EN_CAMINO,
+        EstadoSolicitudSeguimientoEnum.EN_ATENCION,
+    )
+)
+
 
 def extract_nivel_prioridad(ai_payload: dict | None) -> str | None:
     if not ai_payload or not isinstance(ai_payload, dict):
@@ -57,6 +66,9 @@ def row_to_detalle(row: dict, evidencias: list) -> SolicitudBandejaDetalleRead:
         motivo_rechazo=row.get("motivo_rechazo"),
         creado_at=row["bandeja_creado_at"],
         respondido_at=row.get("respondido_at"),
+        presupuesto_bob=row.get("presupuesto_bob"),
+        presupuesto_detalle=row.get("presupuesto_detalle"),
+        presupuesto_registrado_at=row.get("presupuesto_registrado_at"),
         evidencias=[SolicitudEvidenciaTallerRead.model_validate(x) for x in evidencias],
     )
 
